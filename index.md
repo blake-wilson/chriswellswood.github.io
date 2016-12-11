@@ -1,8 +1,8 @@
-# A Collection of Bits and Pieces That I've Written
+# Bits and Pieces and Odds and Ends
 
-#### Code, science and misc by Chris Wells Wood
+#### Code, science and misc by Chris Wells Wood.
 
-##### GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) | Twitter: [@ChrisWellsWood](https://twitter.com/ChrisWellsWood)
+GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) | Twitter: [@ChrisWellsWood](https://twitter.com/ChrisWellsWood)
 
 ---
 
@@ -12,7 +12,7 @@ I'm a research scientist that spends a lot of time writing code and occasionally
 
 ## Most Recent
 
-[article](empty_rust_structs.md)
+* 11/12/2016 - [Initialising Empty Structs in Rust](empty_rust_structs.md)
 
 ## The Rest
 
@@ -20,4 +20,4 @@ I'm a research scientist that spends a lot of time writing code and occasionally
 
 #### Rust
 
-* [article](empty_rust_structs.md)
+* 11/12/2016 - [Initialising Empty Structs in Rust](empty_rust_structs.md)
