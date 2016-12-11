@@ -9,3 +9,9 @@ GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) \| Twitter: [@Chris
 ---
 
 **[CONTENT]**
+
+---
+
+[Previous] \| [Home](index.md) \| [Next]
+
+© Chris Wells Wood, 2016. 

@@ -29,3 +29,8 @@ This is everything else, separated into categories.
 
 #### 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
 > A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!
+
+
+---
+
+© Chris Wells Wood, 2016. 

@@ -186,3 +186,10 @@ It seems a little more transparent, and there's no clash with the name of the me
 ### Acknowledgements
 
 Thanks to @joshtriplett and @yohanesu75 for some extra info.
+
+
+---
+
+[Previous] \| [Home](index.md) \| [Next]
+
+© Chris Wells Wood, 2016. 
