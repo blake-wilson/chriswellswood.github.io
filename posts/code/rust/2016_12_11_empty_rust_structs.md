@@ -48,7 +48,8 @@ error[E0063]: missing fields `x`, `y`, `z` in initializer of `Point`
   |              ^^^^^ missing `x`, `y`, `z`
 ```
 
-The proper way to do this for a struct in Rust is to implement the `Default` trait and then you can generate default values easily:
+The proper way to do this for a struct in Rust is to implement the `Default`
+trait and then you can generate default values easily:
 
 ```Rust
 #[derive(Debug)]
@@ -65,7 +66,8 @@ impl Default for Point {
 }
 fn main() {
   let p1 = Point::default(); 
-  let p2 = Point{ x: 34, ..Default::default() }; // Partial definition of fields
+  // Partial definition of fields
+  let p2 = Point{ x: 34, ..Default::default() };
 }
 ```
 
@@ -87,7 +89,13 @@ fn main() {
 
 It's like magic! 
 
-Initialising empty structs is especially useful when working with an API, where you might give a function a pointer to a struct and the fields are populated for you. If you're working with a RUST API that follows this pattern, we can just use our `Default` trait implementation to do this, right? Well, that depends on the API. If you're using using the `winapi` crate, this doesn't work as `Default` has not been implemented for any of the structs that I've used:
+Initialising empty structs is especially useful when working with an API,
+where you might give a function a pointer to a struct and the fields are
+populated for you. If you're working with a RUST API that follows this pattern,
+we can just use our `Default` trait implementation to do this, right? Well,
+that depends on the API. If you're using using the `winapi` crate, this 
+doesn't work as `Default` has not been implemented for any of the structs that
+I've used:
 
 ```Rust
 extern crate winapi;
@@ -106,10 +114,13 @@ is not satisfied
  --> src\main.rs:6:24
   |
 6 |     let rect = RECT{ ..Default::default() };
-  |                        ^^^^^^^^^^^^^^^^ trait `winapi::RECT: std::default::Default` not satisfied
+  |                        ^^^^^^^^^^^^^^^^ trait `winapi::RECT: 
+std::default::Default` not satisfied
 ```
 
-Unfortunately, you're not allowed to implement a trait that you did not define, for a type that you also did not define. So if you're using a struct from an external crate, you can't implement `Default` for it:
+Unfortunately, you're not allowed to implement a trait that you did not
+define, for a type that you also did not define. So if you're using a struct
+from an external crate, you can't implement `Default` for it:
 
 ```Rust
 extern crate winapi;
@@ -129,14 +140,18 @@ fn main() {
 ```
 
 ```
-error[E0117]: only traits defined in the current crate can be implemented for arbitrary types
+error[E0117]: only traits defined in the current crate can be implemented for
+arbitrary types
+
  --> src\main.rs:5:1
   |
 5 | impl Default for RECT {
   | ^ impl doesn't use types inside crate
 ```
 
-That's annoying... So what do you do? There's a couple of things you could do. Firstly, you could wrap the struct as a new type (so you're defining it in your own crate):
+That's annoying... So what do you do? There's a couple of things you could do.
+Firstly, you could wrap the struct as a new type (so you're defining it in
+your own crate):
 
 ```Rust
 extern crate winapi;
@@ -158,7 +173,8 @@ fn main() {
 }
 ```
 
-But this is a bit clunky, so I prefer just creating a new `trait`, and implementing it for the external struct:
+But this is a bit clunky, so I prefer just creating a new `trait`, and
+implementing it for the external struct:
 
 ```Rust
 extern crate winapi;
@@ -181,7 +197,10 @@ fn main() {
 }
 ```
 
-It seems a little more transparent, and there's no clash with the name of the method. If you want to be a good citizen, the best way to deal with this is probably to just go and modify the crate you're using, adding `derive(Debug)` attributes to everything!
+It seems a little more transparent, and there's no clash with the name of the
+method. If you want to be a good citizen, the best way to deal with this is
+probably to just go and modify the crate you're using, adding `derive(Debug)`
+attributes to everything!
 
 ### Acknowledgements
 
