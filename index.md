@@ -12,9 +12,13 @@ I'm a research scientist that spends a lot of time writing code and occasionally
 
 ## Most Recent
 
-* 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
+Here's a list of the most recent posts:
+
+1. 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
 
 ## The Rest
+
+This is everything else, separated into categories.
 
 ### Code
 
