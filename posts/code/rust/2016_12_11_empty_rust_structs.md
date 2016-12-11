@@ -8,6 +8,8 @@ GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) \| Twitter: [@Chris
 
 ---
 
+<script src="https://gist.github.com/ChrisWellsWood/84421854794037e760808d5d97d21421.js"></script>
+
 ## Initialising Empty Structs in Rust
 
 In C/C++, you can initialise a struct without giving values for any of the fields:
