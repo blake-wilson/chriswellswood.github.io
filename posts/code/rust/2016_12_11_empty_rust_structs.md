@@ -1,4 +1,14 @@
-# Initialising Empty Structs in Rust
+# Bits and Pieces and Odds and Ends
+
+#### Code, science and misc by Chris Wells Wood.
+
+GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) | Twitter: [@ChrisWellsWood](https://twitter.com/ChrisWellsWood)
+
+[Previous] | [Home](index.md) | [Next]
+
+---
+
+## Initialising Empty Structs in Rust
 
 In C/C++, you can initialise a struct without giving values for any of the fields:
 
@@ -173,4 +183,6 @@ fn main() {
 
 It seems a little more transparent, and there's no clash with the name of the method. If you want to be a good citizen, the best way to deal with this is probably to just go and modify the crate you're using, adding `derive(Debug)` attributes to everything!
 
-Thanks to joshtriplett and yohanesu75 for some extra info.
+### Acknowledgements
+
+Thanks to @joshtriplett and @yohanesu75 for some extra info.
