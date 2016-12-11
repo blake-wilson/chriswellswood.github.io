@@ -4,4 +4,4 @@
 
 Stuff is going to go here.
 
-[article]
+[article](empty_rust_structs.md)
