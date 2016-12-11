@@ -14,9 +14,8 @@ ___
 
 ## Most Recent
 
-Here's a list of the most recent posts:
-
-1. 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
+11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
+> A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!
 
 ___
 
@@ -28,4 +27,5 @@ This is everything else, separated into categories.
 
 #### Rust
 
-* 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
+11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
+> A little article about method for initialising empty structs in Rust, it can be more complicated than you might think.
