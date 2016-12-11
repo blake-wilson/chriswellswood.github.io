@@ -12,7 +12,7 @@ I'm a research scientist that spends a lot of time writing code and occasionally
 
 ## Most Recent
 
-* 11/12/2016 - [Initialising Empty Structs in Rust](empty_rust_structs.md)
+* 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
 
 ## The Rest
 
@@ -20,4 +20,4 @@ I'm a research scientist that spends a lot of time writing code and occasionally
 
 #### Rust
 
-* 11/12/2016 - [Initialising Empty Structs in Rust](empty_rust_structs.md)
+* 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
