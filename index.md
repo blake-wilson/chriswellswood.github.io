@@ -30,6 +30,13 @@ This is everything else, separated into categories.
 #### 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
 > A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!
 
+___
+
+## Useful or Interesting Stuff Not Made By Me
+
+#### [Markdown Cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)
+> A great cheatsheet for markdown written by @adam-p. I always forget how to make tables...
+
 
 ---
 
