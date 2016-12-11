@@ -2,9 +2,9 @@
 
 #### Code, science and misc by Chris Wells Wood.
 
-GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) | Twitter: [@ChrisWellsWood](https://twitter.com/ChrisWellsWood)
+GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) \| Twitter: [@ChrisWellsWood](https://twitter.com/ChrisWellsWood)
 
-[Previous] | [Home](index.md) | [Next]
+[Previous] \| [Home](index.md) \| [Next]
 
 ---
 
