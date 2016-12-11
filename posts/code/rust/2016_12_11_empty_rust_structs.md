@@ -4,7 +4,7 @@
 
 GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) \| Twitter: [@ChrisWellsWood](https://twitter.com/ChrisWellsWood)
 
-[Previous] \| [Home](index.md) \| [Next]
+[Previous] \| [Home](https://chriswellswood.github.io) \| [Next]
 
 ---
 
