@@ -10,6 +10,7 @@ GitHub: [@ChrisWellsWood](https://github.com/ChrisWellsWood) \| Twitter: [@Chris
 
 I'm a research scientist that spends a lot of time writing code and occasionally ventures into the lab. This is sort of a blog with various articles/posts as well as snippets from other sources.
 
+___
 
 ## Most Recent
 
@@ -17,6 +18,7 @@ Here's a list of the most recent posts:
 
 1. 11/12/2016 - [Initialising Empty Structs in Rust](posts/code/rust/2016_12_11_empty_rust_structs.md)
 
+___
 
 ## The Rest
 
