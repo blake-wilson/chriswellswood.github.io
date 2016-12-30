@@ -1,9 +1,11 @@
 module EmptyStructs exposing (..)
 
-date : (Int, Int, Int)
+import PostTypes
+
+date : PostTypes.Date
 date = (2016, 12, 11)
 
-postString : String
+postString : PostTypes.RawContent
 postString = """
 # Initialising Empty Structs in Rust
 
