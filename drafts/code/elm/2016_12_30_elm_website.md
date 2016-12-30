@@ -8,4 +8,7 @@
 
 # Log
 
-* Reviewing Elm architecture, with attention to building to html
+* Reviewing Elm architecture, with attention to embedding in html
+    * https://guide.elm-lang.org/interop/javascript.html
+* Rejigging to use html instead of markdown
+* Set up `.gitignore`
