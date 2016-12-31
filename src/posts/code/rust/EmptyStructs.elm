@@ -2,6 +2,9 @@ module EmptyStructs exposing (..)
 
 import PostTypes
 
+title : PostTypes.Title
+title = "Initialising Empty Structs in Rust"
+
 date : PostTypes.Date
 date = (2016, 12, 11)
 
