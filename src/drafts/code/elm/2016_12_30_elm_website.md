@@ -3,6 +3,7 @@
 1. Make template for header/footer/nav
 1. Insert content into page
     1. Make post as elm file
+    1. Make it app load articles
 1. Remove old markdown pages
 1. Beautify
 1. Mobile?
