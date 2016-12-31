@@ -1,4 +1,7 @@
-import Html exposing (..)
+import Html
+import Markdown
+
+import EmptyStructs
 
 main = Html.program
     { init = init
@@ -37,7 +40,22 @@ subscriptions model =
 
 -- VIEW
 
-view : Model -> Html Msg
+view : Model -> Html.Html Msg
 view model =
-    div []
-        [ h1 [] [ text "Bits and Pieces and Odds and Ends" ] ]
+    Html.div []
+        [ header
+        , Html.p [] [ Markdown.toHtml [] EmptyStructs.postString ]
+        , footer
+        ]
+
+header : Html.Html msg
+header =
+    Html.header []
+        [ Html.h1 [] [ Html.text "Bits and Pieces and Odds and Ends" ]
+        ]
+
+footer : Html.Html msg
+footer =
+    Html.footer []
+        [ Html.text "© Chris Wells Wood, 2016."
+        ]
