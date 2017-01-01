@@ -1,10 +1,14 @@
 import Html
 import Html.Attributes
 import Html.Events
+import Http
+import Json.Decode as Decode
 import Markdown
 
-import Home
-import EmptyStructs
+import Messages
+import Home exposing (home)
+import Content exposing (allPosts, ContentIndex, PostInfo)
+
 
 main = Html.program
     { init = init
@@ -17,24 +21,36 @@ main = Html.program
 -- MODEL
 
 type alias Model = 
-    { content : String
+    { post : Maybe PostInfo
+    , content : Maybe String
     }
 
 init : (Model, Cmd Msg)
 init =
-    (Model "home", Cmd.none)
+    (Model Nothing Nothing, Cmd.none)
 
 
 -- UPDATE
 
-type Msg = Home
+type alias Msg = Messages.Msg
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Home ->
-        ({ model | content = "home" }, Cmd.none)
-
+    Messages.Home ->
+        init
+    
+    Messages.GetPost post ->
+        ( model
+        , Http.send Messages.ShowContent
+            (Http.getString post.url)
+        )
+    
+    Messages.ShowContent (Ok content) ->
+        ({ model | content = Just content }, Cmd.none)
+    
+    Messages.ShowContent (Err content) ->
+        (model, Cmd.none)
 
 -- SUBSCRIPTIONS (currently not required)
 
@@ -52,13 +68,13 @@ view model =
         , footer
         ]
 
-header : Html.Html msg
+header : Html.Html Msg
 header =
     Html.header []
-        [ Html.h1
-            []
-            [ Html.text "Bits and Pieces and Odds and Ends" ]
-        , Html.h3 [] [ Html.text "Code, science and misc by Chris Wells Wood." ]
+        [ Html.div [ Html.Events.onClick Messages.Home ]
+            [ Html.h1 [] [ Html.text "Bits and Pieces and Odds and Ends" ]
+            , Html.h3 [] [ Html.text "Code, science and misc by Chris Wells Wood." ]
+            ]
         , socialMedia
         ]
 
@@ -83,22 +99,14 @@ footer =
 
 -- Content views and functions
 
-getContent : Model -> Html.Html msg
+getContent : Model -> Html.Html Messages.Msg
 getContent model =
-    if model.content == "home" then
-        home
-    else
-        home
-
-home : Html.Html msg
-home = Html.div []
-    [ Html.h2 [] [ Html.text "About Me"]
-    , Html.p [] [ Html.text aboutMe]
-    ]
-
-aboutMe : String
-aboutMe = """
-I'm a research scientist that spends a lot of time writing code and
-occasionally ventures into the lab. This is sort of a blog with various
-articles/posts as well as snippets from other sources.
-"""
+    case model.content of
+        Just content ->
+            renderPost content
+        Nothing ->
+            home
+          
+renderPost : String -> Html.Html msg
+renderPost content =
+    Markdown.toHtml [] content

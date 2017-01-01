@@ -8,6 +8,7 @@
 1. Beautify
 1. Mobile?
 1. Embed analytics
+1. Change date to date types
 
 # Notes
 
