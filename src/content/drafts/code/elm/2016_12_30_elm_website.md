@@ -9,10 +9,12 @@
 1. Mobile?
 1. Embed analytics
 1. Change date to date types
+1. Home will be a more complex elm app to manage searching and sorting etc
+1. Make a crawler in python to automatically find posts
 
 # Notes
 
-* elm-make .\src\Main.elm --output=index.html
+* elm-make .\src\Main.elm --output=cww_site.js
 * Need to use double backslashes
 
 # Log

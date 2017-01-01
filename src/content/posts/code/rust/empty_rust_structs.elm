@@ -1,3 +1,16 @@
+import Html
+import Markdown
+
+import Templates
+
+main : Html.Html msg
+main = view
+
+view : Html.Html msg
+view = Templates.post rawContent
+
+rawContent: String
+rawContent = """
 # Initialising Empty Structs in Rust
 
 In C/C++, you can initialise a struct without giving values for any of the fields:
@@ -174,3 +187,4 @@ fn main() {
 It seems a little more transparent, and there's no clash with the name of the method. If you want to be a good citizen, the best way to deal with this is probably to just go and modify the crate you're using, adding `derive(Debug)` attributes to everything!
 
 Thanks to joshtriplett and yohanesu75 for some extra info.
+"""

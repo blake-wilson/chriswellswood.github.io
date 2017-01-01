@@ -5,6 +5,7 @@
     "license": "BSD3",
     "source-directories": [
         "src",
+        "src/content",
         "src/content/posts/code/rust"
     ],
     "exposed-modules": [],

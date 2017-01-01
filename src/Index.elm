@@ -1,14 +1,16 @@
-module Home exposing (..)
+module Index exposing (..)
 
 import Html
 import Html.Attributes
-import Html.Events
 
 import Content exposing (allPosts, ContentIndex, PostInfo)
-import Messages
+import Templates
 
-home : Html.Html Messages.Msg
-home = Html.div []
+main : Html.Html msg
+main = Templates.basicPage view
+
+view : Html.Html msg
+view = Html.div []
     [ aboutMe
     , Html.hr [] []
     , recentPosts
@@ -32,19 +34,19 @@ articles/posts as well as snippets from other sources.
 
 -- Recent Posts
 
-recentPosts : Html.Html Messages.Msg
+recentPosts : Html.Html msg
 recentPosts = Html.div []
     [ Html.h2 [] [ Html.text "Recent" ]
     , recentPostList (List.reverse (List.sortBy .date allPosts))
     ]
 
-recentPostList : ContentIndex -> Html.Html Messages.Msg
+recentPostList : ContentIndex -> Html.Html msg
 recentPostList posts = Html.ol [] (List.map makePostDetailItem posts)
 
-makePostDetailItem : PostInfo -> Html.Html Messages.Msg
+makePostDetailItem : PostInfo -> Html.Html msg
 makePostDetailItem post =
     Html.li []
-        [ Html.h4 [ Html.Events.onClick (Messages.GetPost post)]
+        [ Html.h4 []
             [ Html.text (post.title ++ " - " ++ post.category ++ "/" ++ post.subcategory) ]
         , Html.p [] [ Html.text post.description ]
         ]
