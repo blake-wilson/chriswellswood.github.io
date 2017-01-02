@@ -12,6 +12,8 @@
 1. Home will be a more complex elm app to manage searching and sorting etc
 1. Make a crawler in python to automatically find posts
     1. Have it fix the titles too
+1. 505 page
+
 # Notes
 
 * elm-make .\src\Main.elm --output=cww_site.js

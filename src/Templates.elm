@@ -2,9 +2,6 @@ module Templates exposing (..)
 
 import Html
 import Html.Attributes
-import Html.Events
-import Http
-import Json.Decode as Decode
 import Markdown
 
 
@@ -27,7 +24,8 @@ header : Html.Html msg
 header =
     Html.header []
         [ Html.div []
-            [ Html.h1 [] [ Html.text "Bits and Pieces and Odds and Ends" ]
+            [ Html.a [ Html.Attributes.href "/index.html"]
+                [ Html.h1 [] [ Html.text "Bits and Pieces and Odds and Ends" ] ]
             , Html.h3 [] [ Html.text "Code, science and misc by Chris Wells Wood." ]
             ]
         , socialMedia
