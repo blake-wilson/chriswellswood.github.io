@@ -7,7 +7,7 @@ import Markdown
 
 basicPage : Html.Html msg -> Html.Html msg
 basicPage content =
-    Html.div []
+    Html.div [ Html.Attributes.id "main" ]
         [ header
         , content
         , footer
@@ -24,8 +24,9 @@ header : Html.Html msg
 header =
     Html.header []
         [ Html.div []
-            [ Html.a [ Html.Attributes.href "/index.html"]
-                [ Html.h1 [] [ Html.text "Bits and Pieces and Odds and Ends" ] ]
+            [ Html.h1 []
+                [ Html.a [ Html.Attributes.href "/index.html"]
+                    [ Html.text "Bits and Pieces and Odds and Ends" ] ]
             , Html.h3 [] [ Html.text "Code, science and misc by Chris Wells Wood." ]
             ]
         , socialMedia

@@ -8347,17 +8347,17 @@ var _user$project$Templates$header = A2(
 			{
 				ctor: '::',
 				_0: A2(
-					_elm_lang$html$Html$a,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$href('/index.html'),
-						_1: {ctor: '[]'}
-					},
+					_elm_lang$html$Html$h1,
+					{ctor: '[]'},
 					{
 						ctor: '::',
 						_0: A2(
-							_elm_lang$html$Html$h1,
-							{ctor: '[]'},
+							_elm_lang$html$Html$a,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$href('/index.html'),
+								_1: {ctor: '[]'}
+							},
 							{
 								ctor: '::',
 								_0: _elm_lang$html$Html$text('Bits and Pieces and Odds and Ends'),
@@ -8387,7 +8387,11 @@ var _user$project$Templates$header = A2(
 var _user$project$Templates$basicPage = function (content) {
 	return A2(
 		_elm_lang$html$Html$div,
-		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$id('main'),
+			_1: {ctor: '[]'}
+		},
 		{
 			ctor: '::',
 			_0: _user$project$Templates$header,
