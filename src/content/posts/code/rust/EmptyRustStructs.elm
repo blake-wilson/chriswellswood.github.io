@@ -1,7 +1,19 @@
+module EmptyRustStructs exposing (..)
+
 import Html
-import Markdown
 
 import Templates
+import Types
+
+metaData : Types.ContentMetaData
+metaData =
+    { title = "Empty Rust Structs"
+    , date = (2016, 12, 11)
+    , description = "A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!"
+    , category = "Code"
+    , subcategory = "Rust"
+    , url = "posts/code/rust/empty-rust-structs.html"
+    }
 
 main : Html.Html msg
 main = view

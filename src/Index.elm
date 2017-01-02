@@ -3,8 +3,11 @@ module Index exposing (..)
 import Html
 import Html.Attributes
 
-import Content exposing (allPosts, ContentIndex, PostInfo)
 import Templates
+import Types exposing (ContentMetaData)
+
+import EmptyRustStructs
+import Snippets exposing (allSnippets)
 
 main : Html.Html msg
 main = Templates.basicPage view
@@ -14,6 +17,8 @@ view = Html.div []
     [ aboutMe
     , Html.hr [] []
     , recentPosts
+    , Html.hr [] []
+    , recentSnippets
     , Html.hr [] []
     ]
 
@@ -32,21 +37,45 @@ occasionally ventures into the lab. This is sort of a blog with various
 articles/posts as well as snippets from other sources.
 """
 
--- Recent Posts
+-- CONTENT
+
+-- Generic content functionality
+
+recentContentList : List ContentMetaData -> Html.Html msg
+recentContentList posts = Html.ol [] (List.map contentDetailItem posts)
+
+contentDetailItem : ContentMetaData -> Html.Html msg
+contentDetailItem metaData =
+    Html.li []
+        [ Html.div []
+            [ Html.a [ Html.Attributes.href metaData.url ] [ contentTitle metaData ]
+            , Html.p [] [ Html.text metaData.description ]
+            ]
+        ]
+
+contentTitle : ContentMetaData -> Html.Html msg
+contentTitle metaData = Html.h4 []
+    [ Html.a [ Html.Attributes.href metaData.url ]
+        [ Html.text (metaData.title ++ " - " ++ metaData.category ++ "/" ++ metaData.subcategory) ]
+    ]
+
+-- Posts
+
+allPosts : List ContentMetaData
+allPosts =
+    [ EmptyRustStructs.metaData
+    ]
 
 recentPosts : Html.Html msg
 recentPosts = Html.div []
-    [ Html.h2 [] [ Html.text "Recent" ]
-    , recentPostList (List.reverse (List.sortBy .date allPosts))
+    [ Html.h2 [] [ Html.text "Recent Posts" ]
+    , recentContentList (List.reverse (List.sortBy .date allPosts))
     ]
 
-recentPostList : ContentIndex -> Html.Html msg
-recentPostList posts = Html.ol [] (List.map makePostDetailItem posts)
+-- Snippets
 
-makePostDetailItem : PostInfo -> Html.Html msg
-makePostDetailItem post =
-    Html.li []
-        [ Html.h4 []
-            [ Html.text (post.title ++ " - " ++ post.category ++ "/" ++ post.subcategory) ]
-        , Html.p [] [ Html.text post.description ]
-        ]
+recentSnippets : Html.Html msg
+recentSnippets = Html.div []
+    [ Html.h2 [] [ Html.text "Recent Snippets" ]
+    , recentContentList (List.reverse (List.sortBy .date allSnippets))
+    ]

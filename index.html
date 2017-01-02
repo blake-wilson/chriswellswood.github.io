@@ -9131,56 +9131,6 @@ var _evancz$elm_markdown$Markdown$Options = F4(
 	function (a, b, c, d) {
 		return {githubFlavored: a, defaultHighlighting: b, sanitize: c, smartypants: d};
 	});
-var _user$project$Content$allSnippets = {
-	ctor: '::',
-	_0: {
-		title: 'Markdown Cheatsheet',
-		date: {ctor: '_Tuple3', _0: 2016, _1: 12, _2: 11},
-		description: 'A great cheatsheet for markdown written by @adam-p. I always forget how to make tables...',
-		category: 'Code',
-		subcategory: 'Markdown',
-		url: 'https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet'
-	},
-	_1: {ctor: '[]'}
-};
-var _user$project$Content$allPosts = {
-	ctor: '::',
-	_0: {
-		title: 'Empty Rust Structs',
-		date: {ctor: '_Tuple3', _0: 2016, _1: 12, _2: 11},
-		description: 'A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!',
-		category: 'Code',
-		subcategory: 'Rust',
-		url: 'posts/empty_rust_structs.html'
-	},
-	_1: {
-		ctor: '::',
-		_0: {
-			title: 'Building a blog in Elm',
-			date: {ctor: '_Tuple3', _0: 2017, _1: 1, _2: 1},
-			description: 'A guide/outline of my experiences using Elm to build a blog hosted on GitHub.',
-			category: 'Code',
-			subcategory: 'Elm',
-			url: 'content/drafts/code/elm/2016_12_30_elm_website.md'
-		},
-		_1: {
-			ctor: '::',
-			_0: {
-				title: 'Test Post 2',
-				date: {ctor: '_Tuple3', _0: 2015, _1: 1, _2: 1},
-				description: 'Another post fake post.',
-				category: 'Code',
-				subcategory: 'Rust',
-				url: 'content/posts/code/rust/2016_12_11_empty_structs.md'
-			},
-			_1: {ctor: '[]'}
-		}
-	}
-};
-var _user$project$Content$InfoRecord = F6(
-	function (a, b, c, d, e, f) {
-		return {title: a, date: b, description: c, category: d, subcategory: e, url: f};
-	});
 var _user$project$Templates$renderPost = function (content) {
 	return A2(
 		_evancz$elm_markdown$Markdown$toHtml,
@@ -9299,49 +9249,113 @@ var _user$project$Templates$post = function (rawContent) {
 		rawContent);
 	return _user$project$Templates$basicPage(content);
 };
-var _user$project$Index$makePostDetailItem = function (post) {
+var _user$project$Types$ContentMetaData = F6(
+	function (a, b, c, d, e, f) {
+		return {title: a, date: b, description: c, category: d, subcategory: e, url: f};
+	});
+var _user$project$EmptyRustStructs$rawContent = '\n# Initialising Empty Structs in Rust\n\nIn C/C++, you can initialise a struct without giving values for any of the fields:\n\n```C\nstruct Point {\n  float x;\n  float y;\n  float z;\n};\n\nint main() {\n  Point my_point = {};\n}\n```\n\nStructs in RUST can\'t do this by default, you\'ll just get an error:\n\n```Rust\n#[derive(Debug)]\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nfn main() {\n    let p1 = Point{};\n    println!(\"{:?}\", eep);\n}\n```\n\n```\nerror[E0063]: missing fields `x`, `y`, `z` in initializer of `Point`\n --> src\\main.rs:2:15\n  |\n2 |     let p1 = Point{};\n  |              ^^^^^ missing `x`, `y`, `z`\n```\n\nThe proper way to do this for a struct in Rust is to implement the `Default` trait and then you can generate default values easily:\n\n```Rust\n#[derive(Debug)]\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nimpl Default for Point {\n    fn default () -> Point {\n        Point{x: 0, y: 0, z:0}\n    }\n}\nfn main() {\n  let p1 = Point::default(); \n  let p2 = Point{ x: 34, ..Default::default() }; // Partial definition of fields\n}\n```\n\nYou can even do this automatically using the `derive` attribute.\n\n```Rust\n#[derive(Debug, Default)] // Derive is cool, I have no idea how it works!\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nfn main() {\n  let p1 = Point::default();\n  let p2 = Point{ x: 34, ..Default::default() };\n}\n```\n\nIt\'s like magic! \n\nInitialising empty structs is especially useful when working with an API, where you might give a function a pointer to a struct and the fields are populated for you. If you\'re working with a RUST API that follows this pattern, we can just use our `Default` trait implementation to do this, right? Well, that depends on the API. If you\'re using using the `winapi` crate, this doesn\'t work as `Default` has not been implemented for any of the structs that I\'ve used:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\nfn main() {\n    let rect = RECT{ ..Default::default() };\n    println!(\"{:?}\", rect);\n}\n```\n\n```\nerror[E0277]: the trait bound `winapi::RECT: std::default::Default`\nis not satisfied\n --> src\\main.rs:6:24\n  |\n6 |     let rect = RECT{ ..Default::default() };\n  |                        ^^^^^^^^^^^^^^^^ trait `winapi::RECT: std::default::Default` not satisfied\n```\n\nUnfortunately, you\'re not allowed to implement a trait that you did not define, for a type that you also did not define. So if you\'re using a struct from an external crate, you can\'t implement `Default` for it:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\nimpl Default for RECT {\n    fn default () -> RECT {\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\n    }\n}\n\nfn main() {\n    let rect = RECT::default();\n    println!(\"{:?}\", rect);\n}\n```\n\n```\nerror[E0117]: only traits defined in the current crate can be implemented for arbitrary types\n --> src\\main.rs:5:1\n  |\n5 | impl Default for RECT {\n  | ^ impl doesn\'t use types inside crate\n```\n\nThat\'s annoying... So what do you do? There\'s a couple of things you could do. Firstly, you could wrap the struct as a new type (so you\'re defining it in your own crate):\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\n#[derive(Debug)]\nstruct WrappedRECT{rect: RECT}\n\nimpl Default for WrappedRECT {\n    fn default () -> WrappedRECT {\n        WrappedRECT{rect: RECT{left: 0, top: 0, right: 0, bottom: 0}}\n    }\n}\n\nfn main() {\n    let rect = WrappedRECT::default();\n    println!(\"{:?}\", rect);\n}\n```\n\nBut this is a bit clunky, so I prefer just creating a new `trait`, and implementing it for the external struct:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\ntrait Empty<T> {\n    fn empty() -> T;\n}\n\nimpl Empty<RECT> for RECT {\n    fn empty() -> RECT {\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\n    }\n}\n\nfn main() {\n    let rect = RECT::empty();\n    println!(\"{:?}\", rect);\n}\n```\n\nIt seems a little more transparent, and there\'s no clash with the name of the method. If you want to be a good citizen, the best way to deal with this is probably to just go and modify the crate you\'re using, adding `derive(Debug)` attributes to everything!\n\nThanks to joshtriplett and yohanesu75 for some extra info.\n';
+var _user$project$EmptyRustStructs$view = _user$project$Templates$post(_user$project$EmptyRustStructs$rawContent);
+var _user$project$EmptyRustStructs$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(_user$project$EmptyRustStructs$view);
+var _user$project$EmptyRustStructs$metaData = {
+	title: 'Empty Rust Structs',
+	date: {ctor: '_Tuple3', _0: 2016, _1: 12, _2: 11},
+	description: 'A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!',
+	category: 'Code',
+	subcategory: 'Rust',
+	url: 'posts/code/rust/empty-rust-structs.html'
+};
+var _user$project$Snippets$allSnippets = {
+	ctor: '::',
+	_0: {
+		title: 'Markdown Cheatsheet',
+		date: {ctor: '_Tuple3', _0: 2016, _1: 12, _2: 11},
+		description: 'A great cheatsheet for markdown written by @adam-p. I always forget how to make tables...',
+		category: 'Code',
+		subcategory: 'Markdown',
+		url: 'https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet'
+	},
+	_1: {ctor: '[]'}
+};
+var _user$project$Index$allPosts = {
+	ctor: '::',
+	_0: _user$project$EmptyRustStructs$metaData,
+	_1: {ctor: '[]'}
+};
+var _user$project$Index$contentTitle = function (metaData) {
+	return A2(
+		_elm_lang$html$Html$h4,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$a,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$href(metaData.url),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							metaData.title,
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								' - ',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									metaData.category,
+									A2(_elm_lang$core$Basics_ops['++'], '/', metaData.subcategory))))),
+					_1: {ctor: '[]'}
+				}),
+			_1: {ctor: '[]'}
+		});
+};
+var _user$project$Index$contentDetailItem = function (metaData) {
 	return A2(
 		_elm_lang$html$Html$li,
 		{ctor: '[]'},
 		{
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$h4,
+				_elm_lang$html$Html$div,
 				{ctor: '[]'},
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html$text(
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							post.title,
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								' - ',
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									post.category,
-									A2(_elm_lang$core$Basics_ops['++'], '/', post.subcategory))))),
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$p,
-					{ctor: '[]'},
-					{
+					_0: A2(
+						_elm_lang$html$Html$a,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$href(metaData.url),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _user$project$Index$contentTitle(metaData),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
 						ctor: '::',
-						_0: _elm_lang$html$Html$text(post.description),
+						_0: A2(
+							_elm_lang$html$Html$p,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text(metaData.description),
+								_1: {ctor: '[]'}
+							}),
 						_1: {ctor: '[]'}
-					}),
-				_1: {ctor: '[]'}
-			}
+					}
+				}),
+			_1: {ctor: '[]'}
 		});
 };
-var _user$project$Index$recentPostList = function (posts) {
+var _user$project$Index$recentContentList = function (posts) {
 	return A2(
 		_elm_lang$html$Html$ol,
 		{ctor: '[]'},
-		A2(_elm_lang$core$List$map, _user$project$Index$makePostDetailItem, posts));
+		A2(_elm_lang$core$List$map, _user$project$Index$contentDetailItem, posts));
 };
 var _user$project$Index$recentPosts = A2(
 	_elm_lang$html$Html$div,
@@ -9353,19 +9367,45 @@ var _user$project$Index$recentPosts = A2(
 			{ctor: '[]'},
 			{
 				ctor: '::',
-				_0: _elm_lang$html$Html$text('Recent'),
+				_0: _elm_lang$html$Html$text('Recent Posts'),
 				_1: {ctor: '[]'}
 			}),
 		_1: {
 			ctor: '::',
-			_0: _user$project$Index$recentPostList(
+			_0: _user$project$Index$recentContentList(
 				_elm_lang$core$List$reverse(
 					A2(
 						_elm_lang$core$List$sortBy,
 						function (_) {
 							return _.date;
 						},
-						_user$project$Content$allPosts))),
+						_user$project$Index$allPosts))),
+			_1: {ctor: '[]'}
+		}
+	});
+var _user$project$Index$recentSnippets = A2(
+	_elm_lang$html$Html$div,
+	{ctor: '[]'},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$h2,
+			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('Recent Snippets'),
+				_1: {ctor: '[]'}
+			}),
+		_1: {
+			ctor: '::',
+			_0: _user$project$Index$recentContentList(
+				_elm_lang$core$List$reverse(
+					A2(
+						_elm_lang$core$List$sortBy,
+						function (_) {
+							return _.date;
+						},
+						_user$project$Snippets$allSnippets))),
 			_1: {ctor: '[]'}
 		}
 	});
@@ -9417,7 +9457,18 @@ var _user$project$Index$view = A2(
 						_elm_lang$html$Html$hr,
 						{ctor: '[]'},
 						{ctor: '[]'}),
-					_1: {ctor: '[]'}
+					_1: {
+						ctor: '::',
+						_0: _user$project$Index$recentSnippets,
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$hr,
+								{ctor: '[]'},
+								{ctor: '[]'}),
+							_1: {ctor: '[]'}
+						}
+					}
 				}
 			}
 		}
