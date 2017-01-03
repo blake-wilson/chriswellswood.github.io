@@ -1,4 +1,4 @@
-## Making a Static Website with Elm and GitHub Pages
+## Making a Static Website with Elm and GitHub Pages - Part 1
 
 *Check out the source code for the site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io).*
 
@@ -154,10 +154,4 @@ post rawContent =
       basicPage content
 ```
 
-### Compilation
-
-Each of the source files needs to be compiled and embedded in a HTML file. Currently I'm using a bat file to do this, although... **YOURE HERE**
-
-### Conclusions
-
-* Allows cool features to be added in the future using the full Elm architecture, something that would not be possible with Jekyll.
+Now each of the source files for the pages needs to be compiled with `elm-make` and embedded in a HTML file. This will be discussed in another post.
