@@ -6,6 +6,7 @@
     "source-directories": [
         "src",
         "src/content",
+        "src/content/posts/code/elm",
         "src/content/posts/code/rust"
     ],
     "exposed-modules": [],

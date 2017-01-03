@@ -7,6 +7,7 @@ import Templates
 import Types exposing (ContentMetaData)
 
 import EmptyRustStructs
+import ElmAndNewLanguages
 import Snippets exposing (allSnippets)
 
 main : Html msg
@@ -63,6 +64,7 @@ contentTitle metaData = h4 []
 allPosts : List ContentMetaData
 allPosts =
     [ EmptyRustStructs.metaData
+    , ElmAndNewLanguages.metaData
     ]
 
 recentPosts : Html msg

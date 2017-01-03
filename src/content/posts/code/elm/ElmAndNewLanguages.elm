@@ -1,4 +1,4 @@
-module EmptyRustStructs exposing (..)
+module ElmAndNewLanguages exposing (..)
 
 import Html exposing (..)
 
