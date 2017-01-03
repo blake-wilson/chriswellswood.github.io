@@ -23,7 +23,7 @@ view = Templates.post rawContent
 
 rawContent: String
 rawContent = """
-# Initialising Empty Structs in Rust
+## Initialising Empty Structs in Rust
 
 In C/C++, you can initialise a struct without giving values for any of the fields:
 
