@@ -9,10 +9,10 @@ metaData : Types.ContentMetaData
 metaData =
     { title = "Elm and Learning New Programming Languages"
     , date = (2016, 08, 25)
-    , description = "A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!"
+    , description = "A bit of pontification on learning programming languages and paradigms."
     , category = "Code"
     , subcategory = "Elm"
-    , url = "posts/code/rust/empty-rust-structs.html"
+    , url = "posts/code/elm/elm-and-learning-new-languages.html"
     }
 
 main : Html msg
@@ -29,7 +29,14 @@ What you really want is something in the middle, so maybe you walk through a sup
 
 I learned to code in Python, and while a lot of programming paradigms are captured by the language, it is mainly an imperative language, that is where you make statements to change the state of a program. For example maybe you want to count all the odd numbers in a list, you could do it in a hundred ways but here's one that is classically imperative:
 
-<script src="https://gist.github.com/ChrisWellsWood/fa3d09b5db8cb40a2d104dc1719c21c2.js"></script><br />
+```Python
+my_numbers = [0, 1, 2, 3, 4, 5]
+odd_number_count = 0
+for number in my_numbers:
+  if number % 2:
+    odd_number_count += 1
+print(odd_number_count)
+```
 
 One day I was reading about how to be a good programmer, and people kept mentioning that you should learn more than one language and you should try to make it pretty different from a language you know. One argument for that is that it show you other ways to program, and Haskell is often used as an example of this. So I started to learn a bit of Haskell, using http://learnyouahaskell.com/, and my mind started to melt! I wasn't aware that there was any other way to program apart from using imperative style code.
 
