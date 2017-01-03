@@ -16,6 +16,9 @@ Bits and pieces that I've written.
 9. Make a crawler in python to automatically find posts
     1. Have it fix the titles too
 10. 505 page
+11. Add post header, with banner etc.
+12. Bring back the content manager?
+    * It will allow the header and posts to reference other articles easily i.e. next or previous
 
 ### Notes
 
