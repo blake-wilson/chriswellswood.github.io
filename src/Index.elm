@@ -19,7 +19,6 @@ view = div []
     , recentPosts
     , hr [] []
     , recentSnippets
-    , hr [] []
     ]
 
 -- About Me Section

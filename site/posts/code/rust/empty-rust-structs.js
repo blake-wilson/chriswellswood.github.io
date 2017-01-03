@@ -8286,12 +8286,26 @@ var _user$project$Templates$renderPost = function (content) {
 		{ctor: '[]'},
 		content);
 };
-var _user$project$Templates$footer = A2(
+var _user$project$Templates$siteFooter = A2(
 	_elm_lang$html$Html$footer,
 	{ctor: '[]'},
 	{
 		ctor: '::',
-		_0: _elm_lang$html$Html$text('© Chris Wells Wood, 2016.'),
+		_0: A2(
+			_elm_lang$html$Html$div,
+			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$hr,
+					{ctor: '[]'},
+					{ctor: '[]'}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('© Chris Wells Wood, 2016.'),
+					_1: {ctor: '[]'}
+				}
+			}),
 		_1: {ctor: '[]'}
 	});
 var _user$project$Templates$socialMedia = A2(
@@ -8336,7 +8350,7 @@ var _user$project$Templates$socialMedia = A2(
 			}
 		}
 	});
-var _user$project$Templates$header = A2(
+var _user$project$Templates$siteHeader = A2(
 	_elm_lang$html$Html$header,
 	{ctor: '[]'},
 	{
@@ -8381,7 +8395,14 @@ var _user$project$Templates$header = A2(
 		_1: {
 			ctor: '::',
 			_0: _user$project$Templates$socialMedia,
-			_1: {ctor: '[]'}
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$hr,
+					{ctor: '[]'},
+					{ctor: '[]'}),
+				_1: {ctor: '[]'}
+			}
 		}
 	});
 var _user$project$Templates$basicPage = function (content) {
@@ -8394,13 +8415,13 @@ var _user$project$Templates$basicPage = function (content) {
 		},
 		{
 			ctor: '::',
-			_0: _user$project$Templates$header,
+			_0: _user$project$Templates$siteHeader,
 			_1: {
 				ctor: '::',
 				_0: content,
 				_1: {
 					ctor: '::',
-					_0: _user$project$Templates$footer,
+					_0: _user$project$Templates$siteFooter,
 					_1: {ctor: '[]'}
 				}
 			}
