@@ -1,6 +1,6 @@
 module EmptyRustStructs exposing (..)
 
-import Html
+import Html exposing (..)
 
 import Templates
 import Types
@@ -15,10 +15,10 @@ metaData =
     , url = "posts/code/rust/empty-rust-structs.html"
     }
 
-main : Html.Html msg
+main : Html msg
 main = view
 
-view : Html.Html msg
+view : Html msg
 view = Templates.post rawContent
 
 rawContent: String
