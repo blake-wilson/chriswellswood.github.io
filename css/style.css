@@ -1,0 +1,53 @@
+h1 {
+    font-family: 'Droid Serif', serif;
+    font-weight: normal;
+}
+
+h1 a {
+    font-family: inherit;
+    color: inherit;
+    text-decoration: inherit;
+}
+
+h2 {
+    font-family: 'Droid Serif', serif;
+    font-weight: normal;
+}
+
+h3 {
+    font-family: 'Droid Serif', serif;
+    font-weight: normal;
+}
+
+h4 {
+    font-family: 'Droid Serif', serif;
+    font-weight: normal;
+}
+
+h5 {
+    font-family: 'Droid Serif', serif;
+    font-weight: normal;
+}
+
+h6 {
+    font-family: 'Droid Serif', serif;
+    font-weight: normal;
+}
+
+hr {
+    display: block;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    margin-left: auto;
+    margin-right: auto;
+    border-style: inset;
+    border-width: 1px;
+}
+
+#main {
+    margin-right: auto;
+    margin-left: auto;
+    max-width: 980px;
+    padding-right: 2.5%;
+    padding-left: 2.5%;
+}
