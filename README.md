@@ -28,3 +28,4 @@ Bits and pieces that I've written.
 
 1. Sauntering vaguely downwards - Starting to program late
 1. GitHub pages with `index.html` in another directory.
+    * https://gist.github.com/cobyism/4730490
