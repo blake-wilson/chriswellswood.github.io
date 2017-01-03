@@ -8,6 +8,7 @@ import Types exposing (ContentMetaData)
 
 import EmptyRustStructs
 import ElmAndNewLanguages
+import OOBrainAndTypes
 import Snippets exposing (allSnippets)
 
 main : Html msg
@@ -65,6 +66,7 @@ allPosts : List ContentMetaData
 allPosts =
     [ EmptyRustStructs.metaData
     , ElmAndNewLanguages.metaData
+    , OOBrainAndTypes.metaData
     ]
 
 recentPosts : Html msg
