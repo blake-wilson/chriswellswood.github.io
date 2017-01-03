@@ -8410,7 +8410,7 @@ var _user$project$Templates$basicPage = function (content) {
 		_elm_lang$html$Html$div,
 		{
 			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$id('main'),
+			_0: _elm_lang$html$Html_Attributes$id('mainSiteDiv'),
 			_1: {ctor: '[]'}
 		},
 		{

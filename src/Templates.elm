@@ -7,7 +7,7 @@ import Markdown
 
 basicPage : Html msg -> Html msg
 basicPage content =
-    div [ id "main" ]
+    div [ id "mainSiteDiv" ]
         [ siteHeader
         , content
         , siteFooter
