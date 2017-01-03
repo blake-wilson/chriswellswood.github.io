@@ -31,7 +31,7 @@ After a while of staring at examples and messing about with classes in Python, i
 
 There is a concept known as the law of the instrument, which was most famously expressed by Abraham Maslow as follows:
 
-"I suppose it is tempting, if the only tool you have is a hammer, to treat everything as if it were a nail."
+> I suppose it is tempting, if the only tool you have is a hammer, to treat everything as if it were a nail."
 
 I now see most problems when I'm programming in terms of objects - "Oh I'll take that data and store it in this object, and it can interact with this, this and this though these methods, and it'll have these properties and some nice class methods and I'll chuck in this static method too". Now I don't think that this is inherently a bad thing, sure it can be taken to absurd extremes†, but most of the time I think what I come up with is a decent solution that can be easily followed, modified, tested etc.
 
