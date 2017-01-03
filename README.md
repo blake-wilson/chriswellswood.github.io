@@ -19,8 +19,9 @@ Bits and pieces that I've written.
 
 ### Notes
 
-* 
+* `git subtree push --prefix site origin master`
 
 ### Post Ideas
 
-1. Sauntering vaguely downwards - Starting to program late 
+1. Sauntering vaguely downwards - Starting to program late
+1. GitHub pages with `index.html` in another directory.
