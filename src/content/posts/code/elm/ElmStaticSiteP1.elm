@@ -1,3 +1,28 @@
+module ElmStaticSiteP1 exposing (..)
+
+import Html exposing (..)
+
+import Templates
+import Types
+
+metaData : Types.ContentMetaData
+metaData =
+    { title = "Making a Static Website with Elm and GitHub Pages - Part 1"
+    , date = (2017, 01, 04)
+    , description = "Creating a simple static site in Elm."
+    , category = "Code"
+    , subcategory = "Elm"
+    , url = "posts/code/elm/elm-static-site-p1.html"
+    }
+
+main : Html msg
+main = view
+
+view : Html msg
+view = Templates.post rawContent
+
+rawContent: String
+rawContent = """
 ## Making a Static Website with Elm and GitHub Pages - Part 1
 
 *Check out the source code for the site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io).*
@@ -21,7 +46,6 @@ Elm applications, especially those that follow the [Elm Architecture](https://gu
 As an example, here's the first section of my Index.elm file, which compiles down to the index.html. *It actually it's compiles to `index.js`, which is embedded in a pretty spartan `index.hmtl` file, but I'll come back to that later.*
 
 ```Elm
-
 -- in Index.elm
 
 module Index exposing (..)
@@ -33,7 +57,6 @@ import Templates
 import Types exposing (ContentMetaData)
 
 -- Posts and snippets
-
 import EmptyRustStructs
 import ElmAndNewLanguages
 import OOBrainAndTypes
@@ -136,11 +159,11 @@ view : Html msg
 view = Templates.post rawContent
 
 rawContent: String
-rawContent = """
+rawContent = \"\"\"
 ## Initialising Empty Structs in Rust
 
 In C/C++, you can initialise...
-"""
+\"\"\"
 ```
 
 The post template is currently the same as the basicPage template, except is take the content and converts it from Markdown to HTML:
@@ -157,3 +180,4 @@ post rawContent =
 ```
 
 And that's it, pretty much the simplest sort of website you can write in Elm. Now each of the source files for the pages needs to be compiled with `elm-make` and embedded in a HTML file, which I'll discuss in the next post.
+"""

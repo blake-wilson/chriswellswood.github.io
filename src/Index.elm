@@ -9,13 +9,14 @@ import Types exposing (ContentMetaData)
 import EmptyRustStructs
 import ElmAndNewLanguages
 import OOBrainAndTypes
+import ElmStaticSiteP1
 import Snippets exposing (allSnippets)
 
 main : Html msg
 main = Templates.basicPage view
 
 view : Html msg
-view = div []
+view = div [] 
     [ aboutMe
     , hr [] []
     , recentPosts
@@ -67,6 +68,7 @@ allPosts =
     [ EmptyRustStructs.metaData
     , ElmAndNewLanguages.metaData
     , OOBrainAndTypes.metaData
+    , ElmStaticSiteP1.metaData
     ]
 
 recentPosts : Html msg

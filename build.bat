@@ -10,6 +10,9 @@ elm-make .\\src\\content\\%pce%\\ElmAndNewLanguages.elm^
 elm-make .\\src\\content\\%pce%\\OOBrainAndTypes.elm^
  --output=.\\site\\%pce%\\object-oriented-brain-and-types.js
 
+elm-make .\\src\\content\\%pce%\\ElmStaticSiteP1.elm^
+ --output=.\\site\\%pce%\\elm-static-site-p1.js
+
 SET pcr="posts\\code\\rust"
 elm-make .\\src\\content\\%pcr%\\EmptyRustStructs.elm^
  --output=.\\site\\%pcr%\\empty-rust-structs.js
