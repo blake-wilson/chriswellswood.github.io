@@ -3,6 +3,7 @@ Bits and pieces that I've written.
 
 ### TO DO
 
+1. Port for `highlight.js`
 1. Beautify
 1. Mobile?
 1. Embed analytics
@@ -12,6 +13,7 @@ Bits and pieces that I've written.
 1. Bring back the content manager?
     * It will allow the header and posts to reference other articles easily i.e. next or previous
 1. Move page views to modules
+1. Quote formatting
 
 ### Notes
 
