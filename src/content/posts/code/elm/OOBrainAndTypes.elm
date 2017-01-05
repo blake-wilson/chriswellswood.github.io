@@ -2,24 +2,22 @@ module OOBrainAndTypes exposing (..)
 
 import Html exposing (..)
 
-import Templates
 import Types
+
+name : String
+name = "object-oriented-brain-and-types"
 
 metaData : Types.ContentMetaData
 metaData =
-    { title = "Object-Oriented Brain and Types"
+    { name = name
+    , title = "Object-Oriented Brain and Types"
     , date = (2016, 08, 29)
     , description = "An intro to types and type aliases in Elm."
     , category = "Code"
     , subcategory = "Elm"
-    , url = "posts/code/elm/object-oriented-brain-and-types.html"
+    , url = "#blog/" ++ name
+    , rawContent = Just rawContent
     }
-
-main : Html msg
-main = view
-
-view : Html msg
-view = Templates.post rawContent
 
 rawContent: String
 rawContent = """

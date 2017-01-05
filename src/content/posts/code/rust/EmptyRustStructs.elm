@@ -2,24 +2,22 @@ module EmptyRustStructs exposing (..)
 
 import Html exposing (..)
 
-import Templates
 import Types
+
+name : String
+name = "empty-rust-structs"
 
 metaData : Types.ContentMetaData
 metaData =
-    { title = "Empty Rust Structs"
+    { name = name
+    , title = "Empty Rust Structs"
     , date = (2016, 12, 11)
     , description = "A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!"
     , category = "Code"
     , subcategory = "Rust"
-    , url = "posts/code/rust/empty-rust-structs.html"
+    , url = "#blog/" ++ name
+    , rawContent = Just rawContent
     }
-
-main : Html msg
-main = view
-
-view : Html msg
-view = Templates.post rawContent
 
 rawContent: String
 rawContent = """

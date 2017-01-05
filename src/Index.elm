@@ -2,8 +2,11 @@ module Index exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Markdown
+import Navigation
+import UrlParser exposing ((</>))
 
-import Templates
+import CommonViews
 import Types exposing (ContentMetaData)
 
 import EmptyRustStructs
@@ -12,22 +15,98 @@ import OOBrainAndTypes
 import ElmStaticSiteP1
 import Snippets exposing (allSnippets)
 
-main : Html msg
-main = Templates.basicPage view
+main : Program Never Model Msg
+main =
+    Navigation.program UrlChange
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = (\_ -> Sub.none)
+        }
 
-view : Html msg
-view = div [] 
-    [ aboutMe
-    , hr [] []
-    , recentPosts
-    , hr [] []
-    , recentSnippets
+init : Navigation.Location -> (Model, Cmd Msg)
+init _ = (Model Home, Cmd.none)
+
+-- Model
+
+type alias Model =
+    { page: Page
+    }
+
+type Page
+    = Home
+    | AllPosts
+    | Post String
+
+-- Update
+
+type Msg
+    = UrlChange Navigation.Location
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        UrlChange location ->
+            { model | page = getPage location } ! [ Cmd.none ]
+
+getPage : Navigation.Location -> Page
+getPage location =
+    Maybe.withDefault Home (UrlParser.parseHash route location)
+
+route : UrlParser.Parser (Page -> a) a
+route =
+    UrlParser.oneOf
+        [ UrlParser.map Home UrlParser.top
+        , UrlParser.map Post (UrlParser.s "blog" </> UrlParser.string)
+        ]
+
+-- View
+
+view : Model -> Html Msg
+view model = div [ id "mainSiteDiv", mainSiteDivStyle ]
+    [ CommonViews.siteHeader
+    , content model
+    , CommonViews.siteFooter
     ]
+
+mainSiteDivStyle : Html.Attribute msg
+mainSiteDivStyle = 
+    style 
+        [ ("margin-right", "auto")
+        , ("margin-left", "auto")
+        , ("max-width", "980px")
+        , ("padding-right", "2.5%")
+        , ("padding-left", "2.5%")
+        ]
+
+content : Model -> Html Msg
+content model = div [ id "contentSection" ]
+    [ getContent model
+    ]
+
+getContent : Model -> Html Msg
+getContent model =
+    case model.page of
+      Home -> home
+      AllPosts -> home
+      Post title -> getBlogPost title
+
+-- Home
+
+home : Html Msg
+home =
+    div []
+        [ aboutMe
+        , hr [] []
+        , recentPosts
+        , hr [] []
+        , recentSnippets
+        ]
 
 -- About Me Section
 
 aboutMe : Html msg
-aboutMe = div []
+aboutMe = div [ id "aboutMe" ]
     [ h2 [] [ text "About Me"]
     , p [] [ text aboutMeText]
     ]
@@ -84,3 +163,20 @@ recentSnippets = div []
     [ h2 [] [ text "Recent Snippets" ]
     , recentContentList (List.reverse (List.sortBy .date allSnippets))
     ]
+
+-- Blog
+
+getBlogPost : String -> Html msg
+getBlogPost title =
+    let
+      blogMetaData = getBlogMetaData title
+    in
+      case blogMetaData of
+        Just metaData -> div [ style [("max-width", "95%")] ]
+            [ Markdown.toHtml [] (Maybe.withDefault "" metaData.rawContent)]
+        Nothing -> aboutMe
+          
+
+getBlogMetaData : String -> Maybe ContentMetaData
+getBlogMetaData title =
+    List.head (List.filter (\metaData -> (metaData.name == title)) allPosts)

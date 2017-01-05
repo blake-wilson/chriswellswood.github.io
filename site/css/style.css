@@ -1,8 +1,16 @@
+html {
+  overflow-y: scroll;
+}
+
 p {
     font-family: 'Open Sans', sans-serif;
 }
 
 li {
+    font-family: 'Open Sans', sans-serif;
+}
+
+table {
     font-family: 'Open Sans', sans-serif;
 }
 
@@ -54,12 +62,4 @@ hr {
     margin-right: auto;
     border-style: inset;
     border-width: 1px;
-}
-
-#mainSiteDiv {
-    margin-right: auto;
-    margin-left: auto;
-    max-width: 980px;
-    padding-right: 2.5%;
-    padding-left: 2.5%;
 }

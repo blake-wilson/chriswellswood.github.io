@@ -2,24 +2,22 @@ module ElmStaticSiteP1 exposing (..)
 
 import Html exposing (..)
 
-import Templates
 import Types
+
+name : String
+name = "elm-static-site-p1"
 
 metaData : Types.ContentMetaData
 metaData =
-    { title = "Making a Static Website with Elm and GitHub Pages - Part 1"
+    { name = name
+    , title = "Making a Static Website with Elm and GitHub Pages - Part 1"
     , date = (2017, 01, 04)
     , description = "Creating a simple static site in Elm."
     , category = "Code"
     , subcategory = "Elm"
-    , url = "posts/code/elm/elm-static-site-p1.html"
+    , url = "#blog/" ++ name
+    , rawContent = Just rawContent
     }
-
-main : Html msg
-main = view
-
-view : Html msg
-view = Templates.post rawContent
 
 rawContent: String
 rawContent = """

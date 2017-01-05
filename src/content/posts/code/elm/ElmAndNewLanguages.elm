@@ -2,24 +2,22 @@ module ElmAndNewLanguages exposing (..)
 
 import Html exposing (..)
 
-import Templates
 import Types
+
+name : String
+name = "elm-and-learning-new-languages"
 
 metaData : Types.ContentMetaData
 metaData =
-    { title = "Elm and Learning New Programming Languages"
+    { name = name
+    , title = "Elm and Learning New Programming Languages"
     , date = (2016, 08, 25)
     , description = "A bit of pontification on learning programming languages and paradigms."
     , category = "Code"
     , subcategory = "Elm"
-    , url = "posts/code/elm/elm-and-learning-new-languages.html"
+    , url = "#blog/" ++ name
+    , rawContent = Just rawContent
     }
-
-main : Html msg
-main = view
-
-view : Html msg
-view = Templates.post rawContent
 
 rawContent: String
 rawContent = """
