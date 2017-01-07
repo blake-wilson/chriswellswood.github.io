@@ -10,9 +10,9 @@ name = "elm-static-site-p1"
 metaData : Types.ContentMetaData
 metaData =
     { name = name
-    , title = "Making a Static Website with Elm and GitHub Pages - Part 1"
-    , date = (2017, 01, 04)
-    , description = "Creating a simple static site in Elm."
+    , title = "Tools for Handling Static Pages in Elm - Part 1. Dealing with Links"
+    , date = (2017, 01, 07)
+    , description = "How to handle links to static content in a dynamic one page Elm app, using the Navigation and UrlParser modules."
     , category = "Code"
     , subcategory = "Elm"
     , url = "#blog/" ++ name
@@ -21,161 +21,136 @@ metaData =
 
 rawContent: String
 rawContent = """
-## Making a Static Website with Elm and GitHub Pages - Part 1
+## Tools for Handling Static Pages in Elm - Part 1. Dealing with Links
 
 *Check out the source code for the site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io).*
 
-First of all, happy new year! I hope everyone had a great holiday. I've got a bit of time off of work, and as I'm now back from visiting family, I've been getting stuck into some little projects. The first thing I wanted to do was update this website. I was very pleased how quickly I managed to get the site up and running using just Markdown and GitHub pages, but obviously there are limitations around building a website this way. So I decided I'd rebuild it in [Elm](http://elm-lang.org/), which is a neat functional programming language designed to make webapps, which I've talked about in a [previous post](posts/code/elm/object-oriented-brain-and-types.html) (warning: it's bit waffly).
+First of all, happy new year! I hope everyone had a great holiday. I've got a bit of time off of work, and as I'm now back from visiting family, I've been getting stuck into some little projects. The first thing I wanted to do was update this website. I was very pleased how quickly I managed to get the site up and running using just Markdown and GitHub pages, but obviously there are limitations around building a website this way. So I decided I'd rebuild it in [Elm](http://elm-lang.org/), which is a neat functional programming language designed to make webapps.
 
-I've been playing around with Elm for a while, and I'm starting to get relatively comfortable with it, but it has taken me the best part of 3 evenings to create a site that replicates the site that I made using GitHub pages in 15 mins! However, it is in a much better state for it and I've learned a lot along the way. The whole process would have been much quicker had I not spent a whole bunch of time working on a design that was just fundamentally flawed, I won't go into it in detail, but it was stupid on many levels. So here's the solution I've settled on.
+I've been playing around with Elm for a while, and I'm starting to get relatively comfortable with it, but it has taken me much longer than expected to superficially recreate the site I made in 15 mins with GitHub Pages and Markdown! However, it is now a really flexible little platform and I've learned a lot about Elm, Javascript and HTML along the way.
 
-I had a few requirements when making the site:
+The main purpose of this website is to host my blog, as well as sharing things that I've made and other interesting stuff I've found. As the content will mainly be static, traditionally this type of site would be constructed from a bunch of separate HTML documents i.e one for home, one for each post etc.
 
-1. It should be easy to maintain.
-1. It be able to use Markdown for content.
-1. I wanted to do as much as possible by myself.
+Usually Elm is used to make one page webapps, where content is dynamically added to the page, so it wasn't particularly obvious to me how I should implement this type of site using the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:
 
-There's nice [Jekyll](https://jekyllrb.com/) integration with GitHub pages, which would address many of these requirements, but I've had issues trying to get Jekyll to work on Windows before, and more than that, I can't quite grasp how it all fits together.
+1. **How you would provide a link to a particular article when there's only a single HTML page?**
+2. After dynamically changing the website, how do you deal with running external Javascript libraries in response to these changes?
 
-### Basic Structure
+This post deals with the first topic.
 
-Elm applications, especially those that follow the [Elm Architecture](https://guide.elm-lang.org/architecture/), have a Model/Update/View (or [MVC](https://en.wikipedia.org/wiki/Model-view-controller)) structure. A static site is essentially just a "view", and so it's a lot simpler to construct than most Elm apps. Every discreet page on the site is currently an separate Elm app i.e. a source file compiles down to a single HTML file.
+### Links on a single page Elm application
 
-As an example, here's the first section of my Index.elm file, which compiles down to the index.html. *It actually it's compiles to `index.js`, which is embedded in a pretty spartan `index.hmtl` file, but I'll come back to that later.*
+My initial solution to this was to just have a bunch of Elm files that each compiled independently to create a bunch of HTML pages. I used a bat file to automate the building process, but it felt clunky. Then I came across the `navigation` module in the Elm core library. So I rewrote the site to use this, but quickly found out I also needed to use the `url-parser` module.
 
-```Elm
--- in Index.elm
-
-module Index exposing (..)
-
-import Html exposing (..)
-import Html.Attributes exposing (..)
-
-import Templates
-import Types exposing (ContentMetaData)
-
--- Posts and snippets
-import EmptyRustStructs
-import ElmAndNewLanguages
-import OOBrainAndTypes
-import Snippets exposing (allSnippets)
-
-main : Html msg
-main = Templates.basicPage view
-
-view : Html msg
-view = div []
-    [ aboutMe -- Defined later in the file
-    , hr [] []
-    , recentPosts -- Defined later in the file
-    , hr [] []
-    , recentSnippets -- Defined later in the file
-    ]
-...
-```
-
-Let's go through this and explain what's going on here. The first chunk of the file is just imports of bits of the Elm standard library, as well as various modules I've defined. The content itself, currently the posts and snippets, are Elm modules, which allows metadata such as the title and date of the post, to be easily extracted.
-
-The `main` function is used as an entry point to an Elm application, and usually it is a `Html.Program` type, which is a record with the following structure:
+Firstly, the current active page is recorded in the model using a union type:
 
 ```Elm
-main = Html.Program
-    { init = ...
-    , view = ...
-    , update = ...
-    , subscriptions = ...
+type alias Model =
+    { page: Page
     }
+
+type Page
+    = Home
+    | AllPosts
+    | Post String
 ```
 
-This tells the Elm how to start and update the model, and defines the view, which will use the model to render the website. The `main` function doesn't have to be a `Html.Program` type though, it can also just be a `Html msg`, essentially just the view part. Here, I've defined a module called `Templates.elm` that contains basic templates for different types of pages. The view for the index is wrapped in the template, which adds the header and footer, here's what it looks like in `Templates.elm`:
+This means that we can currently have 3 "types" of pages. `Home` and `AllPosts` are pretty self explanatory, correspond to a unique page. The `Post` page type corresponds to blog post pages, of which there are many, and so information on the specific post is also required.
+
+You can handle the unique pages using just the navigation module, by pattern matching a hash in a url, as outlined in [this article](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) by Pablo Fernández. However, you need more information for the post pages, so you can get the correct post. This can be extracted from the URL using the [`url-parser` module](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/).
+
+To parse a URL, you need a `Msg` to handle the change in URL, which takes a `Navigation.Location` as an input:
 
 ```Elm
-...
--- in Templates.elm
+type Msg
+    = UrlChange Navigation.Location
+```
 
-basicPage : Html msg -> Html msg
-basicPage content =
-    div [ id "main" ]
-        [ siteHeader -- Defined later in the file
-        , content
-        , siteFooter -- Defined later in the file
+The `Navigation.Location` record has the following type annotation:
+
+```Elm
+type alias Location =
+    { href : String
+    , host : String
+    , hostname : String
+    , protocol : String
+    , origin : String
+    , port_ : String
+    , pathname : String
+    , search : String
+    , hash : String
+    , username : String
+    , password : String }
+```
+
+I'm using location hashes for the links to different content, so we can ignore the rest of the record. Our update function handles the `UrlChange Msg`, parsing the URL and saving the correct page type in the model.
+
+```Elm
+import UrlParser exposing ((</>))
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        UrlChange location ->
+            { model | page = getPage location } ! [ Cmd.none ]
+
+getPage : Navigation.Location -> Page
+getPage location =
+    Maybe.withDefault AllPosts (UrlParser.parseHash route location)
+
+route : UrlParser.Parser (Page -> a) a
+route =
+    UrlParser.oneOf
+        [ UrlParser.map Home UrlParser.top
+        , UrlParser.map Post (UrlParser.s "blog" </> UrlParser.string)
         ]
-...
 ```
 
-The view itself contains the main sections of the homepage, which are defined later. Information regarding posts is stored in Elm records in the post "modules" (see below). These are gathered up in a list of all the posts in `Index.elm`, although I'm planning to move this to a `Content` module:
+The update function is pretty straight forward, it process a `UrlChange Msg` and then parses the location to get the page type, which is stored in the model. The `getPage` function uses `UrlParser.parseHash` to process the location, generating a `Maybe Page`.
+
+`parseHash` takes a `UrlParser.Parser` type, in this case `route`. Route looks a bit weird, mainly due to `UrlParser.oneOf`, but essentially it just take a bunch of parsers and merges them together to make a super parser that when used will try each of the parsers it contains.
+
+The actual parsers themselves are the `(UrlParser.s "blog" </> UrlParser.string)` and `UrlParser.top` bits. The `Parser` takes URLs and converts them to data. `UrlParser.top` is pretty simple, it doesn't consume any segments from the path, and so will successfully parse if the URL if it has no additional segments. The `s` parser will parse a segment of the URL if it *exactly* matches a provided string, so `UrlParser.s "blog"` will parse `/blog/` but nothing else. `UrlParser.string` will successfully parse any segment that is a string. Finally, `UrlParser.</>` combines the parsers together, to make a parser that has to exactly match `blog` and then contain another segment that is a string. There are other parser types too, check out the [docs](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/UrlParser) for more details.
+
+The parser can then be applied to the location using either `parsePath` or `parseHash`, and will return `Just *data*` or `Nothing`. `UrlParser.map` is used to transform the data contained in the URL into a `Msg`. So, using this parser:
 
 ```Elm
-allPosts : List ContentMetaData
-allPosts =
-    [ EmptyRustStructs.metaData
-    , ElmAndNewLanguages.metaData
-    , OOBrainAndTypes.metaData
+-- /                      ==> Just Home
+-- /blog/my-gid-blog-post ==> Just (Post "my-gid-blog-post")
+-- /blog                  ==> Nothing
+```
+
+`UrlParser` is very powerful, and isn't as complex to use as it is to explain. The best way to get a feel for how `UrlParser` works is to actually use it.
+
+Finally, the post type in the `model` can be used to alter content in the view when it's rendered:
+
+```Elm
+view : Model -> Html Msg
+view model = div [ id "mainSiteDiv", mainSiteDivStyle ]
+    [ CommonViews.siteHeader
+    , content model
+    , CommonViews.siteFooter
     ]
-```
 
-Once the posts are in a list, it's easy to sort or filter them in anyway you like:
-
-```Elm
--- in Index.elm
-
-recentPosts : Html msg
-recentPosts = div []
-    [ h2 [] [ text "Recent Posts" ]
-    , recentContentList (List.reverse (List.sortBy .date allPosts))
+content : Model -> Html Msg
+content model = div [ id "contentSection" ]
+    [ getContent model
     ]
+
+getContent : Model -> Html Msg
+getContent model =
+    case model.page of
+      Home -> home
+      AllPosts -> postList
+      Post title -> getBlogPost title
 ```
 
-I currently just sort by date and reverse it, but in the future this page will be a full Elm app, with search, sort and filter functionality for posts.
+Now you can easily link to content using URLs with location tags.
 
-The post page source files are very simple, all they contain is the metadata, a very simple view based off of another template, and the content itself, which is written in Markdown.
+That's it for this post, but in the next post I'll discuss using ports and tasks to interact with Javascript, allowing us to format code in the posts.
 
-```Elm
--- in EmptyRustStructs.elm
+### References
 
-module EmptyRustStructs exposing (..)
-
-import Html exposing (..)
-
-import Templates
-import Types
-
-metaData : Types.ContentMetaData
-metaData =
-    { title = "Empty Rust Structs"
-    , date = (2016, 12, 11)
-    , description = "A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!"
-    , category = "Code"
-    , subcategory = "Rust"
-    , url = "posts/code/rust/empty-rust-structs.html"
-    }
-
-main : Html msg
-main = view
-
-view : Html msg
-view = Templates.post rawContent
-
-rawContent: String
-rawContent = \"\"\"
-## Initialising Empty Structs in Rust
-
-In C/C++, you can initialise...
-\"\"\"
-```
-
-The post template is currently the same as the basicPage template, except is take the content and converts it from Markdown to HTML:
-
-```Elm
--- in Templates.elm
-
-post : String -> Html msg
-post rawContent =
-    let
-      content = Markdown.toHtml [] rawContent
-    in
-      basicPage content
-```
-
-And that's it, pretty much the simplest sort of website you can write in Elm. Now each of the source files for the pages needs to be compiled with `elm-make` and embedded in a HTML file, which I'll discuss in the next post.
+1. [SPA simple with Elm Navigation](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) Pablo Fernández
+1. UrlParser [documentation](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/) and [example](https://github.com/evancz/url-parser/blob/2.0.1/examples/Example.elm) by Evan Czaplicki.
 """
