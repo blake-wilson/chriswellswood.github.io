@@ -21,7 +21,10 @@ main =
         }
 
 init : Navigation.Location -> (Model, Cmd Msg)
-init _ = (Model Home, Cmd.none)
+init location =
+    ( Model Home
+    , Task.perform identity (Task.succeed (UrlChange location))
+    )
 
 -- Model
 

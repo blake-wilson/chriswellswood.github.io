@@ -24,11 +24,7 @@ rawContent = """
 
 First of all, happy new year! I hope everyone had a great holiday. I've got a bit of time off of work, and as I'm now back from visiting family, I've been getting stuck into some little projects. The first thing I wanted to do was update this website. I was very pleased how quickly I managed to get the site up and running using just Markdown and GitHub pages, but obviously there are limitations around building a website this way. So I decided I'd rebuild it in [Elm](http://elm-lang.org/), which is a neat functional programming language designed to make webapps.
 
-I've been playing around with Elm for a while, and I'm starting to get relatively comfortable with it, but it has taken me much longer than expected to superficially recreate the site I made in 15 mins with GitHub Pages and Markdown! However, it is now a really flexible little platform and I've learned a lot about Elm, Javascript and HTML along the way.
-
-The main purpose of this website is to host my blog, as well as sharing things that I've made and other interesting stuff I've found. As the content will mainly be static, traditionally this type of site would be constructed from a bunch of separate HTML documents i.e one for home, one for each post etc.
-
-Usually Elm is used to make one page webapps, where content is dynamically added to the page, so it wasn't particularly obvious to me how I should implement this type of site using the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:
+The main purpose of this website is to host my blog, as well as sharing things that I've made and other interesting stuff I've found. Usually Elm is used to make one page webapps, where content is dynamically added to the page, so it wasn't particularly obvious to me how I should implement this a site that mainly uses static content with the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:
 
 1. **How you would provide a link to a particular article when there's only a single HTML page?**
 2. After dynamically changing the website, how do you deal with running external Javascript libraries in response to these changes?
@@ -52,7 +48,9 @@ main =
         }
 ```
 
-This is very similar to `Html.program`, only real difference is that you need to supply a `Msg` that will be fed to the update function everytime the URL changes. Next, the current active page is recorded in the model using a union type:
+This is very similar to `Html.program`, only real difference is that you need to supply a `Msg` that will be fed to the update function everytime the URL changes. The `init` function is important too, but I'll come back to that later.
+
+Next, the current active page is recorded in the model using a union type:
 
 ```Elm
 type alias Model =
@@ -155,7 +153,26 @@ getContent model =
       Post title -> getBlogPost title
 ```
 
-Now you can easily link to content using URLs with location tags.
+There's one more bit of plumbing we need to do if this is to work properly. Previously I mentioned that the `init` was important. When I originally implemented the `init`, it looks like this:
+
+```Elm
+init : Navigation.Location -> (Model, Cmd Msg)
+init _ = ( Model Home, Cmd.none )
+```
+
+As it's `Navigation.program` it takes a `Navigation.Location` as an input, but I threw it away because I didn't know what to do with it. The model is simply initialised with the `Home` page. This works, if you go to the URL of my website it goes to the homepage. However, if you use with a hash location, like this https://chriswellswood.github.io/#blog/elm-static-site-p1, you still go to the homepage. It's pretty obvious why this is happening, no `UrlChange` message is getting passed to the `update` function.
+
+To fix this, I changed the `init` function to look like this:
+
+```Elm
+init : Navigation.Location -> (Model, Cmd Msg)
+init location =
+    ( Model Home
+    , Task.perform identity (Task.succeed (UrlChange location))
+    )
+```
+
+This time, the model is the same, but the location is not thrown away. We need to send a command to pass `UrlChange` to the `update` function. To to this we wrap a the `Msg` in a task that will always succeed and will return the `UrlChange`, and then identity is used to provide `UrlChange` to be passed to update after the task has been performed. The end result is that as soon as the website starts, the URL will be pasrsed and the correct content will be loaded.
 
 That's it for this post, but in the next post I'll discuss using ports and tasks to interact with Javascript, allowing us to format code in the posts.
 
