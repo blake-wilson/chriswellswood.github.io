@@ -10006,7 +10006,7 @@ var _user$project$ElmStaticSiteP1$metaData = {
 	description: 'Creating a simple static site in Elm.',
 	category: 'Code',
 	subcategory: 'Elm',
-	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$ElmStaticSiteP1$name),
+	url: A2(_elm_lang$core$Basics_ops['++'], 'blog/', _user$project$ElmStaticSiteP1$name),
 	rawContent: _elm_lang$core$Maybe$Just(_user$project$ElmStaticSiteP1$rawContent)
 };
 
@@ -10407,7 +10407,7 @@ var _user$project$Index$getPage = function (location) {
 	return A2(
 		_elm_lang$core$Maybe$withDefault,
 		_user$project$Index$Home,
-		A2(_evancz$url_parser$UrlParser$parseHash, _user$project$Index$route, location));
+		A2(_evancz$url_parser$UrlParser$parsePath, _user$project$Index$route, location));
 };
 var _user$project$Index$Highlight = function (a) {
 	return {ctor: 'Highlight', _0: a};
