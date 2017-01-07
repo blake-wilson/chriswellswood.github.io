@@ -10367,6 +10367,11 @@ var _user$project$Index$view = function (model) {
 			}
 		});
 };
+var _user$project$Index$highlightMarkdown = _elm_lang$core$Native_Platform.outgoingPort(
+	'highlightMarkdown',
+	function (v) {
+		return null;
+	});
 var _user$project$Index$Model = function (a) {
 	return {page: a};
 };
@@ -10404,21 +10409,36 @@ var _user$project$Index$getPage = function (location) {
 		_user$project$Index$Home,
 		A2(_evancz$url_parser$UrlParser$parseHash, _user$project$Index$route, location));
 };
+var _user$project$Index$Highlight = function (a) {
+	return {ctor: 'Highlight', _0: a};
+};
 var _user$project$Index$update = F2(
 	function (msg, model) {
 		var _p3 = msg;
-		return A2(
-			_elm_lang$core$Platform_Cmd_ops['!'],
-			_elm_lang$core$Native_Utils.update(
-				model,
+		if (_p3.ctor === 'UrlChange') {
+			return A2(
+				_elm_lang$core$Platform_Cmd_ops['!'],
+				_elm_lang$core$Native_Utils.update(
+					model,
+					{
+						page: _user$project$Index$getPage(_p3._0)
+					}),
 				{
-					page: _user$project$Index$getPage(_p3._0)
-				}),
-			{
-				ctor: '::',
-				_0: _elm_lang$core$Platform_Cmd$none,
-				_1: {ctor: '[]'}
-			});
+					ctor: '::',
+					_0: A2(
+						_elm_lang$core$Task$perform,
+						_user$project$Index$Highlight,
+						_elm_lang$core$Process$sleep(50 * _elm_lang$core$Time$millisecond)),
+					_1: {ctor: '[]'}
+				});
+		} else {
+			return {
+				ctor: '_Tuple2',
+				_0: model,
+				_1: _user$project$Index$highlightMarkdown(
+					{ctor: '_Tuple0'})
+			};
+		}
 	});
 var _user$project$Index$UrlChange = function (a) {
 	return {ctor: 'UrlChange', _0: a};
