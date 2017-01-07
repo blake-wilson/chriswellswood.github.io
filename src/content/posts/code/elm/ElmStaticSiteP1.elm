@@ -39,7 +39,20 @@ This post deals with the first topic.
 
 My initial solution to this was to just have a bunch of Elm files that each compiled independently to create a bunch of HTML pages. I used a bat file to automate the building process, but it felt clunky. Then I came across the `navigation` module in the Elm core library. So I rewrote the site to use this, but quickly found out I also needed to use the `url-parser` module.
 
-Firstly, the current active page is recorded in the model using a union type:
+To start, you need to use a special `Program` type, stored in the `Navigation` module:
+
+```Elm
+main : Program Never Model Msg
+main =
+    Navigation.program UrlChange
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = (\\_ -> Sub.none)
+        }
+```
+
+This is very similar to `Html.program`, only real difference is that you need to supply a `Msg` that will be fed to the update function everytime the URL changes. Next, the current active page is recorded in the model using a union type:
 
 ```Elm
 type alias Model =
