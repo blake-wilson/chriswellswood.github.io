@@ -6,9 +6,9 @@ First of all, happy new year! I hope everyone had a great holiday. I've got a bi
 
 I've been playing around with Elm for a while, and I'm starting to get relatively comfortable with it, but it has taken me much longer than expected to superficially recreate the site I made in 15 mins with GitHub Pages and Markdown! However, it is now a really flexible little platform and I've learned a lot about Elm, Javascript and HTML along the way.
 
-The main purpose of this website is to host my blog, sharing things that I've made and other interesting stuff I've found. As the content will be static site, traditionally this type of site would be constructed from a bunch of separate HTML documents i.e one for home, one for each post etc.
+The main purpose of this website is to host my blog, as well as sharing things that I've made and other interesting stuff I've found. As the content will mainly be static, traditionally this type of site would be constructed from a bunch of separate HTML documents i.e one for home, one for each post etc.
 
-Usually Elm is used to make one page webapps, where content is dynamically added to the page. It wasn't particularly obvious to me how I should implement this type of site using the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:
+Usually Elm is used to make one page webapps, where content is dynamically added to the page, so it wasn't particularly obvious to me how I should implement this type of site using the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:
 
 1. **How you would provide a link to a particular article when there's only a single HTML page?**
 2. After dynamically changing the website, how do you deal with running external Javascript libraries in response to these changes?
@@ -34,16 +34,16 @@ type Page
 
 This means that we can currently have 3 "types" of pages. `Home` and `AllPosts` are pretty self explanatory, correspond to a unique page. The `Post` page type corresponds to blog post pages, of which there are many, and so information on the specific post is also required.
 
-You can handle the unique pages using just the navigation module, by pattern matching a hash in a url, as outlined in [this article](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1), by Pablo Fernández. However, you need more information for the post pages, so you can get the correct post. This can be extracted from the URL using the [`url-parser` module](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/).
+You can handle the unique pages using just the navigation module, by pattern matching a hash in a url, as outlined in [this article](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) by Pablo Fernández. However, you need more information for the post pages, so you can get the correct post. This can be extracted from the URL using the [`url-parser` module](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/).
 
-To parse a URL, you need a `Msg` to handle the change, which takes a `Navigation.Location` as an input:
+To parse a URL, you need a `Msg` to handle the change in URL, which takes a `Navigation.Location` as an input:
 
 ```Elm
 type Msg
     = UrlChange Navigation.Location
 ```
 
-The `Navigation.Location` record which has the following type annotation:
+The `Navigation.Location` record has the following type annotation:
 
 ```Elm
 type alias Location =
@@ -125,3 +125,8 @@ getContent model =
 Now you can easily link to content using URLs with location tags.
 
 That's it for this post, but in the next post I'll discuss using ports and tasks to interact with Javascript, allowing us to format code in the posts.
+
+### References
+
+1. [SPA simple with Elm Navigation](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) Pablo Fernández
+1. UrlParser [documentation](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/) and [example](https://github.com/evancz/url-parser/blob/2.0.1/examples/Example.elm) by Evan Czaplicki.
