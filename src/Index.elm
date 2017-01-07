@@ -1,9 +1,12 @@
-module Index exposing (..)
+port module Index exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Markdown
 import Navigation
+import Process
+import Task
+import Time
 import UrlParser exposing ((</>))
 
 import CommonViews
@@ -38,16 +41,28 @@ type Page
     | AllPosts
     | Post String
 
+-- Ports
+
+port highlightMarkdown : () -> Cmd msg
+
 -- Update
 
 type Msg
     = UrlChange Navigation.Location
+    | Highlight ()
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        -- The task here is to force an update before highlighting
         UrlChange location ->
-            { model | page = getPage location } ! [ Cmd.none ]
+            { model | page = getPage location } !
+                [ Task.perform Highlight (Process.sleep (50 * Time.millisecond)) ]
+        
+        Highlight _ ->
+            (model, highlightMarkdown ())
+
+
 
 getPage : Navigation.Location -> Page
 getPage location =

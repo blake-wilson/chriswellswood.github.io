@@ -17,6 +17,7 @@ Bits and pieces that I've written.
 
 ### Notes
 
+* `.\src\Index.elm --output=.\site\index.js`
 * `git subtree push --prefix site origin master`
 
 ### Post Ideas
