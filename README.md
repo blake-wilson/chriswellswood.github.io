@@ -3,7 +3,7 @@ Bits and pieces that I've written.
 
 ### TO DO
 
-1. Port for `highlight.js`
+1. Add `Navigation.program` section to blog post
 1. Beautify
 1. Mobile?
 1. Embed analytics

@@ -2,12 +2,9 @@ module ElmStaticSiteP1 exposing (..)
 
 import Html exposing (..)
 
-import Types
-
 name : String
 name = "elm-static-site-p1"
 
-metaData : Types.ContentMetaData
 metaData =
     { name = name
     , title = "Tools for Handling Static Pages in Elm - Part 1. Dealing with Links"

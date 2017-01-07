@@ -2,12 +2,9 @@ module OOBrainAndTypes exposing (..)
 
 import Html exposing (..)
 
-import Types
-
 name : String
 name = "object-oriented-brain-and-types"
 
-metaData : Types.ContentMetaData
 metaData =
     { name = name
     , title = "Object-Oriented Brain and Types"

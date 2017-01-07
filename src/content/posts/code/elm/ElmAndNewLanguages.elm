@@ -2,12 +2,9 @@ module ElmAndNewLanguages exposing (..)
 
 import Html exposing (..)
 
-import Types
-
 name : String
 name = "elm-and-learning-new-languages"
 
-metaData : Types.ContentMetaData
 metaData =
     { name = name
     , title = "Elm and Learning New Programming Languages"

@@ -1,11 +1,7 @@
 module Snippets exposing (..)
 
-
-import Types exposing (ContentMetaData)
-
 -- Snippets are essentially metadata without the content.
 
-allSnippets : List ContentMetaData
 allSnippets = 
     [ { name = "markdown-cheatsheet"
       , title = "Markdown Cheatsheet"

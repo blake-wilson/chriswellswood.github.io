@@ -2,12 +2,9 @@ module EmptyRustStructs exposing (..)
 
 import Html exposing (..)
 
-import Types
-
 name : String
 name = "empty-rust-structs"
 
-metaData : Types.ContentMetaData
 metaData =
     { name = name
     , title = "Empty Rust Structs"

@@ -2,7 +2,6 @@ port module Index exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Markdown
 import Navigation
 import Process
 import Task
@@ -10,13 +9,7 @@ import Time
 import UrlParser exposing ((</>))
 
 import CommonViews
-import Types exposing (ContentMetaData)
-
-import EmptyRustStructs
-import ElmAndNewLanguages
-import OOBrainAndTypes
-import ElmStaticSiteP1
-import Snippets exposing (allSnippets)
+import Content
 
 main : Program Never Model Msg
 main =
@@ -102,7 +95,7 @@ getContent model =
     case model.page of
       Home -> home
       AllPosts -> home
-      Post title -> getBlogPost title
+      Post title -> Maybe.withDefault home (Content.getBlogPost title)
 
 -- Home
 
@@ -111,9 +104,9 @@ home =
     div []
         [ aboutMe
         , hr [] []
-        , recentPosts
+        , Content.recentPosts
         , hr [] []
-        , recentSnippets
+        , Content.recentSnippets
         ]
 
 -- About Me Section
@@ -130,66 +123,3 @@ I'm a research scientist that spends a lot of time writing code and
 occasionally ventures into the lab. This is sort of a blog with various
 articles/posts as well as snippets from other sources.
 """
-
--- CONTENT
-
--- Generic content functionality
-
-recentContentList : List ContentMetaData -> Html msg
-recentContentList posts = ol [] (List.map contentDetailItem posts)
-
-contentDetailItem : ContentMetaData -> Html msg
-contentDetailItem metaData =
-    li []
-        [ div []
-            [ a [ href metaData.url ] [ contentTitle metaData ]
-            , p [] [ text metaData.description ]
-            ]
-        ]
-
-contentTitle : ContentMetaData -> Html msg
-contentTitle metaData = h4 []
-    [ a [ href metaData.url ]
-        [ text (metaData.title ++ " - " ++ metaData.category ++ "/" ++ metaData.subcategory) ]
-    ]
-
--- Posts
-
-allPosts : List ContentMetaData
-allPosts =
-    [ EmptyRustStructs.metaData
-    , ElmAndNewLanguages.metaData
-    , OOBrainAndTypes.metaData
-    , ElmStaticSiteP1.metaData
-    ]
-
-recentPosts : Html msg
-recentPosts = div []
-    [ h2 [] [ text "Recent Posts" ]
-    , recentContentList (List.reverse (List.sortBy .date allPosts))
-    ]
-
--- Snippets
-
-recentSnippets : Html msg
-recentSnippets = div []
-    [ h2 [] [ text "Recent Snippets" ]
-    , recentContentList (List.reverse (List.sortBy .date allSnippets))
-    ]
-
--- Blog
-
-getBlogPost : String -> Html msg
-getBlogPost title =
-    let
-      blogMetaData = getBlogMetaData title
-    in
-      case blogMetaData of
-        Just metaData -> div [ style [("max-width", "95%")] ]
-            [ Markdown.toHtml [] (Maybe.withDefault "" metaData.rawContent)]
-        Nothing -> aboutMe
-          
-
-getBlogMetaData : String -> Maybe ContentMetaData
-getBlogMetaData title =
-    List.head (List.filter (\metaData -> (metaData.name == title)) allPosts)
