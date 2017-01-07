@@ -3,6 +3,7 @@ module Content exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Markdown
+import String
 
 import EmptyRustStructs
 import ElmAndNewLanguages
@@ -13,7 +14,7 @@ import Snippets exposing (allSnippets)
 type alias ContentMetaData =
     { name : String
     , title : String
-    , date : (Int, Int, Int)
+    , date : (List Int)
     , description : String
     , category : String
     , subcategory : String
@@ -21,23 +22,59 @@ type alias ContentMetaData =
     , rawContent : Maybe String
     }
 
-recentContentList : List ContentMetaData -> Html msg
-recentContentList posts = ol [] (List.map contentDetailItem posts)
+recentContentCards : List ContentMetaData -> Int -> Html msg
+recentContentCards posts numToShow =
+    div [ id "recentContentCards", recentContentCardsStyle ] 
+        (List.take numToShow (List.map contentCard posts))
 
-contentDetailItem : ContentMetaData -> Html msg
-contentDetailItem metaData =
-    li []
-        [ div []
-            [ a [ href metaData.url ] [ contentTitle metaData ]
-            , p [] [ text metaData.description ]
-            ]
+recentContentCardsStyle : Html.Attribute msg
+recentContentCardsStyle = 
+    style 
+        [ ("width", "90%")
+        , ("margin", "0 auto")
         ]
 
-contentTitle : ContentMetaData -> Html msg
-contentTitle metaData = h4 []
-    [ a [ href metaData.url ]
-        [ text (metaData.title ++ " - " ++ metaData.category ++ "/" ++ metaData.subcategory) ]
-    ]
+contentCard : ContentMetaData -> Html msg
+contentCard metaData =
+    div 
+        [ style 
+            [ ("border-left", "3px solid #bdc696")
+            , ("background-color", "#dfe0dc")
+            , ("margin-top", "10px")
+            , ("margin-bottom", "10px")
+            , ("padding", "10px 10px 1px 10px")
+            ]
+        ]
+        [ h4
+            [ style 
+                [ ("margin", "0")
+                , ("padding", "0")]]
+            [ a [ href metaData.url ] [ text metaData.title ] ]
+        , cardInfo metaData
+        , p [] [ text metaData.description ]
+        ]
+
+cardInfo : ContentMetaData -> Html msg
+cardInfo metaData =
+    p 
+        [ style 
+            [ ("font-size", "12px")
+            , ("margin", "0")
+            , ("padding", "0")
+            ]
+        ]
+        [ b [] [ text "Date Posted: " ]
+        , text ((dateToString metaData.date) ++ " | ")
+        , b [] [ text "Category: " ]
+        , text (metaData.category ++ "/" ++ metaData.subcategory)
+        ]
+
+dateToString : List Int -> String
+dateToString dateTuple =
+    List.map toString dateTuple
+    |> List.reverse
+    |> List.intersperse "/" 
+    |> List.foldr (++) ""
 
 -- Posts
 
@@ -63,16 +100,16 @@ getBlogMetaData : String -> Maybe ContentMetaData
 getBlogMetaData title =
     List.head (List.filter (\metaData -> (metaData.name == title)) allPosts)
 
-recentPosts : Html msg
-recentPosts = div []
+recentPosts : Int -> Html msg
+recentPosts numToShow = div []
     [ h2 [] [ text "Recent Posts" ]
-    , recentContentList (List.reverse (List.sortBy .date allPosts))
+    , recentContentCards (List.reverse (List.sortBy .date allPosts)) numToShow
     ]
 
 -- Snippets
 
-recentSnippets : Html msg
-recentSnippets = div []
+recentSnippets : Int -> Html msg
+recentSnippets numToShow = div []
     [ h2 [] [ text "Recent Snippets" ]
-    , recentContentList (List.reverse (List.sortBy .date allSnippets))
+    , recentContentCards (List.reverse (List.sortBy .date allSnippets)) numToShow
     ]

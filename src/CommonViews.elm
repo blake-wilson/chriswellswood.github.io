@@ -14,7 +14,7 @@ siteHeader =
 nameAndTagline : Html msg
 nameAndTagline = 
     div [ id "nameAndTagline"]
-        [ h1 [ style [("margin-bottom", "0"), ("padding-bottom", "0")] ]
+        [ h1 [ id "siteName", style [("margin-bottom", "0"), ("padding-bottom", "0")] ]
             [ a [ href "#home"] [ text "Bits and Pieces and Odds and Ends" ] ]
         , h3
             [ style [("margin", "0"), ("padding", "0")] ]

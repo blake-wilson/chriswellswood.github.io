@@ -9901,17 +9901,21 @@ var _user$project$CommonViews$nameAndTagline = A2(
 			_elm_lang$html$Html$h1,
 			{
 				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '0'},
-						_1: {
+				_0: _elm_lang$html$Html_Attributes$id('siteName'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
 							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'padding-bottom', _1: '0'},
-							_1: {ctor: '[]'}
-						}
-					}),
-				_1: {ctor: '[]'}
+							_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '0'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'padding-bottom', _1: '0'},
+								_1: {ctor: '[]'}
+							}
+						}),
+					_1: {ctor: '[]'}
+				}
 			},
 			{
 				ctor: '::',
@@ -9984,7 +9988,19 @@ var _user$project$EmptyRustStructs$name = 'empty-rust-structs';
 var _user$project$EmptyRustStructs$metaData = {
 	name: _user$project$EmptyRustStructs$name,
 	title: 'Empty Rust Structs',
-	date: {ctor: '_Tuple3', _0: 2016, _1: 12, _2: 11},
+	date: {
+		ctor: '::',
+		_0: 2016,
+		_1: {
+			ctor: '::',
+			_0: 12,
+			_1: {
+				ctor: '::',
+				_0: 11,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
 	description: 'A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!',
 	category: 'Code',
 	subcategory: 'Rust',
@@ -9997,7 +10013,19 @@ var _user$project$ElmAndNewLanguages$name = 'elm-and-learning-new-languages';
 var _user$project$ElmAndNewLanguages$metaData = {
 	name: _user$project$ElmAndNewLanguages$name,
 	title: 'Elm and Learning New Programming Languages',
-	date: {ctor: '_Tuple3', _0: 2016, _1: 8, _2: 25},
+	date: {
+		ctor: '::',
+		_0: 2016,
+		_1: {
+			ctor: '::',
+			_0: 8,
+			_1: {
+				ctor: '::',
+				_0: 25,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
 	description: 'A bit of pontification on learning programming languages and paradigms.',
 	category: 'Code',
 	subcategory: 'Elm',
@@ -10010,7 +10038,19 @@ var _user$project$OOBrainAndTypes$name = 'object-oriented-brain-and-types';
 var _user$project$OOBrainAndTypes$metaData = {
 	name: _user$project$OOBrainAndTypes$name,
 	title: 'Object-Oriented Brain and Types',
-	date: {ctor: '_Tuple3', _0: 2016, _1: 8, _2: 29},
+	date: {
+		ctor: '::',
+		_0: 2016,
+		_1: {
+			ctor: '::',
+			_0: 8,
+			_1: {
+				ctor: '::',
+				_0: 29,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
 	description: 'An intro to types and type aliases in Elm.',
 	category: 'Code',
 	subcategory: 'Elm',
@@ -10023,7 +10063,19 @@ var _user$project$ElmStaticSiteP1$name = 'elm-static-site-p1';
 var _user$project$ElmStaticSiteP1$metaData = {
 	name: _user$project$ElmStaticSiteP1$name,
 	title: 'Tools for Handling Static Pages in Elm - Part 1. Dealing with Links',
-	date: {ctor: '_Tuple3', _0: 2017, _1: 1, _2: 7},
+	date: {
+		ctor: '::',
+		_0: 2017,
+		_1: {
+			ctor: '::',
+			_0: 1,
+			_1: {
+				ctor: '::',
+				_0: 7,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
 	description: 'How to handle links to static content in a dynamic one page Elm app, using the Navigation and UrlParser modules.',
 	category: 'Code',
 	subcategory: 'Elm',
@@ -10036,7 +10088,19 @@ var _user$project$Snippets$allSnippets = {
 	_0: {
 		name: 'markdown-cheatsheet',
 		title: 'Markdown Cheatsheet',
-		date: {ctor: '_Tuple3', _0: 2016, _1: 12, _2: 11},
+		date: {
+			ctor: '::',
+			_0: 2016,
+			_1: {
+				ctor: '::',
+				_0: 12,
+				_1: {
+					ctor: '::',
+					_0: 11,
+					_1: {ctor: '[]'}
+				}
+			}
+		},
 		description: 'A great cheatsheet for markdown written by @adam-p. I always forget how to make tables...',
 		category: 'Code',
 		subcategory: 'Markdown',
@@ -10101,131 +10165,250 @@ var _user$project$Content$getBlogPost = function (title) {
 		return _elm_lang$core$Maybe$Nothing;
 	}
 };
-var _user$project$Content$contentTitle = function (metaData) {
+var _user$project$Content$dateToString = function (dateTuple) {
+	return A3(
+		_elm_lang$core$List$foldr,
+		F2(
+			function (x, y) {
+				return A2(_elm_lang$core$Basics_ops['++'], x, y);
+			}),
+		'',
+		A2(
+			_elm_lang$core$List$intersperse,
+			'/',
+			_elm_lang$core$List$reverse(
+				A2(_elm_lang$core$List$map, _elm_lang$core$Basics$toString, dateTuple))));
+};
+var _user$project$Content$cardInfo = function (metaData) {
 	return A2(
-		_elm_lang$html$Html$h4,
-		{ctor: '[]'},
+		_elm_lang$html$Html$p,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'font-size', _1: '12px'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'margin', _1: '0'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'padding', _1: '0'},
+							_1: {ctor: '[]'}
+						}
+					}
+				}),
+			_1: {ctor: '[]'}
+		},
 		{
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$a,
+				_elm_lang$html$Html$b,
+				{ctor: '[]'},
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$href(metaData.url),
+					_0: _elm_lang$html$Html$text('Date Posted: '),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$html$Html$text(
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						_user$project$Content$dateToString(metaData.date),
+						' | ')),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$b,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Category: '),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html$text(
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								metaData.category,
+								A2(_elm_lang$core$Basics_ops['++'], '/', metaData.subcategory))),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		});
+};
+var _user$project$Content$contentCard = function (metaData) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$style(
+				{
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'border-left', _1: '3px solid #bdc696'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'background-color', _1: '#dfe0dc'},
+						_1: {
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '10px'},
+								_1: {
+									ctor: '::',
+									_0: {ctor: '_Tuple2', _0: 'padding', _1: '10px 10px 1px 10px'},
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					}
+				}),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$h4,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'margin', _1: '0'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'padding', _1: '0'},
+								_1: {ctor: '[]'}
+							}
+						}),
 					_1: {ctor: '[]'}
 				},
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html$text(
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							metaData.title,
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								' - ',
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									metaData.category,
-									A2(_elm_lang$core$Basics_ops['++'], '/', metaData.subcategory))))),
+					_0: A2(
+						_elm_lang$html$Html$a,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$href(metaData.url),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text(metaData.title),
+							_1: {ctor: '[]'}
+						}),
 					_1: {ctor: '[]'}
 				}),
-			_1: {ctor: '[]'}
+			_1: {
+				ctor: '::',
+				_0: _user$project$Content$cardInfo(metaData),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$p,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text(metaData.description),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			}
 		});
 };
-var _user$project$Content$contentDetailItem = function (metaData) {
+var _user$project$Content$recentContentCardsStyle = _elm_lang$html$Html_Attributes$style(
+	{
+		ctor: '::',
+		_0: {ctor: '_Tuple2', _0: 'width', _1: '90%'},
+		_1: {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 auto'},
+			_1: {ctor: '[]'}
+		}
+	});
+var _user$project$Content$recentContentCards = F2(
+	function (posts, numToShow) {
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$id('recentContentCards'),
+				_1: {
+					ctor: '::',
+					_0: _user$project$Content$recentContentCardsStyle,
+					_1: {ctor: '[]'}
+				}
+			},
+			A2(
+				_elm_lang$core$List$take,
+				numToShow,
+				A2(_elm_lang$core$List$map, _user$project$Content$contentCard, posts)));
+	});
+var _user$project$Content$recentPosts = function (numToShow) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
 		{
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$a,
+				_elm_lang$html$Html$h2,
+				{ctor: '[]'},
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$href(metaData.url),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: _user$project$Content$contentTitle(metaData),
+					_0: _elm_lang$html$Html$text('Recent Posts'),
 					_1: {ctor: '[]'}
 				}),
 			_1: {
 				ctor: '::',
 				_0: A2(
-					_elm_lang$html$Html$p,
-					{ctor: '[]'},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text(metaData.description),
-						_1: {ctor: '[]'}
-					}),
+					_user$project$Content$recentContentCards,
+					_elm_lang$core$List$reverse(
+						A2(
+							_elm_lang$core$List$sortBy,
+							function (_) {
+								return _.date;
+							},
+							_user$project$Content$allPosts)),
+					numToShow),
 				_1: {ctor: '[]'}
 			}
 		});
 };
-var _user$project$Content$recentContentList = function (posts) {
+var _user$project$Content$recentSnippets = function (numToShow) {
 	return A2(
 		_elm_lang$html$Html$div,
+		{ctor: '[]'},
 		{
 			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$id('recentContentList'),
-			_1: {ctor: '[]'}
-		},
-		A2(_elm_lang$core$List$map, _user$project$Content$contentDetailItem, posts));
+			_0: A2(
+				_elm_lang$html$Html$h2,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Recent Snippets'),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_user$project$Content$recentContentCards,
+					_elm_lang$core$List$reverse(
+						A2(
+							_elm_lang$core$List$sortBy,
+							function (_) {
+								return _.date;
+							},
+							_user$project$Snippets$allSnippets)),
+					numToShow),
+				_1: {ctor: '[]'}
+			}
+		});
 };
-var _user$project$Content$recentPosts = A2(
-	_elm_lang$html$Html$div,
-	{ctor: '[]'},
-	{
-		ctor: '::',
-		_0: A2(
-			_elm_lang$html$Html$h2,
-			{ctor: '[]'},
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text('Recent Posts'),
-				_1: {ctor: '[]'}
-			}),
-		_1: {
-			ctor: '::',
-			_0: _user$project$Content$recentContentList(
-				_elm_lang$core$List$reverse(
-					A2(
-						_elm_lang$core$List$sortBy,
-						function (_) {
-							return _.date;
-						},
-						_user$project$Content$allPosts))),
-			_1: {ctor: '[]'}
-		}
-	});
-var _user$project$Content$recentSnippets = A2(
-	_elm_lang$html$Html$div,
-	{ctor: '[]'},
-	{
-		ctor: '::',
-		_0: A2(
-			_elm_lang$html$Html$h2,
-			{ctor: '[]'},
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text('Recent Snippets'),
-				_1: {ctor: '[]'}
-			}),
-		_1: {
-			ctor: '::',
-			_0: _user$project$Content$recentContentList(
-				_elm_lang$core$List$reverse(
-					A2(
-						_elm_lang$core$List$sortBy,
-						function (_) {
-							return _.date;
-						},
-						_user$project$Snippets$allSnippets))),
-			_1: {ctor: '[]'}
-		}
-	});
 var _user$project$Content$ContentMetaData = F8(
 	function (a, b, c, d, e, f, g, h) {
 		return {name: a, title: b, date: c, description: d, category: e, subcategory: f, url: g, rawContent: h};
@@ -10276,7 +10459,7 @@ var _user$project$Index$home = A2(
 				{ctor: '[]'}),
 			_1: {
 				ctor: '::',
-				_0: _user$project$Content$recentPosts,
+				_0: _user$project$Content$recentPosts(5),
 				_1: {
 					ctor: '::',
 					_0: A2(
@@ -10285,7 +10468,7 @@ var _user$project$Index$home = A2(
 						{ctor: '[]'}),
 					_1: {
 						ctor: '::',
-						_0: _user$project$Content$recentSnippets,
+						_0: _user$project$Content$recentSnippets(5),
 						_1: {ctor: '[]'}
 					}
 				}
