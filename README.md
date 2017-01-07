@@ -14,6 +14,7 @@ Bits and pieces that I've written.
     * It will allow the header and posts to reference other articles easily i.e. next or previous
 1. Move page views to modules
 1. Quote formatting
+1. Add link to "Do it right" post static website post
 
 ### Notes
 
@@ -23,5 +24,8 @@ Bits and pieces that I've written.
 ### Post Ideas
 
 1. Sauntering vaguely downwards - Starting to program late
-1. GitHub pages with `index.html` in another directory.
+1. GitHub pages with `index.html` in another directory
     * https://gist.github.com/cobyism/4730490
+1. "Do it right, do it three times..."
+    * New post about making a static site in Elm
+1. Adding Google analytics to an Elm app

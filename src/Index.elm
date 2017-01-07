@@ -62,8 +62,6 @@ update msg model =
         Highlight _ ->
             (model, highlightMarkdown ())
 
-
-
 getPage : Navigation.Location -> Page
 getPage location =
     Maybe.withDefault Home (UrlParser.parseHash route location)
