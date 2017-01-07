@@ -20,6 +20,8 @@ Bits and pieces that I've written.
 
 * `elm-make .\src\Index.elm --output=.\site\index.js`
 * `git subtree push --prefix site origin master`
+* Palette
+    * https://coolors.co/351431-775253-bdc696-d1d3c4-dfe0dc
 
 ### Post Ideas
 
