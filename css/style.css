@@ -2,6 +2,22 @@ html {
   overflow-y: scroll;
 }
 
+a:link {
+    color: #775253
+}
+
+a:visited {
+    color: #775253
+}
+
+a:hover {
+    color: #351431
+}
+
+a:active {
+    color: #775253
+}
+
 p {
     font-family: 'Open Sans', sans-serif;
 }
@@ -21,12 +37,6 @@ footer {
 h1 {
     font-family: 'Droid Serif', serif;
     font-weight: normal;
-}
-
-h1 a {
-    font-family: inherit;
-    color: inherit;
-    text-decoration: inherit;
 }
 
 h2 {
@@ -66,4 +76,14 @@ hr {
 
 code {
     font-size: 18px;
+}
+
+#siteName {
+    font-family: 'Droid Serif', serif;
+    font-weight: normal;
+}
+
+#siteName a {
+    color: inherit;
+    text-decoration: inherit;
 }
