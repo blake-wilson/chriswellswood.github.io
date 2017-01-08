@@ -46,7 +46,6 @@ struct Point {
 
 fn main() {
     let p1 = Point{};
-    println!("{:?}", eep);
 }
 ```
 
