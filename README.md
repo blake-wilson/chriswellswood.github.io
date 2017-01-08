@@ -12,6 +12,8 @@ A website for bits and pieces that I've written, as well as odds and ends by oth
 1. Quote formatting
 1. Add link to "Do it right" post static website post
 1. Use Http to get the content to reduce site size
+1. Sitemap
+    * [Fetch as Google](https://support.google.com/webmasters/answer/6066468?hl=en&visit_id=1-636194846011273641-1526309541&rd=2)
 
 ### Notes
 
