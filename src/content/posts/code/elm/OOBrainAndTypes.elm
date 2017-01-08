@@ -18,8 +18,6 @@ metaData =
 
 rawContent: String
 rawContent = """
-## Elm and Learning New Programming Languages
-
 I'm not embarrassed to admit that it took me a fair amount of time to get my head around object-oriented programming. For a long time I just couldn't figure out why it was a useful thing. That's probably got something to do with my background as a research scientist, and the type of problems I originally tackled during the first few weeks and months after I started learning to code.
 
 After a while of staring at examples and messing about with classes in Python, it eventually clicked for me. A funny thing happened in between finally grasping the idea of objects and now… my brain has become object oriented.

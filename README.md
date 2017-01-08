@@ -1,5 +1,5 @@
 # chriswellswood.github.io
-Bits and pieces that I've written.
+A website for bits and pieces that I've written, as well as odds and ends by other people.
 
 ### TO DO
 
@@ -11,6 +11,7 @@ Bits and pieces that I've written.
 1. 505 page
 1. Quote formatting
 1. Add link to "Do it right" post static website post
+1. Use Http to get the content to reduce site size
 
 ### Notes
 

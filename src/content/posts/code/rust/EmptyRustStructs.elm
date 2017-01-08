@@ -7,7 +7,7 @@ name = "empty-rust-structs"
 
 metaData =
     { name = name
-    , title = "Empty Rust Structs"
+    , title = "Initialising Empty Structs in Rust"
     , date = [2016, 12, 11]
     , description = "A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!"
     , category = "Code"
@@ -18,8 +18,6 @@ metaData =
 
 rawContent: String
 rawContent = """
-## Initialising Empty Structs in Rust
-
 In C/C++, you can initialise a struct without giving values for any of the fields:
 
 ```C

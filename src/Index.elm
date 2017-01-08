@@ -36,6 +36,7 @@ type Page
     = Home
     | AllPosts
     | Post String
+    | AllSnippets
 
 -- Ports
 
@@ -60,13 +61,15 @@ update msg model =
 
 getPage : Navigation.Location -> Page
 getPage location =
-    Maybe.withDefault Home (UrlParser.parseHash route location)
+    Maybe.withDefault AllPosts (UrlParser.parseHash route location)
 
 route : UrlParser.Parser (Page -> a) a
 route =
     UrlParser.oneOf
         [ UrlParser.map Home UrlParser.top
+        , UrlParser.map AllPosts (UrlParser.s "all-posts")
         , UrlParser.map Post (UrlParser.s "blog" </> UrlParser.string)
+        , UrlParser.map AllSnippets (UrlParser.s "all-snippets")
         ]
 
 -- View
@@ -97,8 +100,9 @@ getContent : Model -> Html Msg
 getContent model =
     case model.page of
       Home -> home
-      AllPosts -> home
+      AllPosts -> Content.allPostsView
       Post title -> Maybe.withDefault home (Content.getBlogPost title)
+      AllSnippets -> Content.allSnippetsView
 
 -- Home
 

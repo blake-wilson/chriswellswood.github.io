@@ -9,13 +9,15 @@ siteHeader =
         [ nameAndTagline
         , socialMedia
         , hr [] []
+        , navBar
+        , hr [] []
         ]
 
 nameAndTagline : Html msg
 nameAndTagline = 
     div [ id "nameAndTagline"]
         [ h1 [ id "siteName", style [("margin-bottom", "0"), ("padding-bottom", "0")] ]
-            [ a [ href "#home"] [ text "Bits and Pieces and Odds and Ends" ] ]
+            [ a [ href "index.html"] [ text "Bits and Pieces and Odds and Ends" ] ]
         , h3
             [ style [("margin", "0"), ("padding", "0")] ]
             [ text "Code, science and misc by Chris Wells Wood." ]
@@ -32,11 +34,31 @@ socialMedia = div [ id "socialMedia" ]
             [ text "@ChrisWellsWood" ]
         ]
     ]
-    
+
+navBar : Html msg
+navBar =
+    div []
+        [ a [ href "index.html" ] [ text "Home" ]
+        , text " | "
+        , a [ href "#all-posts" ] [ text "All Posts" ]
+        , text " | "
+        , a [ href "#all-snippets" ] [ text "All Snippets" ]
+        ]
+
 siteFooter : Html msg
 siteFooter =
     footer []
         [ div [ id "siteFooter" ]
             [ hr [] []
-            , text "© Chris Wells Wood, 2016-2017."]
+            , p []
+                [ a
+                    [ class "twitter-follow-button"
+                    , style [("padding-top", "10px")]
+                    , href "https://twitter.com/ChrisWellsWood"
+                    , attribute "data-show-count" "false"
+                    ]
+                    [ text "Follow @ChrisWellsWood" ]
+                ]
+            , text "© Chris Wells Wood, 2016-2017."
+            ]
         ]

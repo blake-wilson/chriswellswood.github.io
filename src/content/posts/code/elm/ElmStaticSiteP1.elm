@@ -18,8 +18,6 @@ metaData =
 
 rawContent: String
 rawContent = """
-## Tools for Handling Static Pages in Elm - Part 1. Dealing with Links
-
 *Check out the source code for the site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io).*
 
 First of all, happy new year! I hope everyone had a great holiday. I've got a bit of time off of work, and as I'm now back from visiting family, I've been getting stuck into some little projects. The first thing I wanted to do was update this website. I was very pleased how quickly I managed to get the site up and running using just Markdown and GitHub pages, but obviously there are limitations around building a website this way. So I decided I'd rebuild it in [Elm](http://elm-lang.org/), which is a neat functional programming language designed to make webapps.

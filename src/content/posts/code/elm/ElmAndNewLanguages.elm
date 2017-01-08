@@ -18,8 +18,6 @@ metaData =
 
 rawContent: String
 rawContent = """
-## Elm and Learning New Programming Languages
-
 So like most people that have been coding for a while, I've got more and more interested in exploring new programming languages. It's kind of like visiting a foreign country, it's fun to experience other ways of life. Sometimes though you're disappointed when it's too similar to home other times it's a bit overwhelming if it's too different.
 
 What you really want is something in the middle, so maybe you walk through a supermarket when you're abroad and you marvel at the unusual selection of canned goods, and then right in the corner you notice a can of baked beans. It always makes me smile, and then you think "What if they taste different!?", and you end up having beans for lunch, which is nice but you end up thinking that you should have been a bit more adventurous. Anyway, you can see what I'm getting at, it's nice to try something new, but sometimes a bit of familiarity doesn't go amiss.

@@ -3,7 +3,6 @@ module Content exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Markdown
-import String
 
 import EmptyRustStructs
 import ElmAndNewLanguages
@@ -22,23 +21,26 @@ type alias ContentMetaData =
     , rawContent : Maybe String
     }
 
+allPosts : List ContentMetaData
+allPosts =
+    [ EmptyRustStructs.metaData
+    , ElmAndNewLanguages.metaData
+    , OOBrainAndTypes.metaData
+    , ElmStaticSiteP1.metaData
+    ]
+
 recentContentCards : List ContentMetaData -> Int -> Html msg
 recentContentCards posts numToShow =
-    div [ id "recentContentCards", recentContentCardsStyle ] 
+    div [ id "recentContentCards" ] 
         (List.take numToShow (List.map contentCard posts))
-
-recentContentCardsStyle : Html.Attribute msg
-recentContentCardsStyle = 
-    style 
-        [ ("width", "90%")
-        , ("margin", "0 auto")
-        ]
 
 contentCard : ContentMetaData -> Html msg
 contentCard metaData =
     div 
-        [ style 
+        [ class "contentCard"
+        , style 
             [ ("border-left", "3px solid #bdc696")
+            , ("border-right", "3px solid #bdc696")
             , ("background-color", "#dfe0dc")
             , ("margin-top", "10px")
             , ("margin-bottom", "10px")
@@ -78,13 +80,12 @@ dateToString dateTuple =
 
 -- Posts
 
-allPosts : List ContentMetaData
-allPosts =
-    [ EmptyRustStructs.metaData
-    , ElmAndNewLanguages.metaData
-    , OOBrainAndTypes.metaData
-    , ElmStaticSiteP1.metaData
-    ]
+allPostsView : Html msg
+allPostsView =
+    div [ id "allPostsView" ]
+        [ h2 [] [ text "All Posts" ]
+        , div [] (List.map contentCard allPosts)
+        ]
 
 getBlogPost : String -> Maybe (Html msg)
 getBlogPost title =
@@ -92,9 +93,26 @@ getBlogPost title =
       blogMetaData = getBlogMetaData title
     in
       case blogMetaData of
-        Just metaData -> Just (div [ style [("max-width", "95%")] ]
-            [ Markdown.toHtml [] (Maybe.withDefault "" metaData.rawContent)])
+        Just metaData -> Just (blogPostView metaData)
         Nothing -> Nothing
+
+blogPostView : ContentMetaData -> Html msg
+blogPostView metaData =
+    div [ class "blogPostView" ]
+        [ blogPostHeader metaData
+        , Markdown.toHtml [] (Maybe.withDefault "" metaData.rawContent)]
+
+blogPostHeader : ContentMetaData -> Html msg
+blogPostHeader metaData =
+    div [ class "blogPostHeader" ] 
+        [ h2 
+            [ style 
+                [ ("margin", "0")
+
+                , ("padding", "0")]] 
+            [ text metaData.title ]
+        , cardInfo metaData
+        ]
 
 getBlogMetaData : String -> Maybe ContentMetaData
 getBlogMetaData title =
@@ -107,6 +125,13 @@ recentPosts numToShow = div []
     ]
 
 -- Snippets
+
+allSnippetsView : Html msg
+allSnippetsView =
+    div [ id "allSnippetsView" ]
+        [ h2 [] [ text "All Snippets" ]
+        , div [] (List.map contentCard Snippets.allSnippets)
+        ]
 
 recentSnippets : Int -> Html msg
 recentSnippets numToShow = div []

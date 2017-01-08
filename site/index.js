@@ -9820,11 +9820,107 @@ var _user$project$CommonViews$siteFooter = A2(
 					{ctor: '[]'}),
 				_1: {
 					ctor: '::',
-					_0: _elm_lang$html$Html$text('© Chris Wells Wood, 2016-2017.'),
-					_1: {ctor: '[]'}
+					_0: A2(
+						_elm_lang$html$Html$p,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$a,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('twitter-follow-button'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'padding-top', _1: '10px'},
+												_1: {ctor: '[]'}
+											}),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$href('https://twitter.com/ChrisWellsWood'),
+											_1: {
+												ctor: '::',
+												_0: A2(_elm_lang$html$Html_Attributes$attribute, 'data-show-count', 'false'),
+												_1: {ctor: '[]'}
+											}
+										}
+									}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('Follow @ChrisWellsWood'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('© Chris Wells Wood, 2016-2017.'),
+						_1: {ctor: '[]'}
+					}
 				}
 			}),
 		_1: {ctor: '[]'}
+	});
+var _user$project$CommonViews$navBar = A2(
+	_elm_lang$html$Html$div,
+	{ctor: '[]'},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$a,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$href('index.html'),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('Home'),
+				_1: {ctor: '[]'}
+			}),
+		_1: {
+			ctor: '::',
+			_0: _elm_lang$html$Html$text(' | '),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$a,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$href('#all-posts'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('All Posts'),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(' | '),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$a,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$href('#all-snippets'),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('All Snippets'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		}
 	});
 var _user$project$CommonViews$socialMedia = A2(
 	_elm_lang$html$Html$div,
@@ -9923,7 +10019,7 @@ var _user$project$CommonViews$nameAndTagline = A2(
 					_elm_lang$html$Html$a,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$href('#home'),
+						_0: _elm_lang$html$Html_Attributes$href('index.html'),
 						_1: {ctor: '[]'}
 					},
 					{
@@ -9978,16 +10074,27 @@ var _user$project$CommonViews$siteHeader = A2(
 					_elm_lang$html$Html$hr,
 					{ctor: '[]'},
 					{ctor: '[]'}),
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: _user$project$CommonViews$navBar,
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$hr,
+							{ctor: '[]'},
+							{ctor: '[]'}),
+						_1: {ctor: '[]'}
+					}
+				}
 			}
 		}
 	});
 
-var _user$project$EmptyRustStructs$rawContent = '\n## Initialising Empty Structs in Rust\n\nIn C/C++, you can initialise a struct without giving values for any of the fields:\n\n```C\nstruct Point {\n  float x;\n  float y;\n  float z;\n};\n\nint main() {\n  Point my_point = {};\n}\n```\n\nStructs in RUST can\'t do this by default, you\'ll just get an error:\n\n```Rust\n#[derive(Debug)]\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nfn main() {\n    let p1 = Point{};\n    println!(\"{:?}\", eep);\n}\n```\n\n```\nerror[E0063]: missing fields `x`, `y`, `z` in initializer of `Point`\n --> src\\main.rs:2:15\n  |\n2 |     let p1 = Point{};\n  |              ^^^^^ missing `x`, `y`, `z`\n```\n\nThe proper way to do this for a struct in Rust is to implement the `Default` trait and then you can generate default values easily:\n\n```Rust\n#[derive(Debug)]\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nimpl Default for Point {\n    fn default () -> Point {\n        Point{x: 0, y: 0, z:0}\n    }\n}\nfn main() {\n  let p1 = Point::default(); \n  let p2 = Point{ x: 34, ..Default::default() }; // Partial definition of fields\n}\n```\n\nYou can even do this automatically using the `derive` attribute.\n\n```Rust\n#[derive(Debug, Default)] // Derive is cool, I have no idea how it works!\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nfn main() {\n  let p1 = Point::default();\n  let p2 = Point{ x: 34, ..Default::default() };\n}\n```\n\nIt\'s like magic! \n\nInitialising empty structs is especially useful when working with an API, where you might give a function a pointer to a struct and the fields are populated for you. If you\'re working with a RUST API that follows this pattern, we can just use our `Default` trait implementation to do this, right? Well, that depends on the API. If you\'re using using the `winapi` crate, this doesn\'t work as `Default` has not been implemented for any of the structs that I\'ve used:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\nfn main() {\n    let rect = RECT{ ..Default::default() };\n    println!(\"{:?}\", rect);\n}\n```\n\n```\nerror[E0277]: the trait bound `winapi::RECT: std::default::Default`\nis not satisfied\n --> src\\main.rs:6:24\n  |\n6 |     let rect = RECT{ ..Default::default() };\n  |                        ^^^^^^^^^^^^^^^^ trait `winapi::RECT: std::default::Default` not satisfied\n```\n\nUnfortunately, you\'re not allowed to implement a trait that you did not define, for a type that you also did not define. So if you\'re using a struct from an external crate, you can\'t implement `Default` for it:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\nimpl Default for RECT {\n    fn default () -> RECT {\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\n    }\n}\n\nfn main() {\n    let rect = RECT::default();\n    println!(\"{:?}\", rect);\n}\n```\n\n```\nerror[E0117]: only traits defined in the current crate can be implemented for arbitrary types\n --> src\\main.rs:5:1\n  |\n5 | impl Default for RECT {\n  | ^ impl doesn\'t use types inside crate\n```\n\nThat\'s annoying... So what do you do? There\'s a couple of things you could do. Firstly, you could wrap the struct as a new type (so you\'re defining it in your own crate):\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\n#[derive(Debug)]\nstruct WrappedRECT{rect: RECT}\n\nimpl Default for WrappedRECT {\n    fn default () -> WrappedRECT {\n        WrappedRECT{rect: RECT{left: 0, top: 0, right: 0, bottom: 0}}\n    }\n}\n\nfn main() {\n    let rect = WrappedRECT::default();\n    println!(\"{:?}\", rect);\n}\n```\n\nBut this is a bit clunky, so I prefer just creating a new `trait`, and implementing it for the external struct:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\ntrait Empty<T> {\n    fn empty() -> T;\n}\n\nimpl Empty<RECT> for RECT {\n    fn empty() -> RECT {\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\n    }\n}\n\nfn main() {\n    let rect = RECT::empty();\n    println!(\"{:?}\", rect);\n}\n```\n\nIt seems a little more transparent, and there\'s no clash with the name of the method. If you want to be a good citizen, the best way to deal with this is probably to just go and modify the crate you\'re using, adding `derive(Debug)` attributes to everything!\n\nThanks to joshtriplett and yohanesu75 for some extra info.\n';
+var _user$project$EmptyRustStructs$rawContent = '\nIn C/C++, you can initialise a struct without giving values for any of the fields:\n\n```C\nstruct Point {\n  float x;\n  float y;\n  float z;\n};\n\nint main() {\n  Point my_point = {};\n}\n```\n\nStructs in RUST can\'t do this by default, you\'ll just get an error:\n\n```Rust\n#[derive(Debug)]\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nfn main() {\n    let p1 = Point{};\n}\n```\n\n```\nerror[E0063]: missing fields `x`, `y`, `z` in initializer of `Point`\n --> src\\main.rs:2:15\n  |\n2 |     let p1 = Point{};\n  |              ^^^^^ missing `x`, `y`, `z`\n```\n\nThe proper way to do this for a struct in Rust is to implement the `Default` trait and then you can generate default values easily:\n\n```Rust\n#[derive(Debug)]\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nimpl Default for Point {\n    fn default () -> Point {\n        Point{x: 0, y: 0, z:0}\n    }\n}\nfn main() {\n  let p1 = Point::default(); \n  let p2 = Point{ x: 34, ..Default::default() }; // Partial definition of fields\n}\n```\n\nYou can even do this automatically using the `derive` attribute.\n\n```Rust\n#[derive(Debug, Default)] // Derive is cool, I have no idea how it works!\nstruct Point {\n    x: i32,\n    y: i32,\n    z: i32,\n}\n\nfn main() {\n  let p1 = Point::default();\n  let p2 = Point{ x: 34, ..Default::default() };\n}\n```\n\nIt\'s like magic! \n\nInitialising empty structs is especially useful when working with an API, where you might give a function a pointer to a struct and the fields are populated for you. If you\'re working with a RUST API that follows this pattern, we can just use our `Default` trait implementation to do this, right? Well, that depends on the API. If you\'re using using the `winapi` crate, this doesn\'t work as `Default` has not been implemented for any of the structs that I\'ve used:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\nfn main() {\n    let rect = RECT{ ..Default::default() };\n    println!(\"{:?}\", rect);\n}\n```\n\n```\nerror[E0277]: the trait bound `winapi::RECT: std::default::Default`\nis not satisfied\n --> src\\main.rs:6:24\n  |\n6 |     let rect = RECT{ ..Default::default() };\n  |                        ^^^^^^^^^^^^^^^^ trait `winapi::RECT: std::default::Default` not satisfied\n```\n\nUnfortunately, you\'re not allowed to implement a trait that you did not define, for a type that you also did not define. So if you\'re using a struct from an external crate, you can\'t implement `Default` for it:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\nimpl Default for RECT {\n    fn default () -> RECT {\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\n    }\n}\n\nfn main() {\n    let rect = RECT::default();\n    println!(\"{:?}\", rect);\n}\n```\n\n```\nerror[E0117]: only traits defined in the current crate can be implemented for arbitrary types\n --> src\\main.rs:5:1\n  |\n5 | impl Default for RECT {\n  | ^ impl doesn\'t use types inside crate\n```\n\nThat\'s annoying... So what do you do? There\'s a couple of things you could do. Firstly, you could wrap the struct as a new type (so you\'re defining it in your own crate):\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\n#[derive(Debug)]\nstruct WrappedRECT{rect: RECT}\n\nimpl Default for WrappedRECT {\n    fn default () -> WrappedRECT {\n        WrappedRECT{rect: RECT{left: 0, top: 0, right: 0, bottom: 0}}\n    }\n}\n\nfn main() {\n    let rect = WrappedRECT::default();\n    println!(\"{:?}\", rect);\n}\n```\n\nBut this is a bit clunky, so I prefer just creating a new `trait`, and implementing it for the external struct:\n\n```Rust\nextern crate winapi;\n\nuse winapi::windef::RECT;\n\ntrait Empty<T> {\n    fn empty() -> T;\n}\n\nimpl Empty<RECT> for RECT {\n    fn empty() -> RECT {\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\n    }\n}\n\nfn main() {\n    let rect = RECT::empty();\n    println!(\"{:?}\", rect);\n}\n```\n\nIt seems a little more transparent, and there\'s no clash with the name of the method. If you want to be a good citizen, the best way to deal with this is probably to just go and modify the crate you\'re using, adding `derive(Debug)` attributes to everything!\n\nThanks to joshtriplett and yohanesu75 for some extra info.\n';
 var _user$project$EmptyRustStructs$name = 'empty-rust-structs';
 var _user$project$EmptyRustStructs$metaData = {
 	name: _user$project$EmptyRustStructs$name,
-	title: 'Empty Rust Structs',
+	title: 'Initialising Empty Structs in Rust',
 	date: {
 		ctor: '::',
 		_0: 2016,
@@ -10008,7 +10115,7 @@ var _user$project$EmptyRustStructs$metaData = {
 	rawContent: _elm_lang$core$Maybe$Just(_user$project$EmptyRustStructs$rawContent)
 };
 
-var _user$project$ElmAndNewLanguages$rawContent = '\n## Elm and Learning New Programming Languages\n\nSo like most people that have been coding for a while, I\'ve got more and more interested in exploring new programming languages. It\'s kind of like visiting a foreign country, it\'s fun to experience other ways of life. Sometimes though you\'re disappointed when it\'s too similar to home other times it\'s a bit overwhelming if it\'s too different.\n\nWhat you really want is something in the middle, so maybe you walk through a supermarket when you\'re abroad and you marvel at the unusual selection of canned goods, and then right in the corner you notice a can of baked beans. It always makes me smile, and then you think \"What if they taste different!?\", and you end up having beans for lunch, which is nice but you end up thinking that you should have been a bit more adventurous. Anyway, you can see what I\'m getting at, it\'s nice to try something new, but sometimes a bit of familiarity doesn\'t go amiss.\n\nI learned to code in Python, and while a lot of programming paradigms are captured by the language, it is mainly an imperative language, that is where you make statements to change the state of a program. For example maybe you want to count all the odd numbers in a list, you could do it in a hundred ways but here\'s one that is classically imperative:\n\n```Python\nmy_numbers = [0, 1, 2, 3, 4, 5]\nodd_number_count = 0\nfor number in my_numbers:\n  if number % 2:\n    odd_number_count += 1\nprint(odd_number_count)\n```\n\nOne day I was reading about how to be a good programmer, and people kept mentioning that you should learn more than one language and you should try to make it pretty different from a language you know. One argument for that is that it show you other ways to program, and Haskell is often used as an example of this. So I started to learn a bit of Haskell, using http://learnyouahaskell.com/, and my mind started to melt! I wasn\'t aware that there was any other way to program apart from using imperative style code.\n\nBy this point, I had been exposed to many functional programming paradigms in Python, such as the idea of functions as first-class citizens, map, filter, list comprehensions… but it never occurred to me that programming languages existed that used these traits as the basis for the language and built upon them.\n\nI learned a fair bit of Haskell, but in the I stopped learning it in the end because it was utterly mind-bending trying to think of an algorithm to solve a particular problem. Also, because it was so unfamiliar I couldn\'t think of anything that I could actually use Haskell for! To make this clear, this was because of my lack of understanding, nothing to do with Haskell itself. It wasn\'t an utter loss though, functional programming stuck with me, and I definitely started using it more in Python after learning a bit of Haskell.\n\nTime passes and I\'m messing around with JavaScript, in particular languages that compile to JavaScript (which is a super interesting topic I\'ll hopefully discuss in more detail in another article) like TypeScript, and I came across Elm, and it properly intrigued me. Elm is a purely functional programming language that compiles down to HTML, CSS and JavaScript and can be used to make front ends for websites and web applications. It feels a lot like Haskell in syntax.\n\nThe nice thing about Elm is that it has a really clear application, in an area I\'m interested in at the moment, which makes it easier to learn for me as I have a goal to work towards. I\'ve started learning a bit of Elm just using the main documentation, and it\'s already starting to cement a lot of the more nebulous aspects of functional programming (things like Currying). I suppose this is to be expected, but what I\'ve been surprised about is that I feel like it\'s teaching me to be a better web developer too, which is really neat!\n\nElm is probably not going to replace things like React and Angular any time soon, if ever, and it\'s still in flux as a language so it probably not ready for \"production\" code, but for a hobbyist wanting to learn about good web development and FP it seems ideal. I feel like Elm is the programming language equivalent of baked beans in a foreign super-market, it feels new and different, but has familiar aspects (the web development parts!).\n\nI\'m going to write about Elm and the little web application that I\'m developing using it in upcoming posts. Let me know what you think of Elm, Haskell and FP on Twitter. Have you used Elm? What did you think? Has anyone learned to code using FP and then moved across to an imperative language?\n';
+var _user$project$ElmAndNewLanguages$rawContent = '\nSo like most people that have been coding for a while, I\'ve got more and more interested in exploring new programming languages. It\'s kind of like visiting a foreign country, it\'s fun to experience other ways of life. Sometimes though you\'re disappointed when it\'s too similar to home other times it\'s a bit overwhelming if it\'s too different.\n\nWhat you really want is something in the middle, so maybe you walk through a supermarket when you\'re abroad and you marvel at the unusual selection of canned goods, and then right in the corner you notice a can of baked beans. It always makes me smile, and then you think \"What if they taste different!?\", and you end up having beans for lunch, which is nice but you end up thinking that you should have been a bit more adventurous. Anyway, you can see what I\'m getting at, it\'s nice to try something new, but sometimes a bit of familiarity doesn\'t go amiss.\n\nI learned to code in Python, and while a lot of programming paradigms are captured by the language, it is mainly an imperative language, that is where you make statements to change the state of a program. For example maybe you want to count all the odd numbers in a list, you could do it in a hundred ways but here\'s one that is classically imperative:\n\n```Python\nmy_numbers = [0, 1, 2, 3, 4, 5]\nodd_number_count = 0\nfor number in my_numbers:\n  if number % 2:\n    odd_number_count += 1\nprint(odd_number_count)\n```\n\nOne day I was reading about how to be a good programmer, and people kept mentioning that you should learn more than one language and you should try to make it pretty different from a language you know. One argument for that is that it show you other ways to program, and Haskell is often used as an example of this. So I started to learn a bit of Haskell, using http://learnyouahaskell.com/, and my mind started to melt! I wasn\'t aware that there was any other way to program apart from using imperative style code.\n\nBy this point, I had been exposed to many functional programming paradigms in Python, such as the idea of functions as first-class citizens, map, filter, list comprehensions… but it never occurred to me that programming languages existed that used these traits as the basis for the language and built upon them.\n\nI learned a fair bit of Haskell, but in the I stopped learning it in the end because it was utterly mind-bending trying to think of an algorithm to solve a particular problem. Also, because it was so unfamiliar I couldn\'t think of anything that I could actually use Haskell for! To make this clear, this was because of my lack of understanding, nothing to do with Haskell itself. It wasn\'t an utter loss though, functional programming stuck with me, and I definitely started using it more in Python after learning a bit of Haskell.\n\nTime passes and I\'m messing around with JavaScript, in particular languages that compile to JavaScript (which is a super interesting topic I\'ll hopefully discuss in more detail in another article) like TypeScript, and I came across Elm, and it properly intrigued me. Elm is a purely functional programming language that compiles down to HTML, CSS and JavaScript and can be used to make front ends for websites and web applications. It feels a lot like Haskell in syntax.\n\nThe nice thing about Elm is that it has a really clear application, in an area I\'m interested in at the moment, which makes it easier to learn for me as I have a goal to work towards. I\'ve started learning a bit of Elm just using the main documentation, and it\'s already starting to cement a lot of the more nebulous aspects of functional programming (things like Currying). I suppose this is to be expected, but what I\'ve been surprised about is that I feel like it\'s teaching me to be a better web developer too, which is really neat!\n\nElm is probably not going to replace things like React and Angular any time soon, if ever, and it\'s still in flux as a language so it probably not ready for \"production\" code, but for a hobbyist wanting to learn about good web development and FP it seems ideal. I feel like Elm is the programming language equivalent of baked beans in a foreign super-market, it feels new and different, but has familiar aspects (the web development parts!).\n\nI\'m going to write about Elm and the little web application that I\'m developing using it in upcoming posts. Let me know what you think of Elm, Haskell and FP on Twitter. Have you used Elm? What did you think? Has anyone learned to code using FP and then moved across to an imperative language?\n';
 var _user$project$ElmAndNewLanguages$name = 'elm-and-learning-new-languages';
 var _user$project$ElmAndNewLanguages$metaData = {
 	name: _user$project$ElmAndNewLanguages$name,
@@ -10033,7 +10140,7 @@ var _user$project$ElmAndNewLanguages$metaData = {
 	rawContent: _elm_lang$core$Maybe$Just(_user$project$ElmAndNewLanguages$rawContent)
 };
 
-var _user$project$OOBrainAndTypes$rawContent = '\n## Elm and Learning New Programming Languages\n\nI\'m not embarrassed to admit that it took me a fair amount of time to get my head around object-oriented programming. For a long time I just couldn\'t figure out why it was a useful thing. That\'s probably got something to do with my background as a research scientist, and the type of problems I originally tackled during the first few weeks and months after I started learning to code.\n\nAfter a while of staring at examples and messing about with classes in Python, it eventually clicked for me. A funny thing happened in between finally grasping the idea of objects and now… my brain has become object oriented.\n\nThere is a concept known as the law of the instrument, which was most famously expressed by Abraham Maslow as follows:\n\n> I suppose it is tempting, if the only tool you have is a hammer, to treat everything as if it were a nail.\"\n\nI now see most problems when I\'m programming in terms of objects - \"Oh I\'ll take that data and store it in this object, and it can interact with this, this and this though these methods, and it\'ll have these properties and some nice class methods and I\'ll chuck in this static method too\". Now I don\'t think that this is inherently a bad thing, sure it can be taken to absurd extremes†, but most of the time I think what I come up with is a decent solution that can be easily followed, modified, tested etc.\n\nWhat happens if you\'re using a language that doesn\'t contain objects? I\'m not taking about something like Rust where there\'s not objects, but there sort of are really, you can glue together structs and functions using the impl keyword and traits. Okay I\'m probably over simplifying that, my Rust* isn\'t great but that\'s the way it seemed to me. In Elm there are no objects, but there are types…\n\nElm has strong, static typing. This means that all data in Elm has a type, and that type is used to dictate what you can do with that data. The compiler will tell you if you\'ve used an Int in a function that expects a String. The compiler can tell from your source code, exactly how data flows through your program, and can tell how everything should connect together. If you pass the wrong type of data to a function, the compiler will tell you long before you run your code as it knows  what the type of the function is (more on this later) and the type of your data. This avoids many of the unexpected behaviours that arise when you\'re using languages that aren\'t statically typed, and particularly when you\'re working with a language like JavaScript or Python where you have duck typing.\n\nWhat does static typing have to do with objects? Well in Elm you can define your own types, and these types represent complex data in the same way that objects can in OOP. Types in Elm can be defined using some simple tools: type annotations and type aliases.\n\nIf we use the Elm repl, we can see the types of values easily:\n\n```Elm\n> \"This is a string\"\n\"This is a string\" : String\n\n> 2.71828\n2.71828 : Float\n\n> 123\n123 : number\n\n> [1, 2, 3, 4, 5]\n[1,2,3,4,5] : List number\n\n> [True, False, True]\n[True,False,True] : List Bool\n\n> []\n[] : List a\n\n> floor\n<function:floor> : Float -> Int\n\n> addX s = s ++ \"X\"\n<function> : String -> String\n\n> \\n -> n * 2\n<function> : number -> number\n\n> (\\n -> n * 2) 4\n8 : number\n\n> \\x y -> x ^ (y - 1)\n<function> : number -> number -> number\n```\n\nWhen you type an expression in the repl, the type of the evaluated expression is displayed immediately after (in the format \"data : type\". Most of this seems obvious, you have strings and their types are strings, or a number of type number or slightly more complicated you have lists which are of the types List \"something\", like List String or List Bool. You can even have lists of a generic type (see the empty list on line 16). There\'s something odd though…\n\nLet\'s look at the type of a function, for example floor on line 19, it has a type of Float -&gt; Int. This means that the type of the function is defined by the type of its input argument and the type that it returns. The type signature looks a lot like you define an anonymous function in Elm, using the syntax on line 25, and that\'s not a coincidence. I won\'t go into why this is here, but it\'s a pretty fundamental part of the language that I\'ll discuss in a later post.\n\nAs you can see in the example, Elm can infer the types of data a function will receive, but you can explicitly state them using type annotations using the same syntax as the type signature:\n\n```Elm\ndoubleIt : number -> number\ndoubleIt n = n * 2\n\nimport String\n\nstringify : number -> String\nstringify n = toString n\n\naddX : String -> String\naddX s = s ++ \"X\"\n\naddX : String -> Int\naddX s = s ++ \"X\"\n-- This raises a error on compilation\n\npowerMinusOne : number -> number -> number\npowerMinusOne x y = x ^ (y - 1)\n\ngetFileExtension : { name : String, path : String } -> String\ngetFileExtension rec = String.right 4 rec.name\n\n-- With no type annotation on get file the type sig is:\n-- <function> : { a | name : String } -> String\n```\n\nAs you can see in line 12, you can\'t lie to the compiler, I checks the types even if you\'ve annotated them. So that\'s all fine, but what if you want to pass more complex data to a function using records? Well you need to annotate the type of the record, and specify the types of all its component data. You can see this on lines 19 and 20. The record that\'s being passed into the function is relatively simple, what if you have lots of data in the record? Well no worries, let\'s just not annotate the type, and the compiler can infer the type. If you do that in the Elm repl you get the type signature on line 23. This shows that the function will take any generic type with that contains a \".name\" field. This sucks! Everything should be more explicit, that\'d make it easier to read. In the words of Raymond Hettinger \"There must be a better way!\", and of course there is. We can use type aliases to make this more readable, concise and maintainable. \n\n```Elm\nimport String\nimport Html\nimport List\n\ntype alias Person = { name : String\n  , access : List String }\n\ntype alias Location = String\n\nee1 = { name = \"Ian Beal\"\n  , access = [\"Caff\", \"Laundrette\"] }\n\nee2 = { name = \"Pat Butcher\"\n  , access = [\"Queen Vic\", \"The Market\"] }\n\nrequestAccess : Person -> Location -> Bool\nrequestAccess person location = if List.member location person.access\n  then True\n  else False\n\nrequestAccess ee1 \"Caff\"\n-- Returns True\n\nrequestAccess ee1 \"Queen Vic\"\n-- Returns False\n\nrequestAccess ee2 \"Queen Vic\"\n-- Returns True\n\nrequestAccess { name = \"Ian Beal\", access = [\"Caff\", \"Laundrette\"] } \"Caff\"\n-- Returns True\n\nrequestAccess { access = [\"Caff\", \"Laundrette\"] } \"Caff\"\n-- Raises error on compilation\n```\n\nYou can see the type aliases on line 5/6 and line 8. 5/6 shows a type alias of a Record with a name and an access field and 8 is an alias of a String. We then add a type annotation to the requestAccess function. This function takes a \"Person\" and a \"Location\" type, then returns a bool if they\'re allowed access. You can annotate any type, but you must remember that it doesn\'t do anything special, it merely is a form of shorthand for the annotations.\n\nType aliases are much lighter weight than objects in most languages, but I think that maybe they\'re a bit more transparent too. Pretty neat!\n\nUpdate: There are also type unions, which as the name suggests groups types together, but I\'ll go into more depth about those in another post.\n\nNote: Most of the examples here are based on the Elm docs regarding types, check them out [here](https://guide.elm-lang.org/types/).\n\n\n† - I love this article by Steve Yegge where he describes a terrifying world where there are only objects http://steve-yegge.blogspot.co.uk/2006/03/execution-in-kingdom-of-nouns.html\n\n\\* - Rust is cool, I like it for the same main reason I like Elm; it has a clear domain except it\'s systems programming not web development. I might write some posts on it at some point.\n';
+var _user$project$OOBrainAndTypes$rawContent = '\nI\'m not embarrassed to admit that it took me a fair amount of time to get my head around object-oriented programming. For a long time I just couldn\'t figure out why it was a useful thing. That\'s probably got something to do with my background as a research scientist, and the type of problems I originally tackled during the first few weeks and months after I started learning to code.\n\nAfter a while of staring at examples and messing about with classes in Python, it eventually clicked for me. A funny thing happened in between finally grasping the idea of objects and now… my brain has become object oriented.\n\nThere is a concept known as the law of the instrument, which was most famously expressed by Abraham Maslow as follows:\n\n> I suppose it is tempting, if the only tool you have is a hammer, to treat everything as if it were a nail.\"\n\nI now see most problems when I\'m programming in terms of objects - \"Oh I\'ll take that data and store it in this object, and it can interact with this, this and this though these methods, and it\'ll have these properties and some nice class methods and I\'ll chuck in this static method too\". Now I don\'t think that this is inherently a bad thing, sure it can be taken to absurd extremes†, but most of the time I think what I come up with is a decent solution that can be easily followed, modified, tested etc.\n\nWhat happens if you\'re using a language that doesn\'t contain objects? I\'m not taking about something like Rust where there\'s not objects, but there sort of are really, you can glue together structs and functions using the impl keyword and traits. Okay I\'m probably over simplifying that, my Rust* isn\'t great but that\'s the way it seemed to me. In Elm there are no objects, but there are types…\n\nElm has strong, static typing. This means that all data in Elm has a type, and that type is used to dictate what you can do with that data. The compiler will tell you if you\'ve used an Int in a function that expects a String. The compiler can tell from your source code, exactly how data flows through your program, and can tell how everything should connect together. If you pass the wrong type of data to a function, the compiler will tell you long before you run your code as it knows  what the type of the function is (more on this later) and the type of your data. This avoids many of the unexpected behaviours that arise when you\'re using languages that aren\'t statically typed, and particularly when you\'re working with a language like JavaScript or Python where you have duck typing.\n\nWhat does static typing have to do with objects? Well in Elm you can define your own types, and these types represent complex data in the same way that objects can in OOP. Types in Elm can be defined using some simple tools: type annotations and type aliases.\n\nIf we use the Elm repl, we can see the types of values easily:\n\n```Elm\n> \"This is a string\"\n\"This is a string\" : String\n\n> 2.71828\n2.71828 : Float\n\n> 123\n123 : number\n\n> [1, 2, 3, 4, 5]\n[1,2,3,4,5] : List number\n\n> [True, False, True]\n[True,False,True] : List Bool\n\n> []\n[] : List a\n\n> floor\n<function:floor> : Float -> Int\n\n> addX s = s ++ \"X\"\n<function> : String -> String\n\n> \\n -> n * 2\n<function> : number -> number\n\n> (\\n -> n * 2) 4\n8 : number\n\n> \\x y -> x ^ (y - 1)\n<function> : number -> number -> number\n```\n\nWhen you type an expression in the repl, the type of the evaluated expression is displayed immediately after (in the format \"data : type\". Most of this seems obvious, you have strings and their types are strings, or a number of type number or slightly more complicated you have lists which are of the types List \"something\", like List String or List Bool. You can even have lists of a generic type (see the empty list on line 16). There\'s something odd though…\n\nLet\'s look at the type of a function, for example floor on line 19, it has a type of Float -&gt; Int. This means that the type of the function is defined by the type of its input argument and the type that it returns. The type signature looks a lot like you define an anonymous function in Elm, using the syntax on line 25, and that\'s not a coincidence. I won\'t go into why this is here, but it\'s a pretty fundamental part of the language that I\'ll discuss in a later post.\n\nAs you can see in the example, Elm can infer the types of data a function will receive, but you can explicitly state them using type annotations using the same syntax as the type signature:\n\n```Elm\ndoubleIt : number -> number\ndoubleIt n = n * 2\n\nimport String\n\nstringify : number -> String\nstringify n = toString n\n\naddX : String -> String\naddX s = s ++ \"X\"\n\naddX : String -> Int\naddX s = s ++ \"X\"\n-- This raises a error on compilation\n\npowerMinusOne : number -> number -> number\npowerMinusOne x y = x ^ (y - 1)\n\ngetFileExtension : { name : String, path : String } -> String\ngetFileExtension rec = String.right 4 rec.name\n\n-- With no type annotation on get file the type sig is:\n-- <function> : { a | name : String } -> String\n```\n\nAs you can see in line 12, you can\'t lie to the compiler, I checks the types even if you\'ve annotated them. So that\'s all fine, but what if you want to pass more complex data to a function using records? Well you need to annotate the type of the record, and specify the types of all its component data. You can see this on lines 19 and 20. The record that\'s being passed into the function is relatively simple, what if you have lots of data in the record? Well no worries, let\'s just not annotate the type, and the compiler can infer the type. If you do that in the Elm repl you get the type signature on line 23. This shows that the function will take any generic type with that contains a \".name\" field. This sucks! Everything should be more explicit, that\'d make it easier to read. In the words of Raymond Hettinger \"There must be a better way!\", and of course there is. We can use type aliases to make this more readable, concise and maintainable. \n\n```Elm\nimport String\nimport Html\nimport List\n\ntype alias Person = { name : String\n  , access : List String }\n\ntype alias Location = String\n\nee1 = { name = \"Ian Beal\"\n  , access = [\"Caff\", \"Laundrette\"] }\n\nee2 = { name = \"Pat Butcher\"\n  , access = [\"Queen Vic\", \"The Market\"] }\n\nrequestAccess : Person -> Location -> Bool\nrequestAccess person location = if List.member location person.access\n  then True\n  else False\n\nrequestAccess ee1 \"Caff\"\n-- Returns True\n\nrequestAccess ee1 \"Queen Vic\"\n-- Returns False\n\nrequestAccess ee2 \"Queen Vic\"\n-- Returns True\n\nrequestAccess { name = \"Ian Beal\", access = [\"Caff\", \"Laundrette\"] } \"Caff\"\n-- Returns True\n\nrequestAccess { access = [\"Caff\", \"Laundrette\"] } \"Caff\"\n-- Raises error on compilation\n```\n\nYou can see the type aliases on line 5/6 and line 8. 5/6 shows a type alias of a Record with a name and an access field and 8 is an alias of a String. We then add a type annotation to the requestAccess function. This function takes a \"Person\" and a \"Location\" type, then returns a bool if they\'re allowed access. You can annotate any type, but you must remember that it doesn\'t do anything special, it merely is a form of shorthand for the annotations.\n\nType aliases are much lighter weight than objects in most languages, but I think that maybe they\'re a bit more transparent too. Pretty neat!\n\nUpdate: There are also type unions, which as the name suggests groups types together, but I\'ll go into more depth about those in another post.\n\nNote: Most of the examples here are based on the Elm docs regarding types, check them out [here](https://guide.elm-lang.org/types/).\n\n\n† - I love this article by Steve Yegge where he describes a terrifying world where there are only objects http://steve-yegge.blogspot.co.uk/2006/03/execution-in-kingdom-of-nouns.html\n\n\\* - Rust is cool, I like it for the same main reason I like Elm; it has a clear domain except it\'s systems programming not web development. I might write some posts on it at some point.\n';
 var _user$project$OOBrainAndTypes$name = 'object-oriented-brain-and-types';
 var _user$project$OOBrainAndTypes$metaData = {
 	name: _user$project$OOBrainAndTypes$name,
@@ -10058,7 +10165,7 @@ var _user$project$OOBrainAndTypes$metaData = {
 	rawContent: _elm_lang$core$Maybe$Just(_user$project$OOBrainAndTypes$rawContent)
 };
 
-var _user$project$ElmStaticSiteP1$rawContent = '\n## Tools for Handling Static Pages in Elm - Part 1. Dealing with Links\n\n*Check out the source code for the site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io).*\n\nFirst of all, happy new year! I hope everyone had a great holiday. I\'ve got a bit of time off of work, and as I\'m now back from visiting family, I\'ve been getting stuck into some little projects. The first thing I wanted to do was update this website. I was very pleased how quickly I managed to get the site up and running using just Markdown and GitHub pages, but obviously there are limitations around building a website this way. So I decided I\'d rebuild it in [Elm](http://elm-lang.org/), which is a neat functional programming language designed to make webapps.\n\nThe main purpose of this website is to host my blog, as well as sharing things that I\'ve made and other interesting stuff I\'ve found. Usually Elm is used to make one page webapps, where content is dynamically added to the page, so it wasn\'t particularly obvious to me how I should implement this a site that mainly uses static content with the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:\n\n1. **How you would provide a link to a particular article when there\'s only a single HTML page?**\n2. After dynamically changing the website, how do you deal with running external Javascript libraries in response to these changes?\n\nThis post deals with the first topic.\n\n### Links on a single page Elm application\n\nMy initial solution to this was to just have a bunch of Elm files that each compiled independently to create a bunch of HTML pages. I used a bat file to automate the building process, but it felt clunky. Then I came across the `navigation` module in the Elm core library. So I rewrote the site to use this, but quickly found out I also needed to use the `url-parser` module.\n\nTo start, you need to use a special `Program` type, stored in the `Navigation` module:\n\n```Elm\nmain : Program Never Model Msg\nmain =\n    Navigation.program UrlChange\n        { init = init\n        , view = view\n        , update = update\n        , subscriptions = (\\_ -> Sub.none)\n        }\n```\n\nThis is very similar to `Html.program`, only real difference is that you need to supply a `Msg` that will be fed to the update function everytime the URL changes. The `init` function is important too, but I\'ll come back to that later.\n\nNext, the current active page is recorded in the model using a union type:\n\n```Elm\ntype alias Model =\n    { page: Page\n    }\n\ntype Page\n    = Home\n    | AllPosts\n    | Post String\n```\n\nThis means that we can currently have 3 \"types\" of pages. `Home` and `AllPosts` are pretty self explanatory, correspond to a unique page. The `Post` page type corresponds to blog post pages, of which there are many, and so information on the specific post is also required.\n\nYou can handle the unique pages using just the navigation module, by pattern matching a hash in a url, as outlined in [this article](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) by Pablo Fernández. However, you need more information for the post pages, so you can get the correct post. This can be extracted from the URL using the [`url-parser` module](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/).\n\nTo parse a URL, you need a `Msg` to handle the change in URL, which takes a `Navigation.Location` as an input:\n\n```Elm\ntype Msg\n    = UrlChange Navigation.Location\n```\n\nThe `Navigation.Location` record has the following type annotation:\n\n```Elm\ntype alias Location =\n    { href : String\n    , host : String\n    , hostname : String\n    , protocol : String\n    , origin : String\n    , port_ : String\n    , pathname : String\n    , search : String\n    , hash : String\n    , username : String\n    , password : String }\n```\n\nI\'m using location hashes for the links to different content, so we can ignore the rest of the record. Our update function handles the `UrlChange Msg`, parsing the URL and saving the correct page type in the model.\n\n```Elm\nimport UrlParser exposing ((</>))\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! [ Cmd.none ]\n\ngetPage : Navigation.Location -> Page\ngetPage location =\n    Maybe.withDefault AllPosts (UrlParser.parseHash route location)\n\nroute : UrlParser.Parser (Page -> a) a\nroute =\n    UrlParser.oneOf\n        [ UrlParser.map Home UrlParser.top\n        , UrlParser.map Post (UrlParser.s \"blog\" </> UrlParser.string)\n        ]\n```\n\nThe update function is pretty straight forward, it process a `UrlChange Msg` and then parses the location to get the page type, which is stored in the model. The `getPage` function uses `UrlParser.parseHash` to process the location, generating a `Maybe Page`.\n\n`parseHash` takes a `UrlParser.Parser` type, in this case `route`. Route looks a bit weird, mainly due to `UrlParser.oneOf`, but essentially it just take a bunch of parsers and merges them together to make a super parser that when used will try each of the parsers it contains.\n\nThe actual parsers themselves are the `(UrlParser.s \"blog\" </> UrlParser.string)` and `UrlParser.top` bits. The `Parser` takes URLs and converts them to data. `UrlParser.top` is pretty simple, it doesn\'t consume any segments from the path, and so will successfully parse if the URL if it has no additional segments. The `s` parser will parse a segment of the URL if it *exactly* matches a provided string, so `UrlParser.s \"blog\"` will parse `/blog/` but nothing else. `UrlParser.string` will successfully parse any segment that is a string. Finally, `UrlParser.</>` combines the parsers together, to make a parser that has to exactly match `blog` and then contain another segment that is a string. There are other parser types too, check out the [docs](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/UrlParser) for more details.\n\nThe parser can then be applied to the location using either `parsePath` or `parseHash`, and will return `Just *data*` or `Nothing`. `UrlParser.map` is used to transform the data contained in the URL into a `Msg`. So, using this parser:\n\n```Elm\n-- /                      ==> Just Home\n-- /blog/my-gid-blog-post ==> Just (Post \"my-gid-blog-post\")\n-- /blog                  ==> Nothing\n```\n\n`UrlParser` is very powerful, and isn\'t as complex to use as it is to explain. The best way to get a feel for how `UrlParser` works is to actually use it.\n\nFinally, the post type in the `model` can be used to alter content in the view when it\'s rendered:\n\n```Elm\nview : Model -> Html Msg\nview model = div [ id \"mainSiteDiv\", mainSiteDivStyle ]\n    [ CommonViews.siteHeader\n    , content model\n    , CommonViews.siteFooter\n    ]\n\ncontent : Model -> Html Msg\ncontent model = div [ id \"contentSection\" ]\n    [ getContent model\n    ]\n\ngetContent : Model -> Html Msg\ngetContent model =\n    case model.page of\n      Home -> home\n      AllPosts -> postList\n      Post title -> getBlogPost title\n```\n\nThere\'s one more bit of plumbing we need to do if this is to work properly. Previously I mentioned that the `init` was important. When I originally implemented the `init`, it looks like this:\n\n```Elm\ninit : Navigation.Location -> (Model, Cmd Msg)\ninit _ = ( Model Home, Cmd.none )\n```\n\nAs it\'s `Navigation.program` it takes a `Navigation.Location` as an input, but I threw it away because I didn\'t know what to do with it. The model is simply initialised with the `Home` page. This works, if you go to the URL of my website it goes to the homepage. However, if you use with a hash location, like this https://chriswellswood.github.io/#blog/elm-static-site-p1, you still go to the homepage. It\'s pretty obvious why this is happening, no `UrlChange` message is getting passed to the `update` function.\n\nTo fix this, I changed the `init` function to look like this:\n\n```Elm\ninit : Navigation.Location -> (Model, Cmd Msg)\ninit location =\n    ( Model Home\n    , Task.perform identity (Task.succeed (UrlChange location))\n    )\n```\n\nThis time, the model is the same, but the location is not thrown away. We need to send a command to pass `UrlChange` to the `update` function. To to this we wrap a the `Msg` in a task that will always succeed and will return the `UrlChange`, and then identity is used to provide `UrlChange` to be passed to update after the task has been performed. The end result is that as soon as the website starts, the URL will be pasrsed and the correct content will be loaded.\n\nThat\'s it for this post, but in the next post I\'ll discuss using ports and tasks to interact with Javascript, allowing us to format code in the posts.\n\n### References\n\n1. [SPA simple with Elm Navigation](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) Pablo Fernández\n1. UrlParser [documentation](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/) and [example](https://github.com/evancz/url-parser/blob/2.0.1/examples/Example.elm) by Evan Czaplicki.\n';
+var _user$project$ElmStaticSiteP1$rawContent = '\n*Check out the source code for the site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io).*\n\nFirst of all, happy new year! I hope everyone had a great holiday. I\'ve got a bit of time off of work, and as I\'m now back from visiting family, I\'ve been getting stuck into some little projects. The first thing I wanted to do was update this website. I was very pleased how quickly I managed to get the site up and running using just Markdown and GitHub pages, but obviously there are limitations around building a website this way. So I decided I\'d rebuild it in [Elm](http://elm-lang.org/), which is a neat functional programming language designed to make webapps.\n\nThe main purpose of this website is to host my blog, as well as sharing things that I\'ve made and other interesting stuff I\'ve found. Usually Elm is used to make one page webapps, where content is dynamically added to the page, so it wasn\'t particularly obvious to me how I should implement this a site that mainly uses static content with the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:\n\n1. **How you would provide a link to a particular article when there\'s only a single HTML page?**\n2. After dynamically changing the website, how do you deal with running external Javascript libraries in response to these changes?\n\nThis post deals with the first topic.\n\n### Links on a single page Elm application\n\nMy initial solution to this was to just have a bunch of Elm files that each compiled independently to create a bunch of HTML pages. I used a bat file to automate the building process, but it felt clunky. Then I came across the `navigation` module in the Elm core library. So I rewrote the site to use this, but quickly found out I also needed to use the `url-parser` module.\n\nTo start, you need to use a special `Program` type, stored in the `Navigation` module:\n\n```Elm\nmain : Program Never Model Msg\nmain =\n    Navigation.program UrlChange\n        { init = init\n        , view = view\n        , update = update\n        , subscriptions = (\\_ -> Sub.none)\n        }\n```\n\nThis is very similar to `Html.program`, only real difference is that you need to supply a `Msg` that will be fed to the update function everytime the URL changes. The `init` function is important too, but I\'ll come back to that later.\n\nNext, the current active page is recorded in the model using a union type:\n\n```Elm\ntype alias Model =\n    { page: Page\n    }\n\ntype Page\n    = Home\n    | AllPosts\n    | Post String\n```\n\nThis means that we can currently have 3 \"types\" of pages. `Home` and `AllPosts` are pretty self explanatory, correspond to a unique page. The `Post` page type corresponds to blog post pages, of which there are many, and so information on the specific post is also required.\n\nYou can handle the unique pages using just the navigation module, by pattern matching a hash in a url, as outlined in [this article](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) by Pablo Fernández. However, you need more information for the post pages, so you can get the correct post. This can be extracted from the URL using the [`url-parser` module](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/).\n\nTo parse a URL, you need a `Msg` to handle the change in URL, which takes a `Navigation.Location` as an input:\n\n```Elm\ntype Msg\n    = UrlChange Navigation.Location\n```\n\nThe `Navigation.Location` record has the following type annotation:\n\n```Elm\ntype alias Location =\n    { href : String\n    , host : String\n    , hostname : String\n    , protocol : String\n    , origin : String\n    , port_ : String\n    , pathname : String\n    , search : String\n    , hash : String\n    , username : String\n    , password : String }\n```\n\nI\'m using location hashes for the links to different content, so we can ignore the rest of the record. Our update function handles the `UrlChange Msg`, parsing the URL and saving the correct page type in the model.\n\n```Elm\nimport UrlParser exposing ((</>))\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! [ Cmd.none ]\n\ngetPage : Navigation.Location -> Page\ngetPage location =\n    Maybe.withDefault AllPosts (UrlParser.parseHash route location)\n\nroute : UrlParser.Parser (Page -> a) a\nroute =\n    UrlParser.oneOf\n        [ UrlParser.map Home UrlParser.top\n        , UrlParser.map Post (UrlParser.s \"blog\" </> UrlParser.string)\n        ]\n```\n\nThe update function is pretty straight forward, it process a `UrlChange Msg` and then parses the location to get the page type, which is stored in the model. The `getPage` function uses `UrlParser.parseHash` to process the location, generating a `Maybe Page`.\n\n`parseHash` takes a `UrlParser.Parser` type, in this case `route`. Route looks a bit weird, mainly due to `UrlParser.oneOf`, but essentially it just take a bunch of parsers and merges them together to make a super parser that when used will try each of the parsers it contains.\n\nThe actual parsers themselves are the `(UrlParser.s \"blog\" </> UrlParser.string)` and `UrlParser.top` bits. The `Parser` takes URLs and converts them to data. `UrlParser.top` is pretty simple, it doesn\'t consume any segments from the path, and so will successfully parse if the URL if it has no additional segments. The `s` parser will parse a segment of the URL if it *exactly* matches a provided string, so `UrlParser.s \"blog\"` will parse `/blog/` but nothing else. `UrlParser.string` will successfully parse any segment that is a string. Finally, `UrlParser.</>` combines the parsers together, to make a parser that has to exactly match `blog` and then contain another segment that is a string. There are other parser types too, check out the [docs](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/UrlParser) for more details.\n\nThe parser can then be applied to the location using either `parsePath` or `parseHash`, and will return `Just *data*` or `Nothing`. `UrlParser.map` is used to transform the data contained in the URL into a `Msg`. So, using this parser:\n\n```Elm\n-- /                      ==> Just Home\n-- /blog/my-gid-blog-post ==> Just (Post \"my-gid-blog-post\")\n-- /blog                  ==> Nothing\n```\n\n`UrlParser` is very powerful, and isn\'t as complex to use as it is to explain. The best way to get a feel for how `UrlParser` works is to actually use it.\n\nFinally, the post type in the `model` can be used to alter content in the view when it\'s rendered:\n\n```Elm\nview : Model -> Html Msg\nview model = div [ id \"mainSiteDiv\", mainSiteDivStyle ]\n    [ CommonViews.siteHeader\n    , content model\n    , CommonViews.siteFooter\n    ]\n\ncontent : Model -> Html Msg\ncontent model = div [ id \"contentSection\" ]\n    [ getContent model\n    ]\n\ngetContent : Model -> Html Msg\ngetContent model =\n    case model.page of\n      Home -> home\n      AllPosts -> postList\n      Post title -> getBlogPost title\n```\n\nThere\'s one more bit of plumbing we need to do if this is to work properly. Previously I mentioned that the `init` was important. When I originally implemented the `init`, it looks like this:\n\n```Elm\ninit : Navigation.Location -> (Model, Cmd Msg)\ninit _ = ( Model Home, Cmd.none )\n```\n\nAs it\'s `Navigation.program` it takes a `Navigation.Location` as an input, but I threw it away because I didn\'t know what to do with it. The model is simply initialised with the `Home` page. This works, if you go to the URL of my website it goes to the homepage. However, if you use with a hash location, like this https://chriswellswood.github.io/#blog/elm-static-site-p1, you still go to the homepage. It\'s pretty obvious why this is happening, no `UrlChange` message is getting passed to the `update` function.\n\nTo fix this, I changed the `init` function to look like this:\n\n```Elm\ninit : Navigation.Location -> (Model, Cmd Msg)\ninit location =\n    ( Model Home\n    , Task.perform identity (Task.succeed (UrlChange location))\n    )\n```\n\nThis time, the model is the same, but the location is not thrown away. We need to send a command to pass `UrlChange` to the `update` function. To to this we wrap a the `Msg` in a task that will always succeed and will return the `UrlChange`, and then identity is used to provide `UrlChange` to be passed to update after the task has been performed. The end result is that as soon as the website starts, the URL will be pasrsed and the correct content will be loaded.\n\nThat\'s it for this post, but in the next post I\'ll discuss using ports and tasks to interact with Javascript, allowing us to format code in the posts.\n\n### References\n\n1. [SPA simple with Elm Navigation](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) Pablo Fernández\n1. UrlParser [documentation](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/) and [example](https://github.com/evancz/url-parser/blob/2.0.1/examples/Example.elm) by Evan Czaplicki.\n';
 var _user$project$ElmStaticSiteP1$name = 'elm-static-site-p1';
 var _user$project$ElmStaticSiteP1$metaData = {
 	name: _user$project$ElmStaticSiteP1$name,
@@ -10110,61 +10217,6 @@ var _user$project$Snippets$allSnippets = {
 	_1: {ctor: '[]'}
 };
 
-var _user$project$Content$allPosts = {
-	ctor: '::',
-	_0: _user$project$EmptyRustStructs$metaData,
-	_1: {
-		ctor: '::',
-		_0: _user$project$ElmAndNewLanguages$metaData,
-		_1: {
-			ctor: '::',
-			_0: _user$project$OOBrainAndTypes$metaData,
-			_1: {
-				ctor: '::',
-				_0: _user$project$ElmStaticSiteP1$metaData,
-				_1: {ctor: '[]'}
-			}
-		}
-	}
-};
-var _user$project$Content$getBlogMetaData = function (title) {
-	return _elm_lang$core$List$head(
-		A2(
-			_elm_lang$core$List$filter,
-			function (metaData) {
-				return _elm_lang$core$Native_Utils.eq(metaData.name, title);
-			},
-			_user$project$Content$allPosts));
-};
-var _user$project$Content$getBlogPost = function (title) {
-	var blogMetaData = _user$project$Content$getBlogMetaData(title);
-	var _p0 = blogMetaData;
-	if (_p0.ctor === 'Just') {
-		return _elm_lang$core$Maybe$Just(
-			A2(
-				_elm_lang$html$Html$div,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'max-width', _1: '95%'},
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: A2(
-						_evancz$elm_markdown$Markdown$toHtml,
-						{ctor: '[]'},
-						A2(_elm_lang$core$Maybe$withDefault, '', _p0._0.rawContent)),
-					_1: {ctor: '[]'}
-				}));
-	} else {
-		return _elm_lang$core$Maybe$Nothing;
-	}
-};
 var _user$project$Content$dateToString = function (dateTuple) {
 	return A3(
 		_elm_lang$core$List$foldr,
@@ -10240,34 +10292,101 @@ var _user$project$Content$cardInfo = function (metaData) {
 			}
 		});
 };
+var _user$project$Content$blogPostHeader = function (metaData) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('blogPostHeader'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$h2,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'margin', _1: '0'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'padding', _1: '0'},
+								_1: {ctor: '[]'}
+							}
+						}),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(metaData.title),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: _user$project$Content$cardInfo(metaData),
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _user$project$Content$blogPostView = function (metaData) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$class('blogPostView'),
+			_1: {ctor: '[]'}
+		},
+		{
+			ctor: '::',
+			_0: _user$project$Content$blogPostHeader(metaData),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_evancz$elm_markdown$Markdown$toHtml,
+					{ctor: '[]'},
+					A2(_elm_lang$core$Maybe$withDefault, '', metaData.rawContent)),
+				_1: {ctor: '[]'}
+			}
+		});
+};
 var _user$project$Content$contentCard = function (metaData) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{
 			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$style(
-				{
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'border-left', _1: '3px solid #bdc696'},
-					_1: {
+			_0: _elm_lang$html$Html_Attributes$class('contentCard'),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
 						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'background-color', _1: '#dfe0dc'},
+						_0: {ctor: '_Tuple2', _0: 'border-left', _1: '3px solid #bdc696'},
 						_1: {
 							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
+							_0: {ctor: '_Tuple2', _0: 'border-right', _1: '3px solid #bdc696'},
 							_1: {
 								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '10px'},
+								_0: {ctor: '_Tuple2', _0: 'background-color', _1: '#dfe0dc'},
 								_1: {
 									ctor: '::',
-									_0: {ctor: '_Tuple2', _0: 'padding', _1: '10px 10px 1px 10px'},
-									_1: {ctor: '[]'}
+									_0: {ctor: '_Tuple2', _0: 'margin-top', _1: '10px'},
+									_1: {
+										ctor: '::',
+										_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '10px'},
+										_1: {
+											ctor: '::',
+											_0: {ctor: '_Tuple2', _0: 'padding', _1: '10px 10px 1px 10px'},
+											_1: {ctor: '[]'}
+										}
+									}
 								}
 							}
 						}
-					}
-				}),
-			_1: {ctor: '[]'}
+					}),
+				_1: {ctor: '[]'}
+			}
 		},
 		{
 			ctor: '::',
@@ -10321,13 +10440,29 @@ var _user$project$Content$contentCard = function (metaData) {
 			}
 		});
 };
-var _user$project$Content$recentContentCardsStyle = _elm_lang$html$Html_Attributes$style(
+var _user$project$Content$allSnippetsView = A2(
+	_elm_lang$html$Html$div,
 	{
 		ctor: '::',
-		_0: {ctor: '_Tuple2', _0: 'width', _1: '90%'},
+		_0: _elm_lang$html$Html_Attributes$id('allSnippetsView'),
+		_1: {ctor: '[]'}
+	},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$h2,
+			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('All Snippets'),
+				_1: {ctor: '[]'}
+			}),
 		_1: {
 			ctor: '::',
-			_0: {ctor: '_Tuple2', _0: 'margin', _1: '0 auto'},
+			_0: A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				A2(_elm_lang$core$List$map, _user$project$Content$contentCard, _user$project$Snippets$allSnippets)),
 			_1: {ctor: '[]'}
 		}
 	});
@@ -10338,47 +10473,13 @@ var _user$project$Content$recentContentCards = F2(
 			{
 				ctor: '::',
 				_0: _elm_lang$html$Html_Attributes$id('recentContentCards'),
-				_1: {
-					ctor: '::',
-					_0: _user$project$Content$recentContentCardsStyle,
-					_1: {ctor: '[]'}
-				}
+				_1: {ctor: '[]'}
 			},
 			A2(
 				_elm_lang$core$List$take,
 				numToShow,
 				A2(_elm_lang$core$List$map, _user$project$Content$contentCard, posts)));
 	});
-var _user$project$Content$recentPosts = function (numToShow) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{ctor: '[]'},
-		{
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$h2,
-				{ctor: '[]'},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text('Recent Posts'),
-					_1: {ctor: '[]'}
-				}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_user$project$Content$recentContentCards,
-					_elm_lang$core$List$reverse(
-						A2(
-							_elm_lang$core$List$sortBy,
-							function (_) {
-								return _.date;
-							},
-							_user$project$Content$allPosts)),
-					numToShow),
-				_1: {ctor: '[]'}
-			}
-		});
-};
 var _user$project$Content$recentSnippets = function (numToShow) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -10404,6 +10505,98 @@ var _user$project$Content$recentSnippets = function (numToShow) {
 								return _.date;
 							},
 							_user$project$Snippets$allSnippets)),
+					numToShow),
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _user$project$Content$allPosts = {
+	ctor: '::',
+	_0: _user$project$EmptyRustStructs$metaData,
+	_1: {
+		ctor: '::',
+		_0: _user$project$ElmAndNewLanguages$metaData,
+		_1: {
+			ctor: '::',
+			_0: _user$project$OOBrainAndTypes$metaData,
+			_1: {
+				ctor: '::',
+				_0: _user$project$ElmStaticSiteP1$metaData,
+				_1: {ctor: '[]'}
+			}
+		}
+	}
+};
+var _user$project$Content$allPostsView = A2(
+	_elm_lang$html$Html$div,
+	{
+		ctor: '::',
+		_0: _elm_lang$html$Html_Attributes$id('allPostsView'),
+		_1: {ctor: '[]'}
+	},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$h2,
+			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('All Posts'),
+				_1: {ctor: '[]'}
+			}),
+		_1: {
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				A2(_elm_lang$core$List$map, _user$project$Content$contentCard, _user$project$Content$allPosts)),
+			_1: {ctor: '[]'}
+		}
+	});
+var _user$project$Content$getBlogMetaData = function (title) {
+	return _elm_lang$core$List$head(
+		A2(
+			_elm_lang$core$List$filter,
+			function (metaData) {
+				return _elm_lang$core$Native_Utils.eq(metaData.name, title);
+			},
+			_user$project$Content$allPosts));
+};
+var _user$project$Content$getBlogPost = function (title) {
+	var blogMetaData = _user$project$Content$getBlogMetaData(title);
+	var _p0 = blogMetaData;
+	if (_p0.ctor === 'Just') {
+		return _elm_lang$core$Maybe$Just(
+			_user$project$Content$blogPostView(_p0._0));
+	} else {
+		return _elm_lang$core$Maybe$Nothing;
+	}
+};
+var _user$project$Content$recentPosts = function (numToShow) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$h2,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Recent Posts'),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_user$project$Content$recentContentCards,
+					_elm_lang$core$List$reverse(
+						A2(
+							_elm_lang$core$List$sortBy,
+							function (_) {
+								return _.date;
+							},
+							_user$project$Content$allPosts)),
 					numToShow),
 				_1: {ctor: '[]'}
 			}
@@ -10481,12 +10674,14 @@ var _user$project$Index$getContent = function (model) {
 		case 'Home':
 			return _user$project$Index$home;
 		case 'AllPosts':
-			return _user$project$Index$home;
-		default:
+			return _user$project$Content$allPostsView;
+		case 'Post':
 			return A2(
 				_elm_lang$core$Maybe$withDefault,
 				_user$project$Index$home,
 				_user$project$Content$getBlogPost(_p0._0));
+		default:
+			return _user$project$Content$allSnippetsView;
 	}
 };
 var _user$project$Index$content = function (model) {
@@ -10559,6 +10754,7 @@ var _user$project$Index$highlightMarkdown = _elm_lang$core$Native_Platform.outgo
 var _user$project$Index$Model = function (a) {
 	return {page: a};
 };
+var _user$project$Index$AllSnippets = {ctor: 'AllSnippets'};
 var _user$project$Index$Post = function (a) {
 	return {ctor: 'Post', _0: a};
 };
@@ -10572,18 +10768,32 @@ var _user$project$Index$route = _evancz$url_parser$UrlParser$oneOf(
 			ctor: '::',
 			_0: A2(
 				_evancz$url_parser$UrlParser$map,
-				_user$project$Index$Post,
-				A2(
-					_evancz$url_parser$UrlParser_ops['</>'],
-					_evancz$url_parser$UrlParser$s('blog'),
-					_evancz$url_parser$UrlParser$string)),
-			_1: {ctor: '[]'}
+				_user$project$Index$AllPosts,
+				_evancz$url_parser$UrlParser$s('all-posts')),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_evancz$url_parser$UrlParser$map,
+					_user$project$Index$Post,
+					A2(
+						_evancz$url_parser$UrlParser_ops['</>'],
+						_evancz$url_parser$UrlParser$s('blog'),
+						_evancz$url_parser$UrlParser$string)),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_evancz$url_parser$UrlParser$map,
+						_user$project$Index$AllSnippets,
+						_evancz$url_parser$UrlParser$s('all-snippets')),
+					_1: {ctor: '[]'}
+				}
+			}
 		}
 	});
 var _user$project$Index$getPage = function (location) {
 	return A2(
 		_elm_lang$core$Maybe$withDefault,
-		_user$project$Index$Home,
+		_user$project$Index$AllPosts,
 		A2(_evancz$url_parser$UrlParser$parseHash, _user$project$Index$route, location));
 };
 var _user$project$Index$Highlight = function (a) {
