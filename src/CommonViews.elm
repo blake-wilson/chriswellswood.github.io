@@ -38,5 +38,5 @@ siteFooter =
     footer []
         [ div [ id "siteFooter" ]
             [ hr [] []
-            , text "© Chris Wells Wood, 2016."]
+            , text "© Chris Wells Wood, 2016-2017."]
         ]

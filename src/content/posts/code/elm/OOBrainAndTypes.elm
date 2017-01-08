@@ -155,5 +155,5 @@ Note: Most of the examples here are based on the Elm docs regarding types, check
 
 † - I love this article by Steve Yegge where he describes a terrifying world where there are only objects http://steve-yegge.blogspot.co.uk/2006/03/execution-in-kingdom-of-nouns.html
 
-* - Rust is cool, I like it for the same main reason I like Elm; it has a clear domain except it's systems programming not web development. I might write some posts on it at some point.
+\\* - Rust is cool, I like it for the same main reason I like Elm; it has a clear domain except it's systems programming not web development. I might write some posts on it at some point.
 """
