@@ -1,7 +1,12 @@
 module Snippets exposing (..)
 
+import Html exposing (..)
+
+import Types exposing (ContentMetaData)
+
 -- Snippets are essentially metadata without the content.
 
+allSnippets : List (ContentMetaData msg)
 allSnippets = 
     [ { name = "markdown-cheatsheet"
       , title = "Markdown Cheatsheet"
@@ -10,6 +15,6 @@ allSnippets =
       , category = "Code"
       , subcategory = "Markdown"
       , url = "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet"
-      , rawContent = Nothing
+      , content = div [] []
       }
     ]

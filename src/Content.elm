@@ -2,7 +2,8 @@ module Content exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Markdown
+
+import Types exposing (ContentMetaData)
 
 import EmptyRustStructs
 import ElmAndNewLanguages
@@ -10,18 +11,7 @@ import OOBrainAndTypes
 import ElmStaticSiteP1
 import Snippets exposing (allSnippets)
 
-type alias ContentMetaData =
-    { name : String
-    , title : String
-    , date : (List Int)
-    , description : String
-    , category : String
-    , subcategory : String
-    , url : String
-    , rawContent : Maybe String
-    }
-
-allPosts : List ContentMetaData
+allPosts : List (ContentMetaData msg)
 allPosts =
     [ EmptyRustStructs.metaData
     , ElmAndNewLanguages.metaData
@@ -29,12 +19,12 @@ allPosts =
     , ElmStaticSiteP1.metaData
     ]
 
-recentContentCards : List ContentMetaData -> Int -> Html msg
+recentContentCards : List (ContentMetaData msg) -> Int -> Html msg
 recentContentCards posts numToShow =
     div [ id "recentContentCards" ] 
         (List.take numToShow (List.map contentCard posts))
 
-contentCard : ContentMetaData -> Html msg
+contentCard : ContentMetaData msg -> Html msg
 contentCard metaData =
     div 
         [ class "contentCard"
@@ -56,7 +46,7 @@ contentCard metaData =
         , p [] [ text metaData.description ]
         ]
 
-cardInfo : ContentMetaData -> Html msg
+cardInfo : ContentMetaData msg -> Html msg
 cardInfo metaData =
     p 
         [ style 
@@ -96,13 +86,24 @@ getBlogPost title =
         Just metaData -> Just (blogPostView metaData)
         Nothing -> Nothing
 
-blogPostView : ContentMetaData -> Html msg
+getBlogMetaData : String -> Maybe (ContentMetaData msg)
+getBlogMetaData title =
+    List.head (List.filter (\metaData -> (metaData.name == title)) allPosts)
+
+recentPosts : Int -> Html msg
+recentPosts numToShow = div []
+    [ h2 [] [ text "Recent Posts" ]
+    , recentContentCards (List.reverse (List.sortBy .date allPosts)) numToShow
+    ]
+
+blogPostView : ContentMetaData msg -> Html msg
 blogPostView metaData =
     div [ class "blogPostView" ]
         [ blogPostHeader metaData
-        , Markdown.toHtml [] (Maybe.withDefault "" metaData.rawContent)]
+        , metaData.content
+        ]
 
-blogPostHeader : ContentMetaData -> Html msg
+blogPostHeader : ContentMetaData msg -> Html msg
 blogPostHeader metaData =
     div [ class "blogPostHeader" ] 
         [ h2 
@@ -113,16 +114,6 @@ blogPostHeader metaData =
             [ text metaData.title ]
         , cardInfo metaData
         ]
-
-getBlogMetaData : String -> Maybe ContentMetaData
-getBlogMetaData title =
-    List.head (List.filter (\metaData -> (metaData.name == title)) allPosts)
-
-recentPosts : Int -> Html msg
-recentPosts numToShow = div []
-    [ h2 [] [ text "Recent Posts" ]
-    , recentContentCards (List.reverse (List.sortBy .date allPosts)) numToShow
-    ]
 
 -- Snippets
 

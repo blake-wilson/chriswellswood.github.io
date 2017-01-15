@@ -1,10 +1,14 @@
 module ElmStaticSiteP1 exposing (..)
 
 import Html exposing (..)
+import Markdown
+
+import Types exposing (ContentMetaData)
 
 name : String
 name = "elm-static-site-p1"
 
+metaData : ContentMetaData msg
 metaData =
     { name = name
     , title = "Tools for Handling Static Pages in Elm - Part 1. Dealing with Links"
@@ -13,8 +17,11 @@ metaData =
     , category = "Code"
     , subcategory = "Elm"
     , url = "#blog/" ++ name
-    , rawContent = Just rawContent
+    , content = content
     }
+
+content : Html msg
+content = Markdown.toHtml [] rawContent
 
 rawContent: String
 rawContent = """

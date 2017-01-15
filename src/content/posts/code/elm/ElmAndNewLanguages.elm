@@ -1,10 +1,14 @@
 module ElmAndNewLanguages exposing (..)
 
 import Html exposing (..)
+import Markdown
+
+import Types exposing (ContentMetaData)
 
 name : String
 name = "elm-and-learning-new-languages"
 
+metaData : ContentMetaData msg
 metaData =
     { name = name
     , title = "Elm and Learning New Programming Languages"
@@ -13,8 +17,11 @@ metaData =
     , category = "Code"
     , subcategory = "Elm"
     , url = "#blog/" ++ name
-    , rawContent = Just rawContent
+    , content = content
     }
+
+content : Html msg
+content = Markdown.toHtml [] rawContent
 
 rawContent: String
 rawContent = """

@@ -1,10 +1,14 @@
 module OOBrainAndTypes exposing (..)
 
 import Html exposing (..)
+import Markdown
+
+import Types exposing (ContentMetaData)
 
 name : String
 name = "object-oriented-brain-and-types"
 
+metaData : ContentMetaData msg
 metaData =
     { name = name
     , title = "Object-Oriented Brain and Types"
@@ -13,8 +17,11 @@ metaData =
     , category = "Code"
     , subcategory = "Elm"
     , url = "#blog/" ++ name
-    , rawContent = Just rawContent
+    , content = content
     }
+
+content : Html msg
+content = Markdown.toHtml [] rawContent
 
 rawContent: String
 rawContent = """
