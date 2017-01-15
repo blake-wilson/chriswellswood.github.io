@@ -30,3 +30,4 @@ A website for bits and pieces that I've written, as well as odds and ends by oth
 1. "Do it right, do it three times..."
     * New post about making a static site in Elm
 1. Adding Google analytics to an Elm app
+1. Reimplementing the counters example with composable views
