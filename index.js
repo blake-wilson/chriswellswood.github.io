@@ -10866,7 +10866,7 @@ var _user$project$Index$update = F2(
 					_0: A2(
 						_elm_lang$core$Task$perform,
 						_user$project$Index$Highlight,
-						_elm_lang$core$Process$sleep(50 * _elm_lang$core$Time$millisecond)),
+						_elm_lang$core$Process$sleep(100 * _elm_lang$core$Time$millisecond)),
 					_1: {ctor: '[]'}
 				});
 		} else {
