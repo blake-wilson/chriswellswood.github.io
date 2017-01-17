@@ -12,7 +12,7 @@ metaData : ContentMetaData msg
 metaData =
     { name = name
     , title = "Creating a Simple Reusable View Module in Elm"
-    , date = [2016, 08, 25]
+    , date = [2017, 01, 17]
     , description = "An updated version of an old example of how to scale your Elm app using modules, this time using reusable views rather than components."
     , category = "Code"
     , subcategory = "Elm"
@@ -25,11 +25,13 @@ content = Markdown.toHtml [] rawContent
 
 rawContent: String
 rawContent = """
-There seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be done. It centred around creating a reusable counter *component* that managed its own updates, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.
+*Check out the source code [here](https://github.com/ChrisWellsWood/elm-counters)*
+
+There seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be achieved. It centred around creating a reusable counter *component* that managed its own updates, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.
 
 Working with reusable components was quite awkward, and involved multiple update functions and relaying `msgs` to the correct place. Personally, I found it difficult to get my head around and I much prefer that the module simply contains functions to create views.
 
-In this post, I'm going to reimplement the old counter example using a reusable views.
+In this post, I'm going to reimplement the old counter example using a the reusable view pattern.
 
 ### The Counter App
 
@@ -45,7 +47,7 @@ main = Html.program
   { init = init
   , view = view
   , update = update
-  , subscriptions = (\_ -> Sub.none)
+  , subscriptions = (\\_ -> Sub.none)
   }
 
 init : ( Model, Cmd Msg )
@@ -204,7 +206,7 @@ type Msg
   | RemoveCounter CounterID
 ```
 
-We handle 3 messages, 2 of which, `ModifyCounter` and `RemoveCounter` are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations?
+We handle 3 messages, 2 of which - `ModifyCounter` and `RemoveCounter` - are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations?
 
 ```Elm
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -228,7 +230,7 @@ update action model =
     
     RemoveCounter counterID ->
       let
-        counterList = List.filter (\cntr -> cntr.refID /= counterID) model.counterList
+        counterList = List.filter (\\cntr -> cntr.refID /= counterID) model.counterList
       in
         ( { model | counterList = counterList }, Cmd.none )
 
@@ -269,11 +271,11 @@ makeView counterModel = viewCounter counterConfig counterModel
 
 It has a button to add counters and uses the `viewcounter` function from `ReusableCounter` module to generate the views for each of the counters. This function needs to be passed a `Config`, which we make using the config function from `ReusableCounter`, giving it our `ModifyCounter` and `RemoveCounter` messages.
 
-Done and dusted! Using this basic approach, you can make modular, composable units, but all your update code is in a single place. You don't need to bother passing `Msg`s around, you just have views and functions to help create views.
+Done and dusted! Using this basic approach, you can make modular, composable units, while all your update logic remains in one place. You don't need to bother passing `Msg`s around, you just have views and functions to help create views.
 
 Here's the final `CounterList` application:
 
 <iframe src="https://chriswellswood.github.io/elm-counters/counter-list.html"></iframe>
 
 Feel free to ask questions or share your thoughts on this over on Twitter ([@ChrisWellsWood](https://twitter.com/ChrisWellsWood))!
-```
+"""
