@@ -1,8 +1,8 @@
 ## Scaling the Elm Architecture - Counter Reusable Views
 
-There seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be done. It centred around creating reusable counter *component* that managed its own state, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.
+There seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be done. It centred around creating a reusable counter *component* that managed its own updates, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.
 
-Working with reusable components was quite awkward, and involved multiple update functions and relaying `msgs` to the correct place. Personally, I found it difficult to get my head around and I much prefer the module simply containing functions to create views.
+Working with reusable components was quite awkward, and involved multiple update functions and relaying `msgs` to the correct place. Personally, I found it difficult to get my head around and I much prefer that the module simply contains functions to create views.
 
 In this post, I'm going to reimplement the old counter example using reusable views.
 
@@ -71,13 +71,13 @@ countStyle =
     ]
 ```
 
-You can try it out:
+Here's what it looks like:
 
 <iframe src="https://chriswellswood.github.io/elm-counters/counter.html"></iframe>
 
 It's pretty straight forward, your model is simply an `Int` and the messages that update handles are `Increment`, `Decrement` and `Clear`. The model is used to create a view which displays the current count, as well as buttons for sending messages to the update function.
 
-I think this is a pretty realistic starting point, as when I first started making things with Elm, I make the core functional bit first and then expanded that into the full application.
+I think this is a pretty realistic starting point, as when I make an app in Elm, I make the core functional bit first and then expanded that into the full application.
 
 ### Counter List
 
@@ -85,7 +85,7 @@ Let's start making our counter list app. What we're aiming for is an app where w
 
 #### Reusable Counter View
 
-To start with, we can get rid of most of the mechanical stuff that Elm needs: the main function `Html.program`, `init` and `update`. We'll rename the model to `CounterModel`, just to be explicit but avoid confusion. I'm also going to tweak the model a bit:
+To start with, we can get rid of most of the mechanical stuff that Elm needs: the main function `Html.program`, `init` and `update`. We'll rename the model to `CounterModel`, just to be explicit and avoid confusion. I'm also going to tweak the model a bit:
 
 ```Elm
 type alias CounterModel =
@@ -99,7 +99,7 @@ newCounter : CounterID -> CounterModel
 newCounter refID = CounterModel 0 refID
 ```
 
-We've changed it to have a reference ID, we'll need this later to be able to keep track of our counters. We also have a type alias for our counter ID, to help us keep track of everything and a convenience function for making a new counter.
+We've changed it to be a record with the count as before but also a reference ID. We'll need the reference ID later to be able to keep track of our counters. We also have a type alias for our counter ID, to help us keep track of everything, as well as a convenience function for making a new counter.
 
 Our update function has been replaced by a helper method that deals with modifying the counters:
 
@@ -114,7 +114,7 @@ modifyCounter counterModifier counterModel =
     Clear -> { counterModel | currentCount = 0 }
 ```
 
-It looks quite like an update function, but doesn't pass messages or commands. Our different counter operations have been defined using a union type. `modifyCounter` looks like an update function, but all it just takes is a counter model and a modifier command and returns a new model.
+It looks quite like an update function, but doesn't pass messages or commands. Our different counter operations have been defined using a union type. `modifyCounter` takes a `CounterModel` and a modifier command and returns a new model.
 
 Next up we have the view for our counter:
 
@@ -151,13 +151,13 @@ config { modifyMsg, removeMsg } =
     }
 ```
 
-This looks a bit weird, but it makes sense. First we define a generic type, it takes a type and returns a new type that uses the input type. in this case we pass in a `msg`, which will be our `Msg` union type from our CounterList app. The function annotations are suited to the type of message: the `modfiyMsg` will be used to pass a `CounterModifier` and a `CounterID` to the `modifyCounter` function in our main app. The `removeMsg` only requires the `CounterID` of the counter to be removed. We then define a config function which takes our messages and returns a Config type.
+This looks a bit weird, but it makes sense if we break it down. First, we define a sort of "generic" type, it takes a type and returns a new type that uses the input type. In this case we pass in a `msg`, which will be our `Msg` union type from our CounterList app. The function annotations are suited to the type of message: the `modifyMsg` will be used to pass a `CounterModifier` and a `CounterID` to the `modifyCounter` function in our main app. The `removeMsg` only requires the `CounterID` of the counter to be removed. We then define a config function which takes our messages and returns a `Config` type.
 
 That's all the changes to the counter itself, now we can make something with it!
 
 #### Counter List
 
-The app itself is pretty standard fair, we use the standard `Html.program`. The model looks like this:
+The app itself is pretty basic, we use the standard `Html.program`. The model looks like this:
 
 ```Elm
 import ReusableCounter exposing (..)
@@ -168,7 +168,7 @@ type alias Model =
   }
 ```
 
-It contains a list of `CounterModel`s and the next free `CounterID`, both of these types are from the ReusableCounter module we defined previously.
+It contains a list of `CounterModel`s and the next free `CounterID`, both of these types are from the `ReusableCounter` module we defined previously.
 
 Our update is pretty simple too:
 
@@ -179,7 +179,7 @@ type Msg
   | RemoveCounter CounterID
 ```
 
-We handle 3 messages, 2 of which, `ModifyCounter` and `RemoveCounter` are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations? The update function is as follows:
+We handle 3 messages, 2 of which, `ModifyCounter` and `RemoveCounter` are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations?
 
 ```Elm
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -217,7 +217,7 @@ updateCounterList modifier targetID counter =
 
 `AddCounter` just adds a new `CounterModel` to our list, giving it the next ID that's free.
 
-Our `ModifyCounter` message takes a modifier type and a `CounterID`, both from the `ReusableCounter` module. To modify the correct counter, we use the `updateCounterList` function, which will run the `modifyCounter` function from the `ReusableCounter` module on the counter, only if the reference and the target IDs match, otherwise it will return the counter unchanged. After this, the `counterList` field is updated in the model.
+Our `ModifyCounter` message takes a modifier type and a `CounterID`, both of which are from the `ReusableCounter` module. To modify the correct counter, we use the `updateCounterList` function, which will run the `modifyCounter` function from the `ReusableCounter` module on the counter, only if the reference and target IDs match, otherwise it will return the counter unchanged. After this, the `counterList` field is updated in the model.
 
 `RemoveCounter` receives a `CounterID` that needs to be removed, and filters the list of counters for all the ones that *do not* have that ID. This results with a new list that does not contain the counter that was to be removed.
 
@@ -245,5 +245,9 @@ makeView counterModel = viewCounter counterConfig counterModel
 It has a button to add counters and uses the `viewcounter` function from `ReusableCounter` module to generate the views for each of the counters. This function needs to be passed a `Config`, which we make using the config function from `ReusableCounter`, giving it our `ModifyCounter` and `RemoveCounter` messages.
 
 Done and dusted! Using this basic approach, you can make modular, composable units, but all your update code is in a single place. You don't need to bother passing `Msg`s around, you just have views and functions to help create views.
+
+Here's the final `CounterList` application:
+
+<iframe src="https://chriswellswood.github.io/elm-counters/counter-list.html"></iframe>
 
 Feel free to ask questions or share your thoughts on this over on Twitter ([@ChrisWellsWood](https://twitter.com/ChrisWellsWood))!
