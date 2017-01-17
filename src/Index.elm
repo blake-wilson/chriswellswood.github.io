@@ -54,7 +54,7 @@ update msg model =
         -- The task here is to force an update before highlighting
         UrlChange location ->
             { model | page = getPage location } !
-                [ Task.perform Highlight (Process.sleep (50 * Time.millisecond)) ]
+                [ Task.perform Highlight (Process.sleep (100 * Time.millisecond)) ]
         
         Highlight _ ->
             (model, highlightMarkdown ())
