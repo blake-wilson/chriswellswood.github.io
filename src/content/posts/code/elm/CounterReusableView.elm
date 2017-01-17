@@ -112,21 +112,7 @@ Let's start making our counter list app. What we're aiming for is an app where w
 
 #### Reusable Counter View
 
-To start with, we can get rid of most of the mechanical stuff that Elm needs: the main function `Html.program`, `init` and `update`. We'll rename the model to `CounterModel`, just to be explicit and avoid confusion. I'm also going to tweak the model a bit:
-
-```Elm
-type alias CounterModel =
-  { currentCount : Int
-  , refID : CounterID
-  }
-
-type alias CounterID = Int
-
-newCounter : CounterID -> CounterModel
-newCounter refID = CounterModel 0 refID
-```
-
-We've changed it to be a record with the count as before but also a reference ID. We'll need the reference ID later to be able to keep track of our counters. We also have a type alias for our counter ID, to help us keep track of everything, as well as a convenience function for making a new counter.
+To start with, we can get rid of most of the mechanical stuff that Elm needs: the main function `Html.program`, `init` and `update`. We'll rename the model to `CounterModel`, just to be explicit and avoid confusion.
 
 Our update function has been replaced by a helper method that deals with modifying the counters:
 
@@ -136,9 +122,9 @@ type CounterModifier = Increment | Decrement | Clear
 modifyCounter : CounterModifier -> CounterModel -> CounterModel
 modifyCounter counterModifier counterModel =
   case counterModifier of
-    Increment -> { counterModel | currentCount = counterModel.currentCount + 1 }
-    Decrement -> { counterModel | currentCount = counterModel.currentCount - 1 }
-    Clear -> { counterModel | currentCount = 0 }
+    Increment -> counterModel + 1
+    Decrement -> counterModel - 1
+    Clear -> 0
 ```
 
 It looks quite like an update function, but doesn't pass messages or commands. Our different counter operations have been defined using a union type. `modifyCounter` takes a `CounterModel` and a modifier command and returns a new model.
@@ -149,26 +135,26 @@ Next up we have the view for our counter:
 viewCounter : Config msg -> CounterModel -> Html msg
 viewCounter (Config { modifyMsg, removeMsg }) counterModel =
   div []
-    [ button [ onClick (modifyMsg Decrement counterModel.refID) ] [ text "-" ]
-    , div [ countStyle ] [ text (toString counterModel.currentCount) ]
-    , button [ onClick (modifyMsg Increment counterModel.refID) ] [ text "+" ]
-    , button [ onClick (modifyMsg Clear counterModel.refID) ] [ text "Clear" ]
-    , button [ onClick (removeMsg counterModel.refID) ] [ text "Remove" ]
+    [ button [ onClick (modifyMsg Decrement) ] [ text "-" ]
+    , div [ countStyle ] [ text (toString counterModel) ]
+    , button [ onClick (modifyMsg Increment) ] [ text "+" ]
+    , button [ onClick (modifyMsg Clear) ] [ text "Clear" ]
+    , button [ onClick (removeMsg) ] [ text "Remove" ]
     ]
 ```
 
-This looks quite familiar, but it's slightly more complicated than before. Firstly, we've added an extra button to remove the counter and all the modifiers now take our new counter IDs, but that's pretty straight forward. Now that the counter is not handling it's own update, it needs to give the `onClick` event a `Msg` from the module that's calling it, which will be our CounterList app. We're passing in the messages from the module that's using the counter in a `Config` type, let's take a look at that:
+This looks quite familiar, but it's slightly more complicated than before. Firstly, we've added an extra button to remove the counter, but that's pretty straight forward. Now that the counter is not handling it's own update, it needs to give the `onClick` event a `Msg` from the module that's calling it, which will be our `CounterList` app. We're passing in the messages from the module that's using the counter in a `Config` type, let's take a look at that:
 
 ```Elm
 type Config msg =
   Config
-    { modifyMsg : (CounterModifier -> CounterID -> msg)
-    , removeMsg : (CounterID -> msg)
+    { modifyMsg : (CounterModifier -> msg)
+    , removeMsg : msg
     }
 
 config
-  : { modifyMsg : (CounterModifier -> CounterID -> msg)
-    , removeMsg : (CounterID -> msg)
+  : { modifyMsg : (CounterModifier -> msg)
+    , removeMsg : msg
     }
   -> Config msg
 config { modifyMsg, removeMsg } =
@@ -178,7 +164,7 @@ config { modifyMsg, removeMsg } =
     }
 ```
 
-This looks a bit weird, but it makes sense if we break it down. First, we define a sort of "generic" type, it takes a type and returns a new type that uses the input type. In this case we pass in a `msg`, which will be our `Msg` union type from our CounterList app. The function annotations are suited to the type of message: the `modifyMsg` will be used to pass a `CounterModifier` and a `CounterID` to the `modifyCounter` function in our main app. The `removeMsg` only requires the `CounterID` of the counter to be removed. We then define a config function which takes our messages and returns a `Config` type.
+This looks a bit weird, but it makes sense if we break it down. First, we define a sort of "generic" type, it takes a type and returns a new type that uses the input type. In this case we pass in a `msg`, which will be our `Msg` union type from our CounterList app. The function annotations are suited to the type of message: the `modifyMsg` will be used to pass a `CounterModifier` to the `modifyCounter` function in our main app. We then define a config function which takes our messages and returns a `Config` type.
 
 That's all the changes to the counter itself, now we can make something with it!
 
@@ -190,23 +176,27 @@ The app itself is pretty basic, we use the standard `Html.program`. The model lo
 import ReusableCounter exposing (..)
 
 type alias Model =
-  { counterList : List CounterModel
+  { counterDict : CounterDict
   , currentCounterID : CounterID
   }
+
+type alias CounterDict = Dict.Dict CounterID CounterModel
+
+type alias CounterID = Int
 ```
 
-It contains a list of `CounterModel`s and the next free `CounterID`, both of these types are from the `ReusableCounter` module we defined previously.
+It contains `counterDict`, a dictionary with a `CounterID` as the key and a `CounterModel` as the value, and `currentCounterID` where the last used `CounterID` is stored.
 
 Our update is pretty simple too:
 
 ```Elm
 type Msg 
   = AddCounter
-  | ModifyCounter CounterModifier CounterID
+  | ModifyCounter CounterID CounterModifier
   | RemoveCounter CounterID
 ```
 
-We handle 3 messages, 2 of which - `ModifyCounter` and `RemoveCounter` - are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations?
+We handle 3 messages, 2 of which - `ModifyCounter` and `RemoveCounter` - are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations? The messages are modified to contain a CounterID before being passed to the counter module, so the CounterID isn't in the `Config` annotation.
 
 ```Elm
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -216,37 +206,33 @@ update action model =
       let
         nextID = model.currentCounterID + 1
         newModel =
-          { counterList = ( newCounter nextID ) :: model.counterList
+          { counterDict = Dict.insert nextID 0 model.counterDict
           , currentCounterID = nextID
           }
       in
         ( newModel, Cmd.none )
     
-    ModifyCounter modifier counterID ->
+    ModifyCounter counterID modifier ->
       let
-        counterList = List.map (updateCounterList modifier counterID) model.counterList
+        clickedCounter = Dict.get counterID model.counterDict
       in
-        ( { model | counterList = counterList }, Cmd.none )
+        case clickedCounter of
+          Just counter ->
+            ( { model | counterDict =
+              Dict.insert counterID (modifyCounter modifier counter) model.counterDict }
+            , Cmd.none )
+          Nothing ->
+            ( model, Cmd.none )
     
     RemoveCounter counterID ->
-      let
-        counterList = List.filter (\\cntr -> cntr.refID /= counterID) model.counterList
-      in
-        ( { model | counterList = counterList }, Cmd.none )
-
-updateCounterList : CounterModifier -> CounterID -> CounterModel -> CounterModel
-updateCounterList modifier targetID counter =
-  if targetID == counter.refID then
-    modifyCounter modifier counter
-  else
-    counter
+        ( { model | counterDict = Dict.remove counterID model.counterDict }, Cmd.none )
 ```
 
-`AddCounter` just adds a new `CounterModel` to our list, giving it the next ID that's free.
+`AddCounter` just adds a new `CounterModel` to our dictionary, using the next ID that's free as the key.
 
-Our `ModifyCounter` message takes a modifier type and a `CounterID`, both of which are from the `ReusableCounter` module. To modify the correct counter, we use the `updateCounterList` function, which will run the `modifyCounter` function from the `ReusableCounter` module on the counter, only if the reference and target IDs match, otherwise it will return the counter unchanged. After this, the `counterList` field is updated in the model.
+Our `ModifyCounter` message takes a modifier type, from the `ReusableCounter` module, and a `CounterID`. The `CounterID` is used to get the relevant counter and is passed to the `modifyCounter` function from the `ReusableCounter` module. After this, the `counterDict` field is updated in the model.
 
-`RemoveCounter` receives a `CounterID` that needs to be removed, and filters the list of counters for all the ones that *do not* have that ID. This results with a new list that does not contain the counter that was to be removed.
+`RemoveCounter` receives a `CounterID` that needs to be removed, and uses `Dict.remove` to create a new Dict without that counter.
 
 Lastly, we have our main view:
 
@@ -255,21 +241,22 @@ view : Model -> Html Msg
 view model =
   div []
     [ div [] [ button [ onClick AddCounter ] [ text "Add Counter" ] ]
-    , div [] (List.map makeView model.counterList)
+    , div [] (List.map makeView (Dict.toList model.counterDict))
     ]
 
-counterConfig : Config Msg
-counterConfig =
-  config
-    { modifyMsg = ModifyCounter
-    , removeMsg = RemoveCounter
-    }
-
-makeView : CounterModel -> Html Msg
-makeView counterModel = viewCounter counterConfig counterModel
+makeView : (CounterID, CounterModel) -> Html Msg
+makeView (refID, counterModel) = 
+  let
+    counterConfig =
+      config
+        { modifyMsg = ModifyCounter refID
+        , removeMsg = RemoveCounter refID
+        }
+  in
+    viewCounter counterConfig counterModel
 ```
 
-It has a button to add counters and uses the `viewcounter` function from `ReusableCounter` module to generate the views for each of the counters. This function needs to be passed a `Config`, which we make using the config function from `ReusableCounter`, giving it our `ModifyCounter` and `RemoveCounter` messages.
+It has a button to add counters and uses the `viewCounter` function from `ReusableCounter` module to generate the views for each of the counters. This function needs to be passed a `Config`, which we make using the `config` function from `ReusableCounter`, giving it our `ModifyCounter` and `RemoveCounter` messages, modified with the relevant `CounterID`s.
 
 Done and dusted! Using this basic approach, you can make modular, composable units, while all your update logic remains in one place. You don't need to bother passing `Msg`s around, you just have views and functions to help create views.
 
@@ -278,4 +265,6 @@ Here's the final `CounterList` application:
 <iframe src="https://chriswellswood.github.io/elm-counters/counter-list.html"></iframe>
 
 Feel free to ask questions or share your thoughts on this over on Twitter ([@ChrisWellsWood](https://twitter.com/ChrisWellsWood))!
+
+*Many thanks to [/u/wintvelt](https://www.reddit.com/user/wintvelt) for some great suggestions on improvements to the code.*
 """
