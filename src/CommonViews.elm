@@ -3,9 +3,10 @@ module CommonViews exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 
+
 siteHeader : Html msg
 siteHeader =
-    header [ id "siteHeader"]
+    header [ id "siteHeader" ]
         [ nameAndTagline
         , socialMedia
         , hr [] []
@@ -13,27 +14,31 @@ siteHeader =
         , hr [] []
         ]
 
+
 nameAndTagline : Html msg
-nameAndTagline = 
-    div [ id "nameAndTagline"]
-        [ h1 [ id "siteName", style [("margin-bottom", "0"), ("padding-bottom", "0")] ]
-            [ a [ href "index.html"] [ text "Bits and Pieces and Odds and Ends" ] ]
+nameAndTagline =
+    div [ id "nameAndTagline" ]
+        [ h1 [ id "siteName", style [ ( "margin-bottom", "0" ), ( "padding-bottom", "0" ) ] ]
+            [ a [ href "index.html" ] [ text "Bits and Pieces and Odds and Ends" ] ]
         , h3
-            [ style [("margin", "0"), ("padding", "0")] ]
+            [ style [ ( "margin", "0" ), ( "padding", "0" ) ] ]
             [ text "Code, science and misc by Chris Wells Wood." ]
         ]
 
+
 socialMedia : Html msg
-socialMedia = div [ id "socialMedia" ]
-    [ p [ style [("font-size", "12px")] ]
-        [ text "GitHub: "
-        , a [ href "https://github.com/ChrisWellsWood" ]
-            [ text "@ChrisWellsWood" ]
-        , text " | Twitter: "
-        , a [ href "https://twitter.com/ChrisWellsWood" ]
-            [ text "@ChrisWellsWood" ]
+socialMedia =
+    div [ id "socialMedia" ]
+        [ p [ style [ ( "font-size", "12px" ) ] ]
+            [ text "GitHub: "
+            , a [ href "https://github.com/ChrisWellsWood" ]
+                [ text "@ChrisWellsWood" ]
+            , text " | Twitter: "
+            , a [ href "https://twitter.com/ChrisWellsWood" ]
+                [ text "@ChrisWellsWood" ]
+            ]
         ]
-    ]
+
 
 navBar : Html msg
 navBar =
@@ -45,6 +50,7 @@ navBar =
         , a [ href "#all-snippets" ] [ text "All Snippets" ]
         ]
 
+
 siteFooter : Html msg
 siteFooter =
     footer []
@@ -53,7 +59,7 @@ siteFooter =
             , p []
                 [ a
                     [ class "twitter-follow-button"
-                    , style [("padding-top", "10px")]
+                    , style [ ( "padding-top", "10px" ) ]
                     , href "https://twitter.com/ChrisWellsWood"
                     , attribute "data-show-count" "false"
                     ]

@@ -2,14 +2,13 @@ module Content exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-
 import Types exposing (ContentMetaData)
-
 import EmptyRustStructs
 import ElmAndNewLanguages
 import OOBrainAndTypes
 import ElmStaticSiteP1
 import Snippets exposing (allSnippets)
+
 
 allPosts : List (ContentMetaData msg)
 allPosts =
@@ -19,40 +18,45 @@ allPosts =
     , ElmStaticSiteP1.metaData
     ]
 
+
 recentContentCards : List (ContentMetaData msg) -> Int -> Html msg
 recentContentCards posts numToShow =
-    div [ id "recentContentCards" ] 
+    div [ id "recentContentCards" ]
         (List.take numToShow (List.map contentCard posts))
+
 
 contentCard : ContentMetaData msg -> Html msg
 contentCard metaData =
-    div 
+    div
         [ class "contentCard"
-        , style 
-            [ ("border-left", "3px solid #bdc696")
-            , ("border-right", "3px solid #bdc696")
-            , ("background-color", "#dfe0dc")
-            , ("margin-top", "10px")
-            , ("margin-bottom", "10px")
-            , ("padding", "10px 10px 1px 10px")
+        , style
+            [ ( "border-left", "3px solid #bdc696" )
+            , ( "border-right", "3px solid #bdc696" )
+            , ( "background-color", "#dfe0dc" )
+            , ( "margin-top", "10px" )
+            , ( "margin-bottom", "10px" )
+            , ( "padding", "10px 10px 1px 10px" )
             ]
         ]
         [ h4
-            [ style 
-                [ ("margin", "0")
-                , ("padding", "0")]]
+            [ style
+                [ ( "margin", "0" )
+                , ( "padding", "0" )
+                ]
+            ]
             [ a [ href metaData.url ] [ text metaData.title ] ]
         , cardInfo metaData
         , p [] [ text metaData.description ]
         ]
 
+
 cardInfo : ContentMetaData msg -> Html msg
 cardInfo metaData =
-    p 
-        [ style 
-            [ ("font-size", "12px")
-            , ("margin", "0")
-            , ("padding", "0")
+    p
+        [ style
+            [ ( "font-size", "12px" )
+            , ( "margin", "0" )
+            , ( "padding", "0" )
             ]
         ]
         [ b [] [ text "Date Posted: " ]
@@ -61,14 +65,18 @@ cardInfo metaData =
         , text (metaData.category ++ "/" ++ metaData.subcategory)
         ]
 
+
 dateToString : List Int -> String
 dateToString dateTuple =
     List.map toString dateTuple
-    |> List.reverse
-    |> List.intersperse "/" 
-    |> List.foldr (++) ""
+        |> List.reverse
+        |> List.intersperse "/"
+        |> List.foldr (++) ""
+
+
 
 -- Posts
+
 
 allPostsView : Html msg
 allPostsView =
@@ -77,24 +85,33 @@ allPostsView =
         , div [] (List.map contentCard allPosts)
         ]
 
+
 getBlogPost : String -> Maybe (Html msg)
 getBlogPost title =
     let
-      blogMetaData = getBlogMetaData title
+        blogMetaData =
+            getBlogMetaData title
     in
-      case blogMetaData of
-        Just metaData -> Just (blogPostView metaData)
-        Nothing -> Nothing
+        case blogMetaData of
+            Just metaData ->
+                Just (blogPostView metaData)
+
+            Nothing ->
+                Nothing
+
 
 getBlogMetaData : String -> Maybe (ContentMetaData msg)
 getBlogMetaData title =
     List.head (List.filter (\metaData -> (metaData.name == title)) allPosts)
 
+
 recentPosts : Int -> Html msg
-recentPosts numToShow = div []
-    [ h2 [] [ text "Recent Posts" ]
-    , recentContentCards (List.reverse (List.sortBy .date allPosts)) numToShow
-    ]
+recentPosts numToShow =
+    div []
+        [ h2 [] [ text "Recent Posts" ]
+        , recentContentCards (List.reverse (List.sortBy .date allPosts)) numToShow
+        ]
+
 
 blogPostView : ContentMetaData msg -> Html msg
 blogPostView metaData =
@@ -103,19 +120,24 @@ blogPostView metaData =
         , metaData.content
         ]
 
+
 blogPostHeader : ContentMetaData msg -> Html msg
 blogPostHeader metaData =
-    div [ class "blogPostHeader" ] 
-        [ h2 
-            [ style 
-                [ ("margin", "0")
-
-                , ("padding", "0")]] 
+    div [ class "blogPostHeader" ]
+        [ h2
+            [ style
+                [ ( "margin", "0" )
+                , ( "padding", "0" )
+                ]
+            ]
             [ text metaData.title ]
         , cardInfo metaData
         ]
 
+
+
 -- Snippets
+
 
 allSnippetsView : Html msg
 allSnippetsView =
@@ -124,8 +146,10 @@ allSnippetsView =
         , div [] (List.map contentCard Snippets.allSnippets)
         ]
 
+
 recentSnippets : Int -> Html msg
-recentSnippets numToShow = div []
-    [ h2 [] [ text "Recent Snippets" ]
-    , recentContentCards (List.reverse (List.sortBy .date allSnippets)) numToShow
-    ]
+recentSnippets numToShow =
+    div []
+        [ h2 [] [ text "Recent Snippets" ]
+        , recentContentCards (List.reverse (List.sortBy .date allSnippets)) numToShow
+        ]

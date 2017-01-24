@@ -7,9 +7,9 @@ import Process
 import Task
 import Time
 import UrlParser exposing ((</>))
-
 import CommonViews
 import Content
+
 
 main : Program Never Model Msg
 main =
@@ -20,17 +20,22 @@ main =
         , subscriptions = (\_ -> Sub.none)
         }
 
-init : Navigation.Location -> (Model, Cmd Msg)
+
+init : Navigation.Location -> ( Model, Cmd Msg )
 init location =
     ( Model Home
     , Task.perform identity (Task.succeed (UrlChange location))
     )
 
+
+
 -- Model
 
+
 type alias Model =
-    { page: Page
+    { page : Page
     }
+
 
 type Page
     = Home
@@ -38,30 +43,39 @@ type Page
     | Post String
     | AllSnippets
 
+
+
 -- Ports
+
 
 port highlightMarkdown : () -> Cmd msg
 
+
+
 -- Update
+
 
 type Msg
     = UrlChange Navigation.Location
     | Highlight ()
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         -- The task here is to force an update before highlighting
         UrlChange location ->
-            { model | page = getPage location } !
-                [ Task.perform Highlight (Process.sleep (50 * Time.millisecond)) ]
-        
+            { model | page = getPage location }
+                ! [ Task.perform Highlight (Process.sleep (50 * Time.millisecond)) ]
+
         Highlight _ ->
-            (model, highlightMarkdown ())
+            ( model, highlightMarkdown () )
+
 
 getPage : Navigation.Location -> Page
 getPage location =
     Maybe.withDefault AllPosts (UrlParser.parseHash route location)
+
 
 route : UrlParser.Parser (Page -> a) a
 route =
@@ -72,39 +86,57 @@ route =
         , UrlParser.map AllSnippets (UrlParser.s "all-snippets")
         ]
 
+
+
 -- View
 
-view : Model -> Html Msg
-view model = div [ id "mainSiteDiv", mainSiteDivStyle ]
-    [ CommonViews.siteHeader
-    , content model
-    , CommonViews.siteFooter
-    ]
 
-mainSiteDivStyle : Html.Attribute msg
-mainSiteDivStyle = 
-    style 
-        [ ("margin-right", "auto")
-        , ("margin-left", "auto")
-        , ("max-width", "980px")
-        , ("padding-right", "2.5%")
-        , ("padding-left", "2.5%")
+view : Model -> Html Msg
+view model =
+    div [ id "mainSiteDiv", mainSiteDivStyle ]
+        [ CommonViews.siteHeader
+        , content model
+        , CommonViews.siteFooter
         ]
 
+
+mainSiteDivStyle : Html.Attribute msg
+mainSiteDivStyle =
+    style
+        [ ( "margin-right", "auto" )
+        , ( "margin-left", "auto" )
+        , ( "max-width", "980px" )
+        , ( "padding-right", "2.5%" )
+        , ( "padding-left", "2.5%" )
+        ]
+
+
 content : Model -> Html Msg
-content model = div [ id "contentSection" ]
-    [ getContent model
-    ]
+content model =
+    div [ id "contentSection" ]
+        [ getContent model
+        ]
+
 
 getContent : Model -> Html Msg
 getContent model =
     case model.page of
-      Home -> home
-      AllPosts -> Content.allPostsView
-      Post title -> Maybe.withDefault home (Content.getBlogPost title)
-      AllSnippets -> Content.allSnippetsView
+        Home ->
+            home
+
+        AllPosts ->
+            Content.allPostsView
+
+        Post title ->
+            Maybe.withDefault home (Content.getBlogPost title)
+
+        AllSnippets ->
+            Content.allSnippetsView
+
+
 
 -- Home
+
 
 home : Html Msg
 home =
@@ -116,17 +148,23 @@ home =
         , Content.recentSnippets 5
         ]
 
+
+
 -- About Me Section
 
+
 aboutMe : Html msg
-aboutMe = div [ id "aboutMe" ]
-    [ h2 [] [ text "About Me"]
-    , p [] [ text aboutMeText]
-    ]
+aboutMe =
+    div [ id "aboutMe" ]
+        [ h2 [] [ text "About Me" ]
+        , p [] [ text aboutMeText ]
+        ]
+
 
 aboutMeText : String
-aboutMeText = """
-I'm a research scientist that spends a lot of time writing code and
-occasionally ventures into the lab. This is sort of a blog with various
-articles/posts as well as snippets from other sources.
+aboutMeText =
+    """\x0D
+I'm a research scientist that spends a lot of time writing code and\x0D
+occasionally ventures into the lab. This is sort of a blog with various\x0D
+articles/posts as well as snippets from other sources.\x0D
 """
