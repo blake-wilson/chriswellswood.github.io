@@ -10211,6 +10211,35 @@ var _user$project$ElmStaticSiteP1$metaData = {
 	content: _user$project$ElmStaticSiteP1$content
 };
 
+var _user$project$CounterReusableView$rawContent = '\n*Check out the source code [here](https://github.com/ChrisWellsWood/elm-counters)*\n\nThere seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be achieved. It centred around creating a reusable counter *component* that managed its own updates, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.\n\nWorking with reusable components was quite awkward, and involved multiple update functions and relaying `msgs` to the correct place. Personally, I found it difficult to get my head around and I much prefer that the module simply contains functions to create views.\n\nIn this post, I\'m going to reimplement the old counter example using a the reusable view pattern.\n\n### The Counter App\n\nWe\'ll start with a little Counter app that\'s entirely self contained:\n\n```Elm\nimport Html exposing (..)\nimport Html.Attributes exposing (style)\nimport Html.Events exposing (onClick)\n\n\nmain = Html.program\n  { init = init\n  , view = view\n  , update = update\n  , subscriptions = (\\_ -> Sub.none)\n  }\n\ninit : ( Model, Cmd Msg )\ninit = ( 0, Cmd.none )\n\n-- MODEL\n\ntype alias Model = Int\n\n\n-- UPDATE\n\n\ntype Msg = Increment | Decrement | Clear\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate action model =\n  case action of\n    Increment ->\n      ( model + 1, Cmd.none )\n\n    Decrement ->\n      ( model - 1, Cmd.none )\n    \n    Clear ->\n      ( 0, Cmd.none )\n\n\n-- VIEW\n\nview : Model -> Html Msg\nview model =\n  div []\n    [ button [ onClick Decrement ] [ text \"-\" ]\n    , div [ countStyle ] [ text (toString model) ]\n    , button [ onClick Increment ] [ text \"+\" ]\n    , button [ onClick Clear ] [ text \"Clear\" ]\n    ]\n\ncountStyle : Attribute msg\ncountStyle =\n  style\n    [ (\"font-size\", \"20px\")\n    , (\"font-family\", \"monospace\")\n    , (\"display\", \"inline-block\")\n    , (\"width\", \"50px\")\n    , (\"text-align\", \"center\")\n    ]\n```\n\nHere\'s what it looks like:\n\n<iframe src=\"https://chriswellswood.github.io/elm-counters/counter.html\"></iframe>\n\nIt\'s pretty straight forward, your model is simply an `Int` and the messages that update handles are `Increment`, `Decrement` and `Clear`. The model is used to create a view which displays the current count, as well as buttons for sending messages to the update function.\n\nI think this is a pretty realistic starting point, as when I make an app in Elm, I make the core functional bit first and then expanded that into the full application.\n\n### Counter List\n\nLet\'s start making our counter list app. What we\'re aiming for is an app where we can dynamically add and remove counters. We need to change the structure of the counter module to accommodate this.\n\n#### Reusable Counter View\n\nTo start with, we can get rid of most of the mechanical stuff that Elm needs: the main function `Html.program`, `init` and `update`. We\'ll rename the model to `CounterModel`, just to be explicit and avoid confusion.\n\nOur update function has been replaced by a helper method that deals with modifying the counters:\n\n```Elm\ntype CounterModifier = Increment | Decrement | Clear\n\nmodifyCounter : CounterModifier -> CounterModel -> CounterModel\nmodifyCounter counterModifier counterModel =\n  case counterModifier of\n    Increment -> counterModel + 1\n    Decrement -> counterModel - 1\n    Clear -> 0\n```\n\nIt looks quite like an update function, but doesn\'t pass messages or commands. Our different counter operations have been defined using a union type. `modifyCounter` takes a `CounterModel` and a modifier command and returns a new model.\n\nNext up we have the view for our counter:\n\n```Elm\nviewCounter : Config msg -> CounterModel -> Html msg\nviewCounter (Config { modifyMsg, removeMsg }) counterModel =\n  div []\n    [ button [ onClick (modifyMsg Decrement) ] [ text \"-\" ]\n    , div [ countStyle ] [ text (toString counterModel) ]\n    , button [ onClick (modifyMsg Increment) ] [ text \"+\" ]\n    , button [ onClick (modifyMsg Clear) ] [ text \"Clear\" ]\n    , button [ onClick (removeMsg) ] [ text \"Remove\" ]\n    ]\n```\n\nThis looks quite familiar, but it\'s slightly more complicated than before. Firstly, we\'ve added an extra button to remove the counter, but that\'s pretty straight forward. Now that the counter is not handling it\'s own update, it needs to give the `onClick` event a `Msg` from the module that\'s calling it, which will be our `CounterList` app. We\'re passing in the messages from the module that\'s using the counter in a `Config` type, let\'s take a look at that:\n\n```Elm\ntype Config msg =\n  Config\n    { modifyMsg : (CounterModifier -> msg)\n    , removeMsg : msg\n    }\n\nconfig\n  : { modifyMsg : (CounterModifier -> msg)\n    , removeMsg : msg\n    }\n  -> Config msg\nconfig { modifyMsg, removeMsg } =\n  Config\n    { modifyMsg = modifyMsg\n    , removeMsg = removeMsg\n    }\n```\n\nThis looks a bit weird, but it makes sense if we break it down. First, we define a sort of \"generic\" type, it takes a type and returns a new type that uses the input type. In this case we pass in a `msg`, which will be our `Msg` union type from our CounterList app. The function annotations are suited to the type of message: the `modifyMsg` will be used to pass a `CounterModifier` to the `modifyCounter` function in our main app. We then define a config function which takes our messages and returns a `Config` type.\n\nThat\'s all the changes to the counter itself, now we can make something with it!\n\n#### Counter List\n\nThe app itself is pretty basic, we use the standard `Html.program`. The model looks like this:\n\n```Elm\nimport ReusableCounter exposing (..)\n\ntype alias Model =\n  { counterDict : CounterDict\n  , currentCounterID : CounterID\n  }\n\ntype alias CounterDict = Dict.Dict CounterID CounterModel\n\ntype alias CounterID = Int\n```\n\nIt contains `counterDict`, a dictionary with a `CounterID` as the key and a `CounterModel` as the value, and `currentCounterID` where the last used `CounterID` is stored.\n\nOur update is pretty simple too:\n\n```Elm\ntype Msg \n  = AddCounter\n  | ModifyCounter CounterID CounterModifier\n  | RemoveCounter CounterID\n```\n\nWe handle 3 messages, 2 of which - `ModifyCounter` and `RemoveCounter` - are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations? The messages are modified to contain a CounterID before being passed to the counter module, so the CounterID isn\'t in the `Config` annotation.\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate action model =\n  case action of\n    AddCounter ->\n      let\n        nextID = model.currentCounterID + 1\n        newModel =\n          { counterDict = Dict.insert nextID 0 model.counterDict\n          , currentCounterID = nextID\n          }\n      in\n        ( newModel, Cmd.none )\n    \n    ModifyCounter counterID modifier ->\n      let\n        clickedCounter = Dict.get counterID model.counterDict\n      in\n        case clickedCounter of\n          Just counter ->\n            ( { model | counterDict =\n              Dict.insert counterID (modifyCounter modifier counter) model.counterDict }\n            , Cmd.none )\n          Nothing ->\n            ( model, Cmd.none )\n    \n    RemoveCounter counterID ->\n        ( { model | counterDict = Dict.remove counterID model.counterDict }, Cmd.none )\n```\n\n`AddCounter` just adds a new `CounterModel` to our dictionary, using the next ID that\'s free as the key.\n\nOur `ModifyCounter` message takes a modifier type, from the `ReusableCounter` module, and a `CounterID`. The `CounterID` is used to get the relevant counter and is passed to the `modifyCounter` function from the `ReusableCounter` module. After this, the `counterDict` field is updated in the model.\n\n`RemoveCounter` receives a `CounterID` that needs to be removed, and uses `Dict.remove` to create a new Dict without that counter.\n\nLastly, we have our main view:\n\n```Elm\nview : Model -> Html Msg\nview model =\n  div []\n    [ div [] [ button [ onClick AddCounter ] [ text \"Add Counter\" ] ]\n    , div [] (List.map makeView (Dict.toList model.counterDict))\n    ]\n\nmakeView : (CounterID, CounterModel) -> Html Msg\nmakeView (refID, counterModel) = \n  let\n    counterConfig =\n      config\n        { modifyMsg = ModifyCounter refID\n        , removeMsg = RemoveCounter refID\n        }\n  in\n    viewCounter counterConfig counterModel\n```\n\nIt has a button to add counters and uses the `viewCounter` function from `ReusableCounter` module to generate the views for each of the counters. This function needs to be passed a `Config`, which we make using the `config` function from `ReusableCounter`, giving it our `ModifyCounter` and `RemoveCounter` messages, modified with the relevant `CounterID`s.\n\nDone and dusted! Using this basic approach, you can make modular, composable units, while all your update logic remains in one place. You don\'t need to bother passing `Msg`s around, you just have views and functions to help create views.\n\nHere\'s the final `CounterList` application:\n\n<iframe src=\"https://chriswellswood.github.io/elm-counters/counter-list.html\"></iframe>\n\nFeel free to ask questions or share your thoughts on this over on Twitter ([@ChrisWellsWood](https://twitter.com/ChrisWellsWood))!\n\n*Many thanks to [/u/wintvelt](https://www.reddit.com/user/wintvelt) for some great suggestions on improvements to the code.*\n';
+var _user$project$CounterReusableView$content = A2(
+	_evancz$elm_markdown$Markdown$toHtml,
+	{ctor: '[]'},
+	_user$project$CounterReusableView$rawContent);
+var _user$project$CounterReusableView$name = 'creating-simple-reusable-view-modules';
+var _user$project$CounterReusableView$metaData = {
+	name: _user$project$CounterReusableView$name,
+	title: 'Creating a Simple Reusable View Module in Elm',
+	date: {
+		ctor: '::',
+		_0: 2017,
+		_1: {
+			ctor: '::',
+			_0: 1,
+			_1: {
+				ctor: '::',
+				_0: 17,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
+	description: 'An updated version of an old example of how to scale your Elm app using modules, this time using reusable views rather than components.',
+	category: 'Code',
+	subcategory: 'Elm',
+	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$CounterReusableView$name),
+	content: _user$project$CounterReusableView$content
+};
+
 var _user$project$Snippets$allSnippets = {
 	ctor: '::',
 	_0: {
@@ -10543,7 +10572,11 @@ var _user$project$Content$allPosts = {
 			_1: {
 				ctor: '::',
 				_0: _user$project$ElmStaticSiteP1$metaData,
-				_1: {ctor: '[]'}
+				_1: {
+					ctor: '::',
+					_0: _user$project$CounterReusableView$metaData,
+					_1: {ctor: '[]'}
+				}
 			}
 		}
 	}
@@ -10570,7 +10603,8 @@ var _user$project$Content$allPostsView = A2(
 			_0: A2(
 				_elm_lang$html$Html$div,
 				{ctor: '[]'},
-				A2(_elm_lang$core$List$map, _user$project$Content$contentCard, _user$project$Content$allPosts)),
+				_elm_lang$core$List$reverse(
+					A2(_elm_lang$core$List$map, _user$project$Content$contentCard, _user$project$Content$allPosts))),
 			_1: {ctor: '[]'}
 		}
 	});
@@ -10832,7 +10866,7 @@ var _user$project$Index$update = F2(
 					_0: A2(
 						_elm_lang$core$Task$perform,
 						_user$project$Index$Highlight,
-						_elm_lang$core$Process$sleep(50 * _elm_lang$core$Time$millisecond)),
+						_elm_lang$core$Process$sleep(100 * _elm_lang$core$Time$millisecond)),
 					_1: {ctor: '[]'}
 				});
 		} else {

@@ -7,6 +7,7 @@ import EmptyRustStructs
 import ElmAndNewLanguages
 import OOBrainAndTypes
 import ElmStaticSiteP1
+import CounterReusableView
 import Snippets exposing (allSnippets)
 
 
@@ -16,6 +17,7 @@ allPosts =
     , ElmAndNewLanguages.metaData
     , OOBrainAndTypes.metaData
     , ElmStaticSiteP1.metaData
+    , CounterReusableView.metaData
     ]
 
 
@@ -82,7 +84,7 @@ allPostsView : Html msg
 allPostsView =
     div [ id "allPostsView" ]
         [ h2 [] [ text "All Posts" ]
-        , div [] (List.map contentCard allPosts)
+        , div [] (List.map contentCard allPosts |> List.reverse)
         ]
 
 

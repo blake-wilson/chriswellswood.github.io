@@ -66,7 +66,7 @@ update msg model =
         -- The task here is to force an update before highlighting
         UrlChange location ->
             { model | page = getPage location }
-                ! [ Task.perform Highlight (Process.sleep (50 * Time.millisecond)) ]
+                ! [ Task.perform Highlight (Process.sleep (100 * Time.millisecond)) ]
 
         Highlight _ ->
             ( model, highlightMarkdown () )
@@ -163,8 +163,8 @@ aboutMe =
 
 aboutMeText : String
 aboutMeText =
-    """\x0D
-I'm a research scientist that spends a lot of time writing code and\x0D
-occasionally ventures into the lab. This is sort of a blog with various\x0D
-articles/posts as well as snippets from other sources.\x0D
+    """\x0D\x0D
+I'm a research scientist that spends a lot of time writing code and\x0D\x0D
+occasionally ventures into the lab. This is sort of a blog with various\x0D\x0D
+articles/posts as well as snippets from other sources.\x0D\x0D
 """
