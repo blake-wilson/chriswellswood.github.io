@@ -163,8 +163,8 @@ aboutMe =
 
 aboutMeText : String
 aboutMeText =
-    """\x0D\x0D
-I'm a research scientist that spends a lot of time writing code and\x0D\x0D
-occasionally ventures into the lab. This is sort of a blog with various\x0D\x0D
-articles/posts as well as snippets from other sources.\x0D\x0D
+    """\x0D
+I'm a research scientist that spends a lot of time writing code and\x0D
+occasionally ventures into the lab. This is sort of a blog with various\x0D
+articles/posts as well as snippets from other sources.\x0D
 """
