@@ -10019,7 +10019,7 @@ var _user$project$CommonViews$nameAndTagline = A2(
 					_elm_lang$html$Html$a,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$href('index.html'),
+						_0: _elm_lang$html$Html_Attributes$href(''),
 						_1: {ctor: '[]'}
 					},
 					{
@@ -10658,7 +10658,7 @@ var _user$project$Content$recentPosts = function (numToShow) {
 		});
 };
 
-var _user$project$Index$aboutMeText = '\r\r\nI\'m a research scientist that spends a lot of time writing code and\r\r\noccasionally ventures into the lab. This is sort of a blog with various\r\r\narticles/posts as well as snippets from other sources.\r\r\n';
+var _user$project$Index$aboutMeText = '\r\nI\'m a research scientist that spends a lot of time writing code and\r\noccasionally ventures into the lab. This is sort of a blog with various\r\narticles/posts as well as snippets from other sources.\r\n';
 var _user$project$Index$aboutMe = A2(
 	_elm_lang$html$Html$div,
 	{
@@ -10802,6 +10802,11 @@ var _user$project$Index$highlightMarkdown = _elm_lang$core$Native_Platform.outgo
 	function (v) {
 		return null;
 	});
+var _user$project$Index$analytics = _elm_lang$core$Native_Platform.outgoingPort(
+	'analytics',
+	function (v) {
+		return v;
+	});
 var _user$project$Index$Model = function (a) {
 	return {page: a};
 };
@@ -10847,35 +10852,54 @@ var _user$project$Index$getPage = function (location) {
 		_user$project$Index$AllPosts,
 		A2(_evancz$url_parser$UrlParser$parseHash, _user$project$Index$route, location));
 };
+var _user$project$Index$Analytics = function (a) {
+	return {ctor: 'Analytics', _0: a};
+};
 var _user$project$Index$Highlight = function (a) {
 	return {ctor: 'Highlight', _0: a};
 };
 var _user$project$Index$update = F2(
 	function (msg, model) {
 		var _p1 = msg;
-		if (_p1.ctor === 'UrlChange') {
-			return A2(
-				_elm_lang$core$Platform_Cmd_ops['!'],
-				_elm_lang$core$Native_Utils.update(
-					model,
+		switch (_p1.ctor) {
+			case 'UrlChange':
+				var _p2 = _p1._0;
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{
+							page: _user$project$Index$getPage(_p2)
+						}),
 					{
-						page: _user$project$Index$getPage(_p1._0)
-					}),
-				{
-					ctor: '::',
-					_0: A2(
-						_elm_lang$core$Task$perform,
-						_user$project$Index$Highlight,
-						_elm_lang$core$Process$sleep(100 * _elm_lang$core$Time$millisecond)),
-					_1: {ctor: '[]'}
-				});
-		} else {
-			return {
-				ctor: '_Tuple2',
-				_0: model,
-				_1: _user$project$Index$highlightMarkdown(
-					{ctor: '_Tuple0'})
-			};
+						ctor: '::',
+						_0: A2(
+							_elm_lang$core$Task$perform,
+							_user$project$Index$Highlight,
+							_elm_lang$core$Process$sleep(100 * _elm_lang$core$Time$millisecond)),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$core$Task$perform,
+								_elm_lang$core$Basics$identity,
+								_elm_lang$core$Task$succeed(
+									_user$project$Index$Analytics(_p2))),
+							_1: {ctor: '[]'}
+						}
+					});
+			case 'Highlight':
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$Index$highlightMarkdown(
+						{ctor: '_Tuple0'})
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$Index$analytics(_p1._0.href)
+				};
 		}
 	});
 var _user$project$Index$UrlChange = function (a) {
@@ -10899,7 +10923,7 @@ var _user$project$Index$main = A2(
 		init: _user$project$Index$init,
 		view: _user$project$Index$view,
 		update: _user$project$Index$update,
-		subscriptions: function (_p2) {
+		subscriptions: function (_p3) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
 	})();
