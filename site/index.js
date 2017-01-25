@@ -10658,7 +10658,7 @@ var _user$project$Content$recentPosts = function (numToShow) {
 		});
 };
 
-var _user$project$Index$aboutMeText = '\r\nI\'m a research scientist that spends a lot of time writing code and\r\noccasionally ventures into the lab. This is sort of a blog with various\r\narticles/posts as well as snippets from other sources.\r\n';
+var _user$project$Index$aboutMeText = '\r\r\nI\'m a research scientist that spends a lot of time writing code and\r\r\noccasionally ventures into the lab. This is sort of a blog with various\r\r\narticles/posts as well as snippets from other sources.\r\r\n';
 var _user$project$Index$aboutMe = A2(
 	_elm_lang$html$Html$div,
 	{
