@@ -10211,6 +10211,35 @@ var _user$project$ElmStaticSiteP1$metaData = {
 	content: _user$project$ElmStaticSiteP1$content
 };
 
+var _user$project$ElmStaticSiteP2$rawContent = '\nIn a [previous article](#blog/elm-static-site-p1), I discussed making a single-page web app in Elm that mainly uses static content, based on my experience making this site. The next thing I wanted to do to the site was add Google Analytics. I wanted to track page views, partly because I\'m nosey, but mainly as I thought this might allow me to refine my content a bit. It\'s free to set up an account, and works by adding a little bit of JavaScript to your pages. To hook this up to our Elm app, we need to use ports.\n\nElm can communicate with JavaScript by sending data through constructs called ports. This means that the JavaScript is isolated from the Elm application, and so you still get all of the normal guarantees you\'d expect with Elm. I like this mode of interopt, as it means that you\'re protected in a lovely bubble of predictable Elm, from all that chaotic JavaScript.\n\nBefore we start, if you\'re planning to do this, make sure you are compiling your Elm app to JavaScript and embedding it in HTML, rather than compiling straight to HTML. This is pretty easy to do and is covered in the [Elm guide](https://guide.elm-lang.org/interop/javascript.html).\n\n### Setting up the Port\n\nGoogle give you a bit of JavaScript to paste into your page that looks like this:\n\n```Javascript\n  (function(i,s,o,g,r,a,m){i[\'GoogleAnalyticsObject\']=r;i[r]=i[r]||function(){\n  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n  })(window,document,\'script\',\'https://www.google-analytics.com/analytics.js\',\'ga\');\n\n  ga(\'create\', \'UA-XXXXXXXX-X\', \'auto\');\n  ga(\'send\', \'pageview\'); // we don\'t want this!\n```\n\nBut this will only send a page view on load. As we are using fragment identifiers, i.e. \"www.boblaw.com/**#lawblog**\", to select our pages, we need to explicitly set the page like this:\n\n```Javascript\nga(\'set\', \'page\', \'www.boblaw.com/#lawblog\');\nga(\'send\', \'pageview\');\n```\n\nWe need to run this code when we change a page, and we\'ll need to pass a String containing the relevant url.\n\nTo make a JavaScript port, you need to define it in your Elm app using the port keyword, both when exposing your module and to explicitly create the port:\n\n```Elm\nport module Index exposing (..)\n\n...\n\nport analytics : String -> Cmd msg\n```\n\nPorts use regular Elm commands and subscriptions. If we\'re only sending data out, it\'s a command, and if we\'re getting data back, it\'s a subscription. We aren\'t needing any data back, so we have the simpler case here.\n\nTo trigger this command when we change the location on the site, we need to change our update function, which I described in a [previous article](#blog/elm-static-site-p1). It looked like this:\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! [ Cmd.none ]\n```\n\nPreviously we had no commands, but now we want to send data through our port:\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! [ analytics location.href ]\n```\n\nWe take the full URL from the `Navigation.Location` record, which includes the current hash location. That\'s all that\'s required on the Elm side, now we need to connect it up to the JavaScript.\n\n### Setting up the HTML file\n\nBefore, our HTML file looked roughly like this:\n\n```Html\n<!DOCTYPE HTML>\n<html>\n\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Bits and Pieces and Odds and Ends</title>\n  <script type=\"text/javascript\" src=\"index.js\"></script>\n\n  <link rel=\"stylesheet\" href=\"css/style.css\">\n</head>\n\n<body>\n</body>\n\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n</script>\n\n</html>\n```\n\nOur Elm app compiles down to a file called `index.js`, which is embedded into the page. We need to add the Google Analytics code so we can start tracking page views:\n\n```Html\n<head>\n  ...\n  <script>\n    (function(i,s,o,g,r,a,m){i[\'GoogleAnalyticsObject\']=r;i[r]=i[r]||function(){\n    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n    })(window,document,\'script\',\'https://www.google-analytics.com/analytics.js\',\'ga\');\n\n    ga(\'create\', \'UA-XXXXXXXX-X\', \'auto\');\n  </script>\n</head>\n...\n```\n\n`UA-XXXXXXXX-X` is the tracking ID that you get when you set up your Google Analytics account, so it varies from person to person. Here we create the session, but we don\'t trigger any page views yet.\n\nNow we need to add the JavaScript that will run when we trigger our Elm port command:\n\n```Html\n...\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n\n    app.ports.analytics.subscribe(\n      function (pageUrl) {\n        ga(\'set\', \'page\', pageUrl);\n        ga(\'send\', \'pageview\');\n      }\n    );\n</script>\n\n</html>\n```\n\nLet\'s break that down a bit. `app.ports.analytics` refers to the port that we created in our app. We subscribe to the event, which is triggered by the `analytics` command, providing a  function that will be run when the event is triggered. This function takes a string, `pageUrl`, which we pass into this function through the port in our Elm app. This is used to set the currently active page through the Google Analytics API, then we send off the page view to be recorded. Pretty easy!\n\n### Explicitly Highlighting Code with `highlight.js`\n\nThis works with any external JavaScript API, for example, all the highlighting for the code in this article is performed using [`highlight.js`](https://highlightjs.org/), and the highlighting function is triggered in a similar way. Let\'s look at how that\'s connected up.\n\nFirst we make our port:\n\n```Elm\nport highlightMarkdown : () -> Cmd msg\n```\n\nThen we trigger the command in our update:\n\n```Elm\ntype Msg\n    = UrlChange Navigation.Location\n    | Highlight ()\n\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! \n                [ Task.perform Highlight (Process.sleep (100 * Time.millisecond))\n                , analytics location.href ]\n\n        Highlight _ ->\n            ( model, highlightMarkdown () )\n```\n\nWe\'ve added a couple of things here because we need to add a delay before we trigger the highlight command, allowing the DOM to be rendered first. We have a new `Highlight Msg` to handle this, which is triggered after a sleep process is performed. `Process.sleep` doesn\'t return anything, so the `Highlight Msg` takes an empty tuple as an argument. All the `Highlight Msg` does is trigger the `highlightMarkdown` port command, which doesn\'t require any input variables, and so it also takes an empty tuple.\n\nOn the HTML side we need a few things:\n\n```Html\n<!DOCTYPE HTML>\n<html>\n\n<head>\n  ...\n  <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js\"></script>\n  \n  <!-- Markdown Highlighting -->\n  <link rel=\"stylesheet\" href=\"css/github.css\">\n  <script src=\"js/highlight.pack.js\"></script>\n  ...\n</head>\n\n<body>\n</body>\n\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n\n    app.ports.highlightMarkdown.subscribe(\n      function () {\n        highlightCodeBlocks();\n      }\n    );\n\n    function highlightCodeBlocks() {\n      $(\'pre code\').each(function(i, block) {\n        hljs.highlightBlock(block);\n      });\n    };\n\n    app.ports.analytics.subscribe(\n      function (pageUrl) {\n        ga(\'set\', \'page\', pageUrl);\n        ga(\'send\', \'pageview\');\n      }\n    );\n\n</script>\n\n</html>\n```\n\nAgain we trigger a function by subscribing to the `app.ports.highlightMarkdown` port. I then use jQuery to grab the relevant divs and highlight them using `highlight.js`. Using this method, we can dynamically add content to the page and then highlight the code.\n\nThat\'s it for this post, take a look at the source code for this site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io), and feel free to ask questions on Twitter if you have any.\n';
+var _user$project$ElmStaticSiteP2$content = A2(
+	_evancz$elm_markdown$Markdown$toHtml,
+	{ctor: '[]'},
+	_user$project$ElmStaticSiteP2$rawContent);
+var _user$project$ElmStaticSiteP2$name = 'elm-static-site-p2';
+var _user$project$ElmStaticSiteP2$metaData = {
+	name: _user$project$ElmStaticSiteP2$name,
+	title: 'Tools for Handling Static Pages in Elm - Part 2. Ports, Google Analytics and Highlight.js',
+	date: {
+		ctor: '::',
+		_0: 2017,
+		_1: {
+			ctor: '::',
+			_0: 1,
+			_1: {
+				ctor: '::',
+				_0: 28,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
+	description: 'How to communicate with external JavaScript libraries using ports.',
+	category: 'Code',
+	subcategory: 'Elm',
+	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$ElmStaticSiteP2$name),
+	content: _user$project$ElmStaticSiteP2$content
+};
+
 var _user$project$CounterReusableView$rawContent = '\n*Check out the source code [here](https://github.com/ChrisWellsWood/elm-counters)*\n\nThere seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be achieved. It centred around creating a reusable counter *component* that managed its own updates, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.\n\nWorking with reusable components was quite awkward, and involved multiple update functions and relaying `msgs` to the correct place. Personally, I found it difficult to get my head around and I much prefer that the module simply contains functions to create views.\n\nIn this post, I\'m going to reimplement the old counter example using a the reusable view pattern.\n\n### The Counter App\n\nWe\'ll start with a little Counter app that\'s entirely self contained:\n\n```Elm\nimport Html exposing (..)\nimport Html.Attributes exposing (style)\nimport Html.Events exposing (onClick)\n\n\nmain = Html.program\n  { init = init\n  , view = view\n  , update = update\n  , subscriptions = (\\_ -> Sub.none)\n  }\n\ninit : ( Model, Cmd Msg )\ninit = ( 0, Cmd.none )\n\n-- MODEL\n\ntype alias Model = Int\n\n\n-- UPDATE\n\n\ntype Msg = Increment | Decrement | Clear\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate action model =\n  case action of\n    Increment ->\n      ( model + 1, Cmd.none )\n\n    Decrement ->\n      ( model - 1, Cmd.none )\n    \n    Clear ->\n      ( 0, Cmd.none )\n\n\n-- VIEW\n\nview : Model -> Html Msg\nview model =\n  div []\n    [ button [ onClick Decrement ] [ text \"-\" ]\n    , div [ countStyle ] [ text (toString model) ]\n    , button [ onClick Increment ] [ text \"+\" ]\n    , button [ onClick Clear ] [ text \"Clear\" ]\n    ]\n\ncountStyle : Attribute msg\ncountStyle =\n  style\n    [ (\"font-size\", \"20px\")\n    , (\"font-family\", \"monospace\")\n    , (\"display\", \"inline-block\")\n    , (\"width\", \"50px\")\n    , (\"text-align\", \"center\")\n    ]\n```\n\nHere\'s what it looks like:\n\n<iframe src=\"https://chriswellswood.github.io/elm-counters/counter.html\"></iframe>\n\nIt\'s pretty straight forward, your model is simply an `Int` and the messages that update handles are `Increment`, `Decrement` and `Clear`. The model is used to create a view which displays the current count, as well as buttons for sending messages to the update function.\n\nI think this is a pretty realistic starting point, as when I make an app in Elm, I make the core functional bit first and then expanded that into the full application.\n\n### Counter List\n\nLet\'s start making our counter list app. What we\'re aiming for is an app where we can dynamically add and remove counters. We need to change the structure of the counter module to accommodate this.\n\n#### Reusable Counter View\n\nTo start with, we can get rid of most of the mechanical stuff that Elm needs: the main function `Html.program`, `init` and `update`. We\'ll rename the model to `CounterModel`, just to be explicit and avoid confusion.\n\nOur update function has been replaced by a helper method that deals with modifying the counters:\n\n```Elm\ntype CounterModifier = Increment | Decrement | Clear\n\nmodifyCounter : CounterModifier -> CounterModel -> CounterModel\nmodifyCounter counterModifier counterModel =\n  case counterModifier of\n    Increment -> counterModel + 1\n    Decrement -> counterModel - 1\n    Clear -> 0\n```\n\nIt looks quite like an update function, but doesn\'t pass messages or commands. Our different counter operations have been defined using a union type. `modifyCounter` takes a `CounterModel` and a modifier command and returns a new model.\n\nNext up we have the view for our counter:\n\n```Elm\nviewCounter : Config msg -> CounterModel -> Html msg\nviewCounter (Config { modifyMsg, removeMsg }) counterModel =\n  div []\n    [ button [ onClick (modifyMsg Decrement) ] [ text \"-\" ]\n    , div [ countStyle ] [ text (toString counterModel) ]\n    , button [ onClick (modifyMsg Increment) ] [ text \"+\" ]\n    , button [ onClick (modifyMsg Clear) ] [ text \"Clear\" ]\n    , button [ onClick (removeMsg) ] [ text \"Remove\" ]\n    ]\n```\n\nThis looks quite familiar, but it\'s slightly more complicated than before. Firstly, we\'ve added an extra button to remove the counter, but that\'s pretty straight forward. Now that the counter is not handling it\'s own update, it needs to give the `onClick` event a `Msg` from the module that\'s calling it, which will be our `CounterList` app. We\'re passing in the messages from the module that\'s using the counter in a `Config` type, let\'s take a look at that:\n\n```Elm\ntype Config msg =\n  Config\n    { modifyMsg : (CounterModifier -> msg)\n    , removeMsg : msg\n    }\n\nconfig\n  : { modifyMsg : (CounterModifier -> msg)\n    , removeMsg : msg\n    }\n  -> Config msg\nconfig { modifyMsg, removeMsg } =\n  Config\n    { modifyMsg = modifyMsg\n    , removeMsg = removeMsg\n    }\n```\n\nThis looks a bit weird, but it makes sense if we break it down. First, we define a sort of \"generic\" type, it takes a type and returns a new type that uses the input type. In this case we pass in a `msg`, which will be our `Msg` union type from our CounterList app. The function annotations are suited to the type of message: the `modifyMsg` will be used to pass a `CounterModifier` to the `modifyCounter` function in our main app. We then define a config function which takes our messages and returns a `Config` type.\n\nThat\'s all the changes to the counter itself, now we can make something with it!\n\n#### Counter List\n\nThe app itself is pretty basic, we use the standard `Html.program`. The model looks like this:\n\n```Elm\nimport ReusableCounter exposing (..)\n\ntype alias Model =\n  { counterDict : CounterDict\n  , currentCounterID : CounterID\n  }\n\ntype alias CounterDict = Dict.Dict CounterID CounterModel\n\ntype alias CounterID = Int\n```\n\nIt contains `counterDict`, a dictionary with a `CounterID` as the key and a `CounterModel` as the value, and `currentCounterID` where the last used `CounterID` is stored.\n\nOur update is pretty simple too:\n\n```Elm\ntype Msg \n  = AddCounter\n  | ModifyCounter CounterID CounterModifier\n  | RemoveCounter CounterID\n```\n\nWe handle 3 messages, 2 of which - `ModifyCounter` and `RemoveCounter` - are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations? The messages are modified to contain a CounterID before being passed to the counter module, so the CounterID isn\'t in the `Config` annotation.\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate action model =\n  case action of\n    AddCounter ->\n      let\n        nextID = model.currentCounterID + 1\n        newModel =\n          { counterDict = Dict.insert nextID 0 model.counterDict\n          , currentCounterID = nextID\n          }\n      in\n        ( newModel, Cmd.none )\n    \n    ModifyCounter counterID modifier ->\n      let\n        clickedCounter = Dict.get counterID model.counterDict\n      in\n        case clickedCounter of\n          Just counter ->\n            ( { model | counterDict =\n              Dict.insert counterID (modifyCounter modifier counter) model.counterDict }\n            , Cmd.none )\n          Nothing ->\n            ( model, Cmd.none )\n    \n    RemoveCounter counterID ->\n        ( { model | counterDict = Dict.remove counterID model.counterDict }, Cmd.none )\n```\n\n`AddCounter` just adds a new `CounterModel` to our dictionary, using the next ID that\'s free as the key.\n\nOur `ModifyCounter` message takes a modifier type, from the `ReusableCounter` module, and a `CounterID`. The `CounterID` is used to get the relevant counter and is passed to the `modifyCounter` function from the `ReusableCounter` module. After this, the `counterDict` field is updated in the model.\n\n`RemoveCounter` receives a `CounterID` that needs to be removed, and uses `Dict.remove` to create a new Dict without that counter.\n\nLastly, we have our main view:\n\n```Elm\nview : Model -> Html Msg\nview model =\n  div []\n    [ div [] [ button [ onClick AddCounter ] [ text \"Add Counter\" ] ]\n    , div [] (List.map makeView (Dict.toList model.counterDict))\n    ]\n\nmakeView : (CounterID, CounterModel) -> Html Msg\nmakeView (refID, counterModel) = \n  let\n    counterConfig =\n      config\n        { modifyMsg = ModifyCounter refID\n        , removeMsg = RemoveCounter refID\n        }\n  in\n    viewCounter counterConfig counterModel\n```\n\nIt has a button to add counters and uses the `viewCounter` function from `ReusableCounter` module to generate the views for each of the counters. This function needs to be passed a `Config`, which we make using the `config` function from `ReusableCounter`, giving it our `ModifyCounter` and `RemoveCounter` messages, modified with the relevant `CounterID`s.\n\nDone and dusted! Using this basic approach, you can make modular, composable units, while all your update logic remains in one place. You don\'t need to bother passing `Msg`s around, you just have views and functions to help create views.\n\nHere\'s the final `CounterList` application:\n\n<iframe src=\"https://chriswellswood.github.io/elm-counters/counter-list.html\"></iframe>\n\nFeel free to ask questions or share your thoughts on this over on Twitter ([@ChrisWellsWood](https://twitter.com/ChrisWellsWood))!\n\n*Many thanks to [/u/wintvelt](https://www.reddit.com/user/wintvelt) for some great suggestions on improvements to the code.*\n';
 var _user$project$CounterReusableView$content = A2(
 	_evancz$elm_markdown$Markdown$toHtml,
@@ -10574,8 +10603,12 @@ var _user$project$Content$allPosts = {
 				_0: _user$project$ElmStaticSiteP1$metaData,
 				_1: {
 					ctor: '::',
-					_0: _user$project$CounterReusableView$metaData,
-					_1: {ctor: '[]'}
+					_0: _user$project$ElmStaticSiteP2$metaData,
+					_1: {
+						ctor: '::',
+						_0: _user$project$CounterReusableView$metaData,
+						_1: {ctor: '[]'}
+					}
 				}
 			}
 		}
@@ -10852,54 +10885,40 @@ var _user$project$Index$getPage = function (location) {
 		_user$project$Index$AllPosts,
 		A2(_evancz$url_parser$UrlParser$parseHash, _user$project$Index$route, location));
 };
-var _user$project$Index$Analytics = function (a) {
-	return {ctor: 'Analytics', _0: a};
-};
 var _user$project$Index$Highlight = function (a) {
 	return {ctor: 'Highlight', _0: a};
 };
 var _user$project$Index$update = F2(
 	function (msg, model) {
 		var _p1 = msg;
-		switch (_p1.ctor) {
-			case 'UrlChange':
-				var _p2 = _p1._0;
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						model,
-						{
-							page: _user$project$Index$getPage(_p2)
-						}),
+		if (_p1.ctor === 'UrlChange') {
+			var _p2 = _p1._0;
+			return A2(
+				_elm_lang$core$Platform_Cmd_ops['!'],
+				_elm_lang$core$Native_Utils.update(
+					model,
 					{
+						page: _user$project$Index$getPage(_p2)
+					}),
+				{
+					ctor: '::',
+					_0: A2(
+						_elm_lang$core$Task$perform,
+						_user$project$Index$Highlight,
+						_elm_lang$core$Process$sleep(100 * _elm_lang$core$Time$millisecond)),
+					_1: {
 						ctor: '::',
-						_0: A2(
-							_elm_lang$core$Task$perform,
-							_user$project$Index$Highlight,
-							_elm_lang$core$Process$sleep(100 * _elm_lang$core$Time$millisecond)),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$core$Task$perform,
-								_elm_lang$core$Basics$identity,
-								_elm_lang$core$Task$succeed(
-									_user$project$Index$Analytics(_p2))),
-							_1: {ctor: '[]'}
-						}
-					});
-			case 'Highlight':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Index$highlightMarkdown(
-						{ctor: '_Tuple0'})
-				};
-			default:
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Index$analytics(_p1._0.href)
-				};
+						_0: _user$project$Index$analytics(_p2.href),
+						_1: {ctor: '[]'}
+					}
+				});
+		} else {
+			return {
+				ctor: '_Tuple2',
+				_0: model,
+				_1: _user$project$Index$highlightMarkdown(
+					{ctor: '_Tuple0'})
+			};
 		}
 	});
 var _user$project$Index$UrlChange = function (a) {
