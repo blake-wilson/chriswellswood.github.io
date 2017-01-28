@@ -59,7 +59,6 @@ port analytics : String -> Cmd msg
 type Msg
     = UrlChange Navigation.Location
     | Highlight ()
-    | Analytics Navigation.Location
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -69,13 +68,10 @@ update msg model =
         UrlChange location ->
             { model | page = getPage location } ! 
                 [ Task.perform Highlight (Process.sleep (100 * Time.millisecond))
-                , Task.perform identity (Task.succeed (Analytics location)) ]
+                , analytics location.href ]
 
         Highlight _ ->
             ( model, highlightMarkdown () )
-        
-        Analytics location ->
-            ( model, analytics location.href )
 
 
 getPage : Navigation.Location -> Page
