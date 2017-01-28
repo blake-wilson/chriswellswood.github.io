@@ -7,6 +7,7 @@ import EmptyRustStructs
 import ElmAndNewLanguages
 import OOBrainAndTypes
 import ElmStaticSiteP1
+import ElmStaticSiteP2
 import CounterReusableView
 import Snippets exposing (allSnippets)
 
@@ -17,6 +18,7 @@ allPosts =
     , ElmAndNewLanguages.metaData
     , OOBrainAndTypes.metaData
     , ElmStaticSiteP1.metaData
+    , ElmStaticSiteP2.metaData
     , CounterReusableView.metaData
     ]
 
