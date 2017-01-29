@@ -47,7 +47,17 @@
 <div id="main"></div>
 <script type="text/javascript">
     var node = document.getElementById('main');
-    var app = Elm.Index.embed(node);
+    var app = Elm.Index.embed(node, {
+      mobile: onMobile()
+    });
+
+    function onMobile() {
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|BB|PlayBook|IEMobile|Windows Phone|Kindle|Silk|Opera Mini/i.test(navigator.userAgent)) {
+        return true;
+      } else {
+        return false;
+      }
+    };
 
     app.ports.highlightMarkdown.subscribe(
       function () {

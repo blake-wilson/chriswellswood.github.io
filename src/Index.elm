@@ -11,9 +11,9 @@ import CommonViews
 import Content
 
 
-main : Program Never Model Msg
+main : Program Flags Model Msg
 main =
-    Navigation.program UrlChange
+    Navigation.programWithFlags UrlChange
         { init = init
         , view = view
         , update = update
@@ -21,9 +21,14 @@ main =
         }
 
 
-init : Navigation.Location -> ( Model, Cmd Msg )
-init location =
-    ( Model Home
+type alias Flags =
+    { mobile : Bool
+    }
+
+
+init : Flags -> Navigation.Location -> ( Model, Cmd Msg )
+init flags location =
+    ( Model Home flags.mobile
     , Task.perform identity (Task.succeed (UrlChange location))
     )
 
@@ -34,6 +39,7 @@ init location =
 
 type alias Model =
     { page : Page
+    , mobile : Bool
     }
 
 

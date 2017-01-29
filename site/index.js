@@ -10821,11 +10821,16 @@ var _user$project$Index$view = function (model) {
 			_0: _user$project$CommonViews$siteHeader,
 			_1: {
 				ctor: '::',
-				_0: _user$project$Index$content(model),
+				_0: _elm_lang$html$Html$text(
+					model.mobile ? 'MOBILE' : 'DESKTOP'),
 				_1: {
 					ctor: '::',
-					_0: _user$project$CommonViews$siteFooter,
-					_1: {ctor: '[]'}
+					_0: _user$project$Index$content(model),
+					_1: {
+						ctor: '::',
+						_0: _user$project$CommonViews$siteFooter,
+						_1: {ctor: '[]'}
+					}
 				}
 			}
 		});
@@ -10840,9 +10845,13 @@ var _user$project$Index$analytics = _elm_lang$core$Native_Platform.outgoingPort(
 	function (v) {
 		return v;
 	});
-var _user$project$Index$Model = function (a) {
-	return {page: a};
+var _user$project$Index$Flags = function (a) {
+	return {mobile: a};
 };
+var _user$project$Index$Model = F2(
+	function (a, b) {
+		return {page: a, mobile: b};
+	});
 var _user$project$Index$AllSnippets = {ctor: 'AllSnippets'};
 var _user$project$Index$Post = function (a) {
 	return {ctor: 'Post', _0: a};
@@ -10924,19 +10933,20 @@ var _user$project$Index$update = F2(
 var _user$project$Index$UrlChange = function (a) {
 	return {ctor: 'UrlChange', _0: a};
 };
-var _user$project$Index$init = function (location) {
-	return {
-		ctor: '_Tuple2',
-		_0: _user$project$Index$Model(_user$project$Index$Home),
-		_1: A2(
-			_elm_lang$core$Task$perform,
-			_elm_lang$core$Basics$identity,
-			_elm_lang$core$Task$succeed(
-				_user$project$Index$UrlChange(location)))
-	};
-};
+var _user$project$Index$init = F2(
+	function (flags, location) {
+		return {
+			ctor: '_Tuple2',
+			_0: A2(_user$project$Index$Model, _user$project$Index$Home, flags.mobile),
+			_1: A2(
+				_elm_lang$core$Task$perform,
+				_elm_lang$core$Basics$identity,
+				_elm_lang$core$Task$succeed(
+					_user$project$Index$UrlChange(location)))
+		};
+	});
 var _user$project$Index$main = A2(
-	_elm_lang$navigation$Navigation$program,
+	_elm_lang$navigation$Navigation$programWithFlags,
 	_user$project$Index$UrlChange,
 	{
 		init: _user$project$Index$init,
@@ -10945,7 +10955,14 @@ var _user$project$Index$main = A2(
 		subscriptions: function (_p3) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
-	})();
+	})(
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (mobile) {
+			return _elm_lang$core$Json_Decode$succeed(
+				{mobile: mobile});
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'mobile', _elm_lang$core$Json_Decode$bool)));
 
 var Elm = {};
 Elm['Index'] = Elm['Index'] || {};
