@@ -154,7 +154,7 @@ home =
     div []
         [ aboutMe
         , hr [] []
-        , Content.recentPosts 5
+        , Content.recentPosts 10
         , hr [] []
         , Content.recentSnippets 5
         ]
