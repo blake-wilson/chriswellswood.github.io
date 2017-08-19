@@ -2,29 +2,35 @@ module CounterReusableView exposing (..)
 
 import Html exposing (..)
 import Markdown
-
 import Types exposing (ContentMetaData)
 
+
 name : String
-name = "creating-simple-reusable-view-modules"
+name =
+    "creating-simple-reusable-view-modules"
+
 
 metaData : ContentMetaData msg
 metaData =
     { name = name
     , title = "Creating a Simple Reusable View Module in Elm"
-    , date = [2017, 01, 17]
+    , date = [ 2017, 1, 17 ]
     , description = "An updated version of an old example of how to scale your Elm app using modules, this time using reusable views rather than components."
     , category = "Code"
     , subcategory = "Elm"
     , url = "#blog/" ++ name
-    , content = content
+    , content = Just content
     }
 
-content : Html msg
-content = Markdown.toHtml [] rawContent
 
-rawContent: String
-rawContent = """
+content : Html msg
+content =
+    Markdown.toHtml [] rawContent
+
+
+rawContent : String
+rawContent =
+    """
 *Check out the source code [here](https://github.com/ChrisWellsWood/elm-counters)*
 
 There seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be achieved. It centred around creating a reusable counter *component* that managed its own updates, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.
@@ -71,7 +77,7 @@ update action model =
 
     Decrement ->
       ( model - 1, Cmd.none )
-    
+
     Clear ->
       ( 0, Cmd.none )
 
@@ -190,7 +196,7 @@ It contains `counterDict`, a dictionary with a `CounterID` as the key and a `Cou
 Our update is pretty simple too:
 
 ```Elm
-type Msg 
+type Msg
   = AddCounter
   | ModifyCounter CounterID CounterModifier
   | RemoveCounter CounterID
@@ -211,7 +217,7 @@ update action model =
           }
       in
         ( newModel, Cmd.none )
-    
+
     ModifyCounter counterID modifier ->
       let
         clickedCounter = Dict.get counterID model.counterDict
@@ -223,7 +229,7 @@ update action model =
             , Cmd.none )
           Nothing ->
             ( model, Cmd.none )
-    
+
     RemoveCounter counterID ->
         ( { model | counterDict = Dict.remove counterID model.counterDict }, Cmd.none )
 ```
@@ -245,7 +251,7 @@ view model =
     ]
 
 makeView : (CounterID, CounterModel) -> Html Msg
-makeView (refID, counterModel) = 
+makeView (refID, counterModel) =
   let
     counterConfig =
       config

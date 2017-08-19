@@ -56,7 +56,9 @@ type Page
 
 port highlightMarkdown : () -> Cmd msg
 
+
 port analytics : String -> Cmd msg
+
 
 
 -- Update
@@ -72,9 +74,10 @@ update msg model =
     case msg of
         -- The task here is to force an update before highlighting
         UrlChange location ->
-            { model | page = getPage location } ! 
-                [ Task.perform Highlight (Process.sleep (100 * Time.millisecond))
-                , analytics location.href ]
+            { model | page = getPage location }
+                ! [ Task.perform Highlight (Process.sleep (100 * Time.millisecond))
+                  , analytics location.href
+                  ]
 
         Highlight _ ->
             ( model, highlightMarkdown () )

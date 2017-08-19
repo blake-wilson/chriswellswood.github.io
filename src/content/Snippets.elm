@@ -16,6 +16,15 @@ allSnippets =
       , category = "Code"
       , subcategory = "Markdown"
       , url = "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet"
-      , content = div [] []
+      , content = Nothing
+      }
+    , { name = "python-packages"
+      , title = "Packaging a Python Project and Distributing on PyPi"
+      , date = [ 2017, 8, 17 ]
+      , description = "Workflow for making and distributing a Python package."
+      , category = "Code"
+      , subcategory = "Python"
+      , url = "https://gist.github.com/ChrisWellsWood/165e3144f4a8199482ab50a8146c8069"
+      , content = Nothing
       }
     ]

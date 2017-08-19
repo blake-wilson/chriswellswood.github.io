@@ -19,7 +19,7 @@ metaData =
     , category = "Code"
     , subcategory = "Elm"
     , url = "#blog/" ++ name
-    , content = content
+    , content = Just content
     }
 
 

@@ -11,5 +11,5 @@ type alias ContentMetaData msg =
     , category : String
     , subcategory : String
     , url : String
-    , content : Html msg
+    , content : Maybe (Html msg)
     }

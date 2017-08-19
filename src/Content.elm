@@ -121,7 +121,7 @@ blogPostView : ContentMetaData msg -> Html msg
 blogPostView metaData =
     div [ class "blogPostView" ]
         [ blogPostHeader metaData
-        , metaData.content
+        , Maybe.withDefault (div [] []) metaData.content
         ]
 
 

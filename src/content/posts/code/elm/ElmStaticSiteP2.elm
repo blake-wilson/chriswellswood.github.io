@@ -19,7 +19,7 @@ metaData =
     , category = "Code"
     , subcategory = "Elm"
     , url = "#blog/" ++ name
-    , content = content
+    , content = Just content
     }
 
 
@@ -185,7 +185,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UrlChange location ->
-            { model | page = getPage location } ! 
+            { model | page = getPage location } !
                 [ Task.perform Highlight (Process.sleep (100 * Time.millisecond))
                 , analytics location.href ]
 
@@ -204,7 +204,7 @@ On the HTML side we need a few things:
 <head>
   ...
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-  
+
   <!-- Markdown Highlighting -->
   <link rel="stylesheet" href="css/github.css">
   <script src="js/highlight.pack.js"></script>
