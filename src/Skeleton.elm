@@ -148,7 +148,7 @@ contentInfo metaData =
 
 contentUrl : String -> String -> String -> String -> String
 contentUrl group category subcategory name =
-    [ group, category, subcategory, name ]
+    [ group, category, subcategory, name ++ ".html" ]
         |> List.map String.toLower
         |> String.join "/"
 
