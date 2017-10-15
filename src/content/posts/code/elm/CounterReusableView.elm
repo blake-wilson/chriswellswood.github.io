@@ -2,7 +2,12 @@ module CounterReusableView exposing (..)
 
 import Html exposing (..)
 import Markdown
-import Types exposing (ContentMetaData)
+import Skeleton exposing (ContentMetaData, skeleton, blogPostView, contentUrl)
+
+
+main =
+    blogPostView metaData content
+        |> skeleton
 
 
 name : String
@@ -10,16 +15,31 @@ name =
     "creating-simple-reusable-view-modules"
 
 
-metaData : ContentMetaData msg
+group : String
+group =
+    "Blog"
+
+
+category : String
+category =
+    "Code"
+
+
+subcategory : String
+subcategory =
+    "Elm"
+
+
+metaData : ContentMetaData
 metaData =
     { name = name
     , title = "Creating a Simple Reusable View Module in Elm"
     , date = [ 2017, 1, 17 ]
     , description = "An updated version of an old example of how to scale your Elm app using modules, this time using reusable views rather than components."
-    , category = "Code"
-    , subcategory = "Elm"
-    , url = "#blog/" ++ name
-    , content = Just content
+    , group = group
+    , category = category
+    , subcategory = subcategory
+    , url = contentUrl group category subcategory name
     }
 
 

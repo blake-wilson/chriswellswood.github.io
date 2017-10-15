@@ -2,7 +2,12 @@ module ElmStaticSiteP2 exposing (..)
 
 import Html exposing (..)
 import Markdown
-import Types exposing (ContentMetaData)
+import Skeleton exposing (ContentMetaData, skeleton, blogPostView, contentUrl)
+
+
+main =
+    blogPostView metaData content
+        |> skeleton
 
 
 name : String
@@ -10,16 +15,31 @@ name =
     "elm-static-site-p2"
 
 
-metaData : ContentMetaData msg
+group : String
+group =
+    "Blog"
+
+
+category : String
+category =
+    "Code"
+
+
+subcategory : String
+subcategory =
+    "Elm"
+
+
+metaData : ContentMetaData
 metaData =
     { name = name
     , title = "Tools for Handling Static Pages in Elm - Part 2. Ports, Google Analytics and Highlight.js"
     , date = [ 2017, 1, 28 ]
     , description = "How to communicate with external JavaScript libraries using ports."
-    , category = "Code"
-    , subcategory = "Elm"
-    , url = "#blog/" ++ name
-    , content = Just content
+    , group = group
+    , category = category
+    , subcategory = subcategory
+    , url = contentUrl group category subcategory name
     }
 
 

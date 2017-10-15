@@ -2,7 +2,12 @@ module OOBrainAndTypes exposing (..)
 
 import Html exposing (..)
 import Markdown
-import Types exposing (ContentMetaData)
+import Skeleton exposing (ContentMetaData, skeleton, blogPostView, contentUrl)
+
+
+main =
+    blogPostView metaData content
+        |> skeleton
 
 
 name : String
@@ -10,16 +15,31 @@ name =
     "object-oriented-brain-and-types"
 
 
-metaData : ContentMetaData msg
+group : String
+group =
+    "Blog"
+
+
+category : String
+category =
+    "Code"
+
+
+subcategory : String
+subcategory =
+    "Elm"
+
+
+metaData : ContentMetaData
 metaData =
     { name = name
     , title = "Object-Oriented Brain and Types"
     , date = [ 2016, 8, 29 ]
     , description = "An intro to types and type aliases in Elm."
-    , category = "Code"
-    , subcategory = "Elm"
-    , url = "#blog/" ++ name
-    , content = Just content
+    , group = group
+    , category = category
+    , subcategory = subcategory
+    , url = contentUrl group category subcategory name
     }
 
 

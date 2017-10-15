@@ -2,7 +2,12 @@ module ElmAndNewLanguages exposing (..)
 
 import Html exposing (..)
 import Markdown
-import Types exposing (ContentMetaData)
+import Skeleton exposing (ContentMetaData, skeleton, blogPostView, contentUrl)
+
+
+main =
+    blogPostView metaData content
+        |> skeleton
 
 
 name : String
@@ -10,16 +15,31 @@ name =
     "elm-and-learning-new-languages"
 
 
-metaData : ContentMetaData msg
+group : String
+group =
+    "Blog"
+
+
+category : String
+category =
+    "Code"
+
+
+subcategory : String
+subcategory =
+    "Elm"
+
+
+metaData : ContentMetaData
 metaData =
     { name = name
     , title = "Elm and Learning New Programming Languages"
     , date = [ 2016, 8, 25 ]
     , description = "A bit of pontification on learning programming languages and paradigms."
-    , category = "Code"
-    , subcategory = "Elm"
-    , url = "#blog/" ++ name
-    , content = Just content
+    , group = group
+    , category = category
+    , subcategory = subcategory
+    , url = contentUrl group category subcategory name
     }
 
 

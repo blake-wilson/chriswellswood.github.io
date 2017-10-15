@@ -1,14 +1,14 @@
-port module Index exposing (..)
+port module Home exposing (..)
 
+import Content
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Navigation
 import Process
+import Skeleton exposing (ContentMetaData, skeleton, contentCard)
 import Task
 import Time
 import UrlParser exposing ((</>))
-import CommonViews
-import Content
 
 
 main : Program Flags Model Msg
@@ -28,7 +28,7 @@ type alias Flags =
 
 init : Flags -> Navigation.Location -> ( Model, Cmd Msg )
 init flags location =
-    ( Model Home flags.mobile
+    ( Model Home
     , Task.perform identity (Task.succeed (UrlChange location))
     )
 
@@ -39,25 +39,13 @@ init flags location =
 
 type alias Model =
     { page : Page
-    , mobile : Bool
     }
 
 
 type Page
     = Home
     | AllPosts
-    | Post String
     | AllSnippets
-
-
-
--- Ports
-
-
-port highlightMarkdown : () -> Cmd msg
-
-
-port analytics : String -> Cmd msg
 
 
 
@@ -66,7 +54,6 @@ port analytics : String -> Cmd msg
 
 type Msg
     = UrlChange Navigation.Location
-    | Highlight ()
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -74,13 +61,7 @@ update msg model =
     case msg of
         -- The task here is to force an update before highlighting
         UrlChange location ->
-            { model | page = getPage location }
-                ! [ Task.perform Highlight (Process.sleep (100 * Time.millisecond))
-                  , analytics location.href
-                  ]
-
-        Highlight _ ->
-            ( model, highlightMarkdown () )
+            { model | page = getPage location } ! []
 
 
 getPage : Navigation.Location -> Page
@@ -93,7 +74,6 @@ route =
     UrlParser.oneOf
         [ UrlParser.map Home UrlParser.top
         , UrlParser.map AllPosts (UrlParser.s "all-posts")
-        , UrlParser.map Post (UrlParser.s "blog" </> UrlParser.string)
         , UrlParser.map AllSnippets (UrlParser.s "all-snippets")
         ]
 
@@ -104,22 +84,7 @@ route =
 
 view : Model -> Html Msg
 view model =
-    div [ id "mainSiteDiv", mainSiteDivStyle ]
-        [ CommonViews.siteHeader
-        , content model
-        , CommonViews.siteFooter
-        ]
-
-
-mainSiteDivStyle : Html.Attribute msg
-mainSiteDivStyle =
-    style
-        [ ( "margin-right", "auto" )
-        , ( "margin-left", "auto" )
-        , ( "max-width", "980px" )
-        , ( "padding-right", "2.5%" )
-        , ( "padding-left", "2.5%" )
-        ]
+    skeleton <| content model
 
 
 content : Model -> Html Msg
@@ -136,13 +101,10 @@ getContent model =
             home
 
         AllPosts ->
-            Content.allPostsView
-
-        Post title ->
-            Maybe.withDefault home (Content.getBlogPost title)
+            allPostsView
 
         AllSnippets ->
-            Content.allSnippetsView
+            allSnippetsView
 
 
 
@@ -154,9 +116,9 @@ home =
     div []
         [ aboutMe
         , hr [] []
-        , Content.recentPosts 10
+        , recentPosts 10
         , hr [] []
-        , Content.recentSnippets 5
+        , recentSnippets 5
         ]
 
 
@@ -179,3 +141,61 @@ I'm a research scientist that spends a lot of time writing code and\x0D
 occasionally ventures into the lab. This is sort of a blog with various\x0D
 articles/posts as well as snippets from other sources.\x0D
 """
+
+
+
+-- Content
+
+
+recentContentCards : Int -> List ContentMetaData -> Html msg
+recentContentCards numToShow posts =
+    div [ id "recentContentCards" ]
+        (List.take numToShow (List.map contentCard posts))
+
+
+
+-- Posts
+
+
+allPostsView : Html msg
+allPostsView =
+    div [ id "allPostsView" ]
+        [ h2 [] [ text "All Posts" ]
+        , div [] (List.map contentCard Content.allPosts |> List.reverse)
+        ]
+
+
+recentPosts : Int -> Html msg
+recentPosts numToShow =
+    div []
+        [ h2 [] [ text "Recent Posts" ]
+        , (Content.allPosts
+            |> List.sortBy .date
+            |> List.reverse
+            |> recentContentCards numToShow
+          )
+        ]
+
+
+
+-- Snippets
+
+
+allSnippetsView : Html msg
+allSnippetsView =
+    div [ id "allSnippetsView" ]
+        [ h2 [] [ text "All Snippets" ]
+        , div [] (List.map contentCard Content.allSnippets)
+        ]
+
+
+recentSnippets : Int -> Html msg
+recentSnippets numToShow =
+    div []
+        [ h2 [] [ text "Recent Snippets" ]
+        , (Content.allSnippets
+            |> List.sortBy .date
+            |> List.reverse
+            |> recentContentCards numToShow
+          )
+        ]
