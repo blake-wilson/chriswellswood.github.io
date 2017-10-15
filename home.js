@@ -1564,8 +1564,7 @@ function toString(v)
 	var type = typeof v;
 	if (type === 'function')
 	{
-		var name = v.func ? v.func.name : v.name;
-		return '<function' + (name === '' ? '' : ':') + name + '>';
+		return '<function>';
 	}
 
 	if (type === 'boolean')
@@ -2072,6 +2071,13 @@ var _elm_lang$core$List$sortWith = _elm_lang$core$Native_List.sortWith;
 var _elm_lang$core$List$sortBy = _elm_lang$core$Native_List.sortBy;
 var _elm_lang$core$List$sort = function (xs) {
 	return A2(_elm_lang$core$List$sortBy, _elm_lang$core$Basics$identity, xs);
+};
+var _elm_lang$core$List$singleton = function (value) {
+	return {
+		ctor: '::',
+		_0: value,
+		_1: {ctor: '[]'}
+	};
 };
 var _elm_lang$core$List$drop = F2(
 	function (n, list) {
@@ -3520,15 +3526,8 @@ function setupIncomingPort(name, callback)
 		sentBeforeInit.push(value);
 	}
 
-	function postInitSend(incomingValue)
+	function postInitSend(value)
 	{
-		var result = A2(_elm_lang$core$Json_Decode$decodeValue, converter, incomingValue);
-		if (result.ctor === 'Err')
-		{
-			throw new Error('Trying to send an unexpected type of value through port `' + name + '`:\n' + result._0);
-		}
-
-		var value = result._0;
 		var temp = subs;
 		while (temp.ctor !== '[]')
 		{
@@ -3539,7 +3538,13 @@ function setupIncomingPort(name, callback)
 
 	function send(incomingValue)
 	{
-		currentSend(incomingValue);
+		var result = A2(_elm_lang$core$Json_Decode$decodeValue, converter, incomingValue);
+		if (result.ctor === 'Err')
+		{
+			throw new Error('Trying to send an unexpected type of value through port `' + name + '`:\n' + result._0);
+		}
+
+		currentSend(result._0);
 	}
 
 	return { send: send };
@@ -4160,7 +4165,7 @@ function endsWith(sub, str)
 function indexes(sub, str)
 {
 	var subLen = sub.length;
-	
+
 	if (subLen < 1)
 	{
 		return _elm_lang$core$Native_List.Nil;
@@ -4173,74 +4178,78 @@ function indexes(sub, str)
 	{
 		is.push(i);
 		i = i + subLen;
-	}	
-	
+	}
+
 	return _elm_lang$core$Native_List.fromArray(is);
 }
+
 
 function toInt(s)
 {
 	var len = s.length;
+
+	// if empty
 	if (len === 0)
 	{
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+		return intErr(s);
 	}
-	var start = 0;
-	if (s[0] === '-')
+
+	// if hex
+	var c = s[0];
+	if (c === '0' && s[1] === 'x')
 	{
-		if (len === 1)
+		for (var i = 2; i < len; ++i)
 		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+			var c = s[i];
+			if (('0' <= c && c <= '9') || ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f'))
+			{
+				continue;
+			}
+			return intErr(s);
 		}
-		start = 1;
+		return _elm_lang$core$Result$Ok(parseInt(s, 16));
 	}
-	for (var i = start; i < len; ++i)
+
+	// is decimal
+	if (c > '9' || (c < '0' && c !== '-' && c !== '+'))
+	{
+		return intErr(s);
+	}
+	for (var i = 1; i < len; ++i)
 	{
 		var c = s[i];
 		if (c < '0' || '9' < c)
 		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+			return intErr(s);
 		}
 	}
+
 	return _elm_lang$core$Result$Ok(parseInt(s, 10));
 }
 
+function intErr(s)
+{
+	return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int");
+}
+
+
 function toFloat(s)
 {
-	var len = s.length;
-	if (len === 0)
+	// check if it is a hex, octal, or binary number
+	if (s.length === 0 || /[\sxbo]/.test(s))
 	{
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
+		return floatErr(s);
 	}
-	var start = 0;
-	if (s[0] === '-')
-	{
-		if (len === 1)
-		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
-		}
-		start = 1;
-	}
-	var dotCount = 0;
-	for (var i = start; i < len; ++i)
-	{
-		var c = s[i];
-		if ('0' <= c && c <= '9')
-		{
-			continue;
-		}
-		if (c === '.')
-		{
-			dotCount += 1;
-			if (dotCount <= 1)
-			{
-				continue;
-			}
-		}
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
-	}
-	return _elm_lang$core$Result$Ok(parseFloat(s));
+	var n = +s;
+	// faster isNaN check
+	return n === n ? _elm_lang$core$Result$Ok(n) : floatErr(s);
 }
+
+function floatErr(s)
+{
+	return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float");
+}
+
 
 function toList(str)
 {
@@ -5695,11 +5704,6 @@ function badToString(problem)
 				problem = problem.rest;
 				break;
 
-			case 'index':
-				context += '[' + problem.index + ']';
-				problem = problem.rest;
-				break;
-
 			case 'oneOf':
 				var problems = problem.problems;
 				for (var i = 0; i < problems.length; i++)
@@ -6617,9 +6621,9 @@ function on(name, options, decoder)
 
 function equalEvents(a, b)
 {
-	if (!a.options === b.options)
+	if (a.options !== b.options)
 	{
-		if (a.stopPropagation !== b.stopPropagation || a.preventDefault !== b.preventDefault)
+		if (a.options.stopPropagation !== b.options.stopPropagation || a.options.preventDefault !== b.options.preventDefault)
 		{
 			return false;
 		}
@@ -7895,7 +7899,7 @@ function normalRenderer(parentNode, view)
 var rAF =
 	typeof requestAnimationFrame !== 'undefined'
 		? requestAnimationFrame
-		: function(callback) { callback(); };
+		: function(callback) { setTimeout(callback, 1000 / 60); };
 
 function makeStepper(domNode, view, initialVirtualNode, eventNode)
 {
@@ -9106,6 +9110,9 @@ var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
 
 var _elm_lang$navigation$Native_Navigation = function() {
 
+
+// FAKE NAVIGATION
+
 function go(n)
 {
 	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
@@ -9136,6 +9143,39 @@ function replaceState(url)
 	});
 }
 
+
+// REAL NAVIGATION
+
+function reloadPage(skipCache)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		document.location.reload(skipCache);
+		callback(_elm_lang$core$Native_Scheduler.succeed(_elm_lang$core$Native_Utils.Tuple0));
+	});
+}
+
+function setLocation(url)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		try
+		{
+			window.location = url;
+		}
+		catch(err)
+		{
+			// Only Firefox can throw a NS_ERROR_MALFORMED_URI exception here.
+			// Other browsers reload the page, so let's be consistent about that.
+			document.location.reload(false);
+		}
+		callback(_elm_lang$core$Native_Scheduler.succeed(_elm_lang$core$Native_Utils.Tuple0));
+	});
+}
+
+
+// GET LOCATION
+
 function getLocation()
 {
 	var location = document.location;
@@ -9156,11 +9196,22 @@ function getLocation()
 }
 
 
+// DETECT IE11 PROBLEMS
+
+function isInternetExplorer11()
+{
+	return window.navigator.userAgent.indexOf('Trident') !== -1;
+}
+
+
 return {
 	go: go,
+	setLocation: setLocation,
+	reloadPage: reloadPage,
 	pushState: pushState,
 	replaceState: replaceState,
-	getLocation: getLocation
+	getLocation: getLocation,
+	isInternetExplorer11: isInternetExplorer11
 };
 
 }();
@@ -9168,38 +9219,26 @@ return {
 var _elm_lang$navigation$Navigation$replaceState = _elm_lang$navigation$Native_Navigation.replaceState;
 var _elm_lang$navigation$Navigation$pushState = _elm_lang$navigation$Native_Navigation.pushState;
 var _elm_lang$navigation$Navigation$go = _elm_lang$navigation$Native_Navigation.go;
-var _elm_lang$navigation$Navigation$spawnPopState = function (router) {
-	return _elm_lang$core$Process$spawn(
-		A3(
-			_elm_lang$dom$Dom_LowLevel$onWindow,
-			'popstate',
-			_elm_lang$core$Json_Decode$value,
-			function (_p0) {
-				return A2(
-					_elm_lang$core$Platform$sendToSelf,
-					router,
-					_elm_lang$navigation$Native_Navigation.getLocation(
-						{ctor: '_Tuple0'}));
-			}));
-};
+var _elm_lang$navigation$Navigation$reloadPage = _elm_lang$navigation$Native_Navigation.reloadPage;
+var _elm_lang$navigation$Navigation$setLocation = _elm_lang$navigation$Native_Navigation.setLocation;
 var _elm_lang$navigation$Navigation_ops = _elm_lang$navigation$Navigation_ops || {};
 _elm_lang$navigation$Navigation_ops['&>'] = F2(
 	function (task1, task2) {
 		return A2(
 			_elm_lang$core$Task$andThen,
-			function (_p1) {
+			function (_p0) {
 				return task2;
 			},
 			task1);
 	});
 var _elm_lang$navigation$Navigation$notify = F3(
 	function (router, subs, location) {
-		var send = function (_p2) {
-			var _p3 = _p2;
+		var send = function (_p1) {
+			var _p2 = _p1;
 			return A2(
 				_elm_lang$core$Platform$sendToApp,
 				router,
-				_p3._0(location));
+				_p2._0(location));
 		};
 		return A2(
 			_elm_lang$navigation$Navigation_ops['&>'],
@@ -9208,30 +9247,45 @@ var _elm_lang$navigation$Navigation$notify = F3(
 			_elm_lang$core$Task$succeed(
 				{ctor: '_Tuple0'}));
 	});
+var _elm_lang$navigation$Navigation$cmdHelp = F3(
+	function (router, subs, cmd) {
+		var _p3 = cmd;
+		switch (_p3.ctor) {
+			case 'Jump':
+				return _elm_lang$navigation$Navigation$go(_p3._0);
+			case 'New':
+				return A2(
+					_elm_lang$core$Task$andThen,
+					A2(_elm_lang$navigation$Navigation$notify, router, subs),
+					_elm_lang$navigation$Navigation$pushState(_p3._0));
+			case 'Modify':
+				return A2(
+					_elm_lang$core$Task$andThen,
+					A2(_elm_lang$navigation$Navigation$notify, router, subs),
+					_elm_lang$navigation$Navigation$replaceState(_p3._0));
+			case 'Visit':
+				return _elm_lang$navigation$Navigation$setLocation(_p3._0);
+			default:
+				return _elm_lang$navigation$Navigation$reloadPage(_p3._0);
+		}
+	});
+var _elm_lang$navigation$Navigation$killPopWatcher = function (popWatcher) {
+	var _p4 = popWatcher;
+	if (_p4.ctor === 'Normal') {
+		return _elm_lang$core$Process$kill(_p4._0);
+	} else {
+		return A2(
+			_elm_lang$navigation$Navigation_ops['&>'],
+			_elm_lang$core$Process$kill(_p4._0),
+			_elm_lang$core$Process$kill(_p4._1));
+	}
+};
 var _elm_lang$navigation$Navigation$onSelfMsg = F3(
 	function (router, location, state) {
 		return A2(
 			_elm_lang$navigation$Navigation_ops['&>'],
 			A3(_elm_lang$navigation$Navigation$notify, router, state.subs, location),
 			_elm_lang$core$Task$succeed(state));
-	});
-var _elm_lang$navigation$Navigation$cmdHelp = F3(
-	function (router, subs, cmd) {
-		var _p4 = cmd;
-		switch (_p4.ctor) {
-			case 'Jump':
-				return _elm_lang$navigation$Navigation$go(_p4._0);
-			case 'New':
-				return A2(
-					_elm_lang$core$Task$andThen,
-					A2(_elm_lang$navigation$Navigation$notify, router, subs),
-					_elm_lang$navigation$Navigation$pushState(_p4._0));
-			default:
-				return A2(
-					_elm_lang$core$Task$andThen,
-					A2(_elm_lang$navigation$Navigation$notify, router, subs),
-					_elm_lang$navigation$Navigation$replaceState(_p4._0));
-		}
 	});
 var _elm_lang$navigation$Navigation$subscription = _elm_lang$core$Native_Platform.leaf('Navigation');
 var _elm_lang$navigation$Navigation$command = _elm_lang$core$Native_Platform.leaf('Navigation');
@@ -9260,59 +9314,27 @@ var _elm_lang$navigation$Navigation$Location = function (a) {
 };
 var _elm_lang$navigation$Navigation$State = F2(
 	function (a, b) {
-		return {subs: a, process: b};
+		return {subs: a, popWatcher: b};
 	});
 var _elm_lang$navigation$Navigation$init = _elm_lang$core$Task$succeed(
 	A2(
 		_elm_lang$navigation$Navigation$State,
 		{ctor: '[]'},
 		_elm_lang$core$Maybe$Nothing));
-var _elm_lang$navigation$Navigation$onEffects = F4(
-	function (router, cmds, subs, _p5) {
-		var _p6 = _p5;
-		var _p9 = _p6.process;
-		var stepState = function () {
-			var _p7 = {ctor: '_Tuple2', _0: subs, _1: _p9};
-			_v3_2:
-			do {
-				if (_p7._0.ctor === '[]') {
-					if (_p7._1.ctor === 'Just') {
-						return A2(
-							_elm_lang$navigation$Navigation_ops['&>'],
-							_elm_lang$core$Process$kill(_p7._1._0),
-							_elm_lang$core$Task$succeed(
-								A2(_elm_lang$navigation$Navigation$State, subs, _elm_lang$core$Maybe$Nothing)));
-					} else {
-						break _v3_2;
-					}
-				} else {
-					if (_p7._1.ctor === 'Nothing') {
-						return A2(
-							_elm_lang$core$Task$map,
-							function (_p8) {
-								return A2(
-									_elm_lang$navigation$Navigation$State,
-									subs,
-									_elm_lang$core$Maybe$Just(_p8));
-							},
-							_elm_lang$navigation$Navigation$spawnPopState(router));
-					} else {
-						break _v3_2;
-					}
-				}
-			} while(false);
-			return _elm_lang$core$Task$succeed(
-				A2(_elm_lang$navigation$Navigation$State, subs, _p9));
-		}();
-		return A2(
-			_elm_lang$navigation$Navigation_ops['&>'],
-			_elm_lang$core$Task$sequence(
-				A2(
-					_elm_lang$core$List$map,
-					A2(_elm_lang$navigation$Navigation$cmdHelp, router, subs),
-					cmds)),
-			stepState);
-	});
+var _elm_lang$navigation$Navigation$Reload = function (a) {
+	return {ctor: 'Reload', _0: a};
+};
+var _elm_lang$navigation$Navigation$reload = _elm_lang$navigation$Navigation$command(
+	_elm_lang$navigation$Navigation$Reload(false));
+var _elm_lang$navigation$Navigation$reloadAndSkipCache = _elm_lang$navigation$Navigation$command(
+	_elm_lang$navigation$Navigation$Reload(true));
+var _elm_lang$navigation$Navigation$Visit = function (a) {
+	return {ctor: 'Visit', _0: a};
+};
+var _elm_lang$navigation$Navigation$load = function (url) {
+	return _elm_lang$navigation$Navigation$command(
+		_elm_lang$navigation$Navigation$Visit(url));
+};
 var _elm_lang$navigation$Navigation$Modify = function (a) {
 	return {ctor: 'Modify', _0: a};
 };
@@ -9339,15 +9361,19 @@ var _elm_lang$navigation$Navigation$forward = function (n) {
 		_elm_lang$navigation$Navigation$Jump(n));
 };
 var _elm_lang$navigation$Navigation$cmdMap = F2(
-	function (_p10, myCmd) {
-		var _p11 = myCmd;
-		switch (_p11.ctor) {
+	function (_p5, myCmd) {
+		var _p6 = myCmd;
+		switch (_p6.ctor) {
 			case 'Jump':
-				return _elm_lang$navigation$Navigation$Jump(_p11._0);
+				return _elm_lang$navigation$Navigation$Jump(_p6._0);
 			case 'New':
-				return _elm_lang$navigation$Navigation$New(_p11._0);
+				return _elm_lang$navigation$Navigation$New(_p6._0);
+			case 'Modify':
+				return _elm_lang$navigation$Navigation$Modify(_p6._0);
+			case 'Visit':
+				return _elm_lang$navigation$Navigation$Visit(_p6._0);
 			default:
-				return _elm_lang$navigation$Navigation$Modify(_p11._0);
+				return _elm_lang$navigation$Navigation$Reload(_p6._0);
 		}
 	});
 var _elm_lang$navigation$Navigation$Monitor = function (a) {
@@ -9400,13 +9426,87 @@ var _elm_lang$navigation$Navigation$programWithFlags = F2(
 			{init: init, view: stuff.view, update: stuff.update, subscriptions: subs});
 	});
 var _elm_lang$navigation$Navigation$subMap = F2(
-	function (func, _p12) {
-		var _p13 = _p12;
+	function (func, _p7) {
+		var _p8 = _p7;
 		return _elm_lang$navigation$Navigation$Monitor(
-			function (_p14) {
+			function (_p9) {
 				return func(
-					_p13._0(_p14));
+					_p8._0(_p9));
 			});
+	});
+var _elm_lang$navigation$Navigation$InternetExplorer = F2(
+	function (a, b) {
+		return {ctor: 'InternetExplorer', _0: a, _1: b};
+	});
+var _elm_lang$navigation$Navigation$Normal = function (a) {
+	return {ctor: 'Normal', _0: a};
+};
+var _elm_lang$navigation$Navigation$spawnPopWatcher = function (router) {
+	var reportLocation = function (_p10) {
+		return A2(
+			_elm_lang$core$Platform$sendToSelf,
+			router,
+			_elm_lang$navigation$Native_Navigation.getLocation(
+				{ctor: '_Tuple0'}));
+	};
+	return _elm_lang$navigation$Native_Navigation.isInternetExplorer11(
+		{ctor: '_Tuple0'}) ? A3(
+		_elm_lang$core$Task$map2,
+		_elm_lang$navigation$Navigation$InternetExplorer,
+		_elm_lang$core$Process$spawn(
+			A3(_elm_lang$dom$Dom_LowLevel$onWindow, 'popstate', _elm_lang$core$Json_Decode$value, reportLocation)),
+		_elm_lang$core$Process$spawn(
+			A3(_elm_lang$dom$Dom_LowLevel$onWindow, 'hashchange', _elm_lang$core$Json_Decode$value, reportLocation))) : A2(
+		_elm_lang$core$Task$map,
+		_elm_lang$navigation$Navigation$Normal,
+		_elm_lang$core$Process$spawn(
+			A3(_elm_lang$dom$Dom_LowLevel$onWindow, 'popstate', _elm_lang$core$Json_Decode$value, reportLocation)));
+};
+var _elm_lang$navigation$Navigation$onEffects = F4(
+	function (router, cmds, subs, _p11) {
+		var _p12 = _p11;
+		var _p15 = _p12.popWatcher;
+		var stepState = function () {
+			var _p13 = {ctor: '_Tuple2', _0: subs, _1: _p15};
+			_v6_2:
+			do {
+				if (_p13._0.ctor === '[]') {
+					if (_p13._1.ctor === 'Just') {
+						return A2(
+							_elm_lang$navigation$Navigation_ops['&>'],
+							_elm_lang$navigation$Navigation$killPopWatcher(_p13._1._0),
+							_elm_lang$core$Task$succeed(
+								A2(_elm_lang$navigation$Navigation$State, subs, _elm_lang$core$Maybe$Nothing)));
+					} else {
+						break _v6_2;
+					}
+				} else {
+					if (_p13._1.ctor === 'Nothing') {
+						return A2(
+							_elm_lang$core$Task$map,
+							function (_p14) {
+								return A2(
+									_elm_lang$navigation$Navigation$State,
+									subs,
+									_elm_lang$core$Maybe$Just(_p14));
+							},
+							_elm_lang$navigation$Navigation$spawnPopWatcher(router));
+					} else {
+						break _v6_2;
+					}
+				}
+			} while(false);
+			return _elm_lang$core$Task$succeed(
+				A2(_elm_lang$navigation$Navigation$State, subs, _p15));
+		}();
+		return A2(
+			_elm_lang$navigation$Navigation_ops['&>'],
+			_elm_lang$core$Task$sequence(
+				A2(
+					_elm_lang$core$List$map,
+					A2(_elm_lang$navigation$Navigation$cmdHelp, router, subs),
+					cmds)),
+			stepState);
 	});
 _elm_lang$core$Native_Platform.effectManagers['Navigation'] = {pkg: 'elm-lang/navigation', init: _elm_lang$navigation$Navigation$init, onEffects: _elm_lang$navigation$Navigation$onEffects, onSelfMsg: _elm_lang$navigation$Navigation$onSelfMsg, tag: 'fx', cmdMap: _elm_lang$navigation$Navigation$cmdMap, subMap: _elm_lang$navigation$Navigation$subMap};
 
@@ -9474,8 +9574,9 @@ var marked = function() {
 	 * marked - a markdown parser
 	 * Copyright (c) 2011-2014, Christopher Jeffrey. (MIT Licensed)
 	 * https://github.com/chjj/marked
+	 * commit cd2f6f5b7091154c5526e79b5f3bfb4d15995a51
 	 */
-	(function(){var block={newline:/^\n+/,code:/^( {4}[^\n]+\n*)+/,fences:noop,hr:/^( *[-*_]){3,} *(?:\n+|$)/,heading:/^ *(#{1,6}) *([^\n]+?) *#* *(?:\n+|$)/,nptable:noop,lheading:/^([^\n]+)\n *(=|-){2,} *(?:\n+|$)/,blockquote:/^( *>[^\n]+(\n(?!def)[^\n]+)*\n*)+/,list:/^( *)(bull) [\s\S]+?(?:hr|def|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,html:/^ *(?:comment|closed|closing) *(?:\n{2,}|\s*$)/,def:/^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +["(]([^\n]+)[")])? *(?:\n+|$)/,table:noop,paragraph:/^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|tag|def))+)\n*/,text:/^[^\n]+/};block.bullet=/(?:[*+-]|\d+\.)/;block.item=/^( *)(bull) [^\n]*(?:\n(?!\1bull )[^\n]*)*/;block.item=replace(block.item,"gm")(/bull/g,block.bullet)();block.list=replace(block.list)(/bull/g,block.bullet)("hr","\\n+(?=\\1?(?:[-*_] *){3,}(?:\\n+|$))")("def","\\n+(?="+block.def.source+")")();block.blockquote=replace(block.blockquote)("def",block.def)();block._tag="(?!(?:"+"a|em|strong|small|s|cite|q|dfn|abbr|data|time|code"+"|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo"+"|span|br|wbr|ins|del|img)\\b)\\w+(?!:/|[^\\w\\s@]*@)\\b";block.html=replace(block.html)("comment",/<!--[\s\S]*?-->/)("closed",/<(tag)[\s\S]+?<\/\1>/)("closing",/<tag(?:"[^"]*"|'[^']*'|[^'">])*?>/)(/tag/g,block._tag)();block.paragraph=replace(block.paragraph)("hr",block.hr)("heading",block.heading)("lheading",block.lheading)("blockquote",block.blockquote)("tag","<"+block._tag)("def",block.def)();block.normal=merge({},block);block.gfm=merge({},block.normal,{fences:/^ *(`{3,}|~{3,}) *(\S+)? *\n([\s\S]+?)\s*\1 *(?:\n+|$)/,paragraph:/^/});block.gfm.paragraph=replace(block.paragraph)("(?!","(?!"+block.gfm.fences.source.replace("\\1","\\2")+"|"+block.list.source.replace("\\1","\\3")+"|")();block.tables=merge({},block.gfm,{nptable:/^ *(\S.*\|.*)\n *([-:]+ *\|[-| :]*)\n((?:.*\|.*(?:\n|$))*)\n*/,table:/^ *\|(.+)\n *\|( *[-:]+[-| :]*)\n((?: *\|.*(?:\n|$))*)\n*/});function Lexer(options){this.tokens=[];this.tokens.links={};this.options=options||marked.defaults;this.rules=block.normal;if(this.options.gfm){if(this.options.tables){this.rules=block.tables}else{this.rules=block.gfm}}}Lexer.rules=block;Lexer.lex=function(src,options){var lexer=new Lexer(options);return lexer.lex(src)};Lexer.prototype.lex=function(src){src=src.replace(/\r\n|\r/g,"\n").replace(/\t/g,"    ").replace(/\u00a0/g," ").replace(/\u2424/g,"\n");return this.token(src,true)};Lexer.prototype.token=function(src,top,bq){var src=src.replace(/^ +$/gm,""),next,loose,cap,bull,b,item,space,i,l;while(src){if(cap=this.rules.newline.exec(src)){src=src.substring(cap[0].length);if(cap[0].length>1){this.tokens.push({type:"space"})}}if(cap=this.rules.code.exec(src)){src=src.substring(cap[0].length);cap=cap[0].replace(/^ {4}/gm,"");this.tokens.push({type:"code",text:!this.options.pedantic?cap.replace(/\n+$/,""):cap});continue}if(cap=this.rules.fences.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"code",lang:cap[2],text:cap[3]});continue}if(cap=this.rules.heading.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"heading",depth:cap[1].length,text:cap[2]});continue}if(top&&(cap=this.rules.nptable.exec(src))){src=src.substring(cap[0].length);item={type:"table",header:cap[1].replace(/^ *| *\| *$/g,"").split(/ *\| */),align:cap[2].replace(/^ *|\| *$/g,"").split(/ *\| */),cells:cap[3].replace(/\n$/,"").split("\n")};for(i=0;i<item.align.length;i++){if(/^ *-+: *$/.test(item.align[i])){item.align[i]="right"}else if(/^ *:-+: *$/.test(item.align[i])){item.align[i]="center"}else if(/^ *:-+ *$/.test(item.align[i])){item.align[i]="left"}else{item.align[i]=null}}for(i=0;i<item.cells.length;i++){item.cells[i]=item.cells[i].split(/ *\| */)}this.tokens.push(item);continue}if(cap=this.rules.lheading.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"heading",depth:cap[2]==="="?1:2,text:cap[1]});continue}if(cap=this.rules.hr.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"hr"});continue}if(cap=this.rules.blockquote.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"blockquote_start"});cap=cap[0].replace(/^ *> ?/gm,"");this.token(cap,top,true);this.tokens.push({type:"blockquote_end"});continue}if(cap=this.rules.list.exec(src)){src=src.substring(cap[0].length);bull=cap[2];this.tokens.push({type:"list_start",ordered:bull.length>1});cap=cap[0].match(this.rules.item);next=false;l=cap.length;i=0;for(;i<l;i++){item=cap[i];space=item.length;item=item.replace(/^ *([*+-]|\d+\.) +/,"");if(~item.indexOf("\n ")){space-=item.length;item=!this.options.pedantic?item.replace(new RegExp("^ {1,"+space+"}","gm"),""):item.replace(/^ {1,4}/gm,"")}if(this.options.smartLists&&i!==l-1){b=block.bullet.exec(cap[i+1])[0];if(bull!==b&&!(bull.length>1&&b.length>1)){src=cap.slice(i+1).join("\n")+src;i=l-1}}loose=next||/\n\n(?!\s*$)/.test(item);if(i!==l-1){next=item.charAt(item.length-1)==="\n";if(!loose)loose=next}this.tokens.push({type:loose?"loose_item_start":"list_item_start"});this.token(item,false,bq);this.tokens.push({type:"list_item_end"})}this.tokens.push({type:"list_end"});continue}if(cap=this.rules.html.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:this.options.sanitize?"paragraph":"html",pre:cap[1]==="pre"||cap[1]==="script"||cap[1]==="style",text:cap[0]});continue}if(!bq&&top&&(cap=this.rules.def.exec(src))){src=src.substring(cap[0].length);this.tokens.links[cap[1].toLowerCase()]={href:cap[2],title:cap[3]};continue}if(top&&(cap=this.rules.table.exec(src))){src=src.substring(cap[0].length);item={type:"table",header:cap[1].replace(/^ *| *\| *$/g,"").split(/ *\| */),align:cap[2].replace(/^ *|\| *$/g,"").split(/ *\| */),cells:cap[3].replace(/(?: *\| *)?\n$/,"").split("\n")};for(i=0;i<item.align.length;i++){if(/^ *-+: *$/.test(item.align[i])){item.align[i]="right"}else if(/^ *:-+: *$/.test(item.align[i])){item.align[i]="center"}else if(/^ *:-+ *$/.test(item.align[i])){item.align[i]="left"}else{item.align[i]=null}}for(i=0;i<item.cells.length;i++){item.cells[i]=item.cells[i].replace(/^ *\| *| *\| *$/g,"").split(/ *\| */)}this.tokens.push(item);continue}if(top&&(cap=this.rules.paragraph.exec(src))){src=src.substring(cap[0].length);this.tokens.push({type:"paragraph",text:cap[1].charAt(cap[1].length-1)==="\n"?cap[1].slice(0,-1):cap[1]});continue}if(cap=this.rules.text.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"text",text:cap[0]});continue}if(src){throw new Error("Infinite loop on byte: "+src.charCodeAt(0))}}return this.tokens};var inline={escape:/^\\([\\`*{}\[\]()#+\-.!_>])/,autolink:/^<([^ >]+(@|:\/)[^ >]+)>/,url:noop,tag:/^<!--[\s\S]*?-->|^<\/?\w+(?:"[^"]*"|'[^']*'|[^'">])*?>/,link:/^!?\[(inside)\]\(href\)/,reflink:/^!?\[(inside)\]\s*\[([^\]]*)\]/,nolink:/^!?\[((?:\[[^\]]*\]|[^\[\]])*)\]/,strong:/^__([\s\S]+?)__(?!_)|^\*\*([\s\S]+?)\*\*(?!\*)/,em:/^\b_((?:__|[\s\S])+?)_\b|^\*((?:\*\*|[\s\S])+?)\*(?!\*)/,code:/^(`+)\s*([\s\S]*?[^`])\s*\1(?!`)/,br:/^ {2,}\n(?!\s*$)/,del:noop,text:/^[\s\S]+?(?=[\\<!\[_*`]| {2,}\n|$)/};inline._inside=/(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*/;inline._href=/\s*<?([\s\S]*?)>?(?:\s+['"]([\s\S]*?)['"])?\s*/;inline.link=replace(inline.link)("inside",inline._inside)("href",inline._href)();inline.reflink=replace(inline.reflink)("inside",inline._inside)();inline.normal=merge({},inline);inline.pedantic=merge({},inline.normal,{strong:/^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,em:/^_(?=\S)([\s\S]*?\S)_(?!_)|^\*(?=\S)([\s\S]*?\S)\*(?!\*)/});inline.gfm=merge({},inline.normal,{escape:replace(inline.escape)("])","~|])")(),url:/^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/,del:/^~~(?=\S)([\s\S]*?\S)~~/,text:replace(inline.text)("]|","~]|")("|","|https?://|")()});inline.breaks=merge({},inline.gfm,{br:replace(inline.br)("{2,}","*")(),text:replace(inline.gfm.text)("{2,}","*")()});function InlineLexer(links,options){this.options=options||marked.defaults;this.links=links;this.rules=inline.normal;this.renderer=this.options.renderer||new Renderer;this.renderer.options=this.options;if(!this.links){throw new Error("Tokens array requires a `links` property.")}if(this.options.gfm){if(this.options.breaks){this.rules=inline.breaks}else{this.rules=inline.gfm}}else if(this.options.pedantic){this.rules=inline.pedantic}}InlineLexer.rules=inline;InlineLexer.output=function(src,links,options){var inline=new InlineLexer(links,options);return inline.output(src)};InlineLexer.prototype.output=function(src){var out="",link,text,href,cap;while(src){if(cap=this.rules.escape.exec(src)){src=src.substring(cap[0].length);out+=cap[1];continue}if(cap=this.rules.autolink.exec(src)){src=src.substring(cap[0].length);if(cap[2]==="@"){text=cap[1].charAt(6)===":"?this.mangle(cap[1].substring(7)):this.mangle(cap[1]);href=this.mangle("mailto:")+text}else{text=escape(cap[1]);href=text}out+=this.renderer.link(href,null,text);continue}if(!this.inLink&&(cap=this.rules.url.exec(src))){src=src.substring(cap[0].length);text=escape(cap[1]);href=text;out+=this.renderer.link(href,null,text);continue}if(cap=this.rules.tag.exec(src)){if(!this.inLink&&/^<a /i.test(cap[0])){this.inLink=true}else if(this.inLink&&/^<\/a>/i.test(cap[0])){this.inLink=false}src=src.substring(cap[0].length);out+=this.options.sanitize?escape(cap[0]):cap[0];continue}if(cap=this.rules.link.exec(src)){src=src.substring(cap[0].length);this.inLink=true;out+=this.outputLink(cap,{href:cap[2],title:cap[3]});this.inLink=false;continue}if((cap=this.rules.reflink.exec(src))||(cap=this.rules.nolink.exec(src))){src=src.substring(cap[0].length);link=(cap[2]||cap[1]).replace(/\s+/g," ");link=this.links[link.toLowerCase()];if(!link||!link.href){out+=cap[0].charAt(0);src=cap[0].substring(1)+src;continue}this.inLink=true;out+=this.outputLink(cap,link);this.inLink=false;continue}if(cap=this.rules.strong.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.strong(this.output(cap[2]||cap[1]));continue}if(cap=this.rules.em.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.em(this.output(cap[2]||cap[1]));continue}if(cap=this.rules.code.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.codespan(escape(cap[2],true));continue}if(cap=this.rules.br.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.br();continue}if(cap=this.rules.del.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.del(this.output(cap[1]));continue}if(cap=this.rules.text.exec(src)){src=src.substring(cap[0].length);out+=escape(this.smartypants(cap[0]));continue}if(src){throw new Error("Infinite loop on byte: "+src.charCodeAt(0))}}return out};InlineLexer.prototype.outputLink=function(cap,link){var href=escape(link.href),title=link.title?escape(link.title):null;return cap[0].charAt(0)!=="!"?this.renderer.link(href,title,this.output(cap[1])):this.renderer.image(href,title,escape(cap[1]))};InlineLexer.prototype.smartypants=function(text){if(!this.options.smartypants)return text;return text.replace(/--/g,"—").replace(/(^|[-\u2014/(\[{"\s])'/g,"$1‘").replace(/'/g,"’").replace(/(^|[-\u2014/(\[{\u2018\s])"/g,"$1“").replace(/"/g,"”").replace(/\.{3}/g,"…")};InlineLexer.prototype.mangle=function(text){var out="",l=text.length,i=0,ch;for(;i<l;i++){ch=text.charCodeAt(i);if(Math.random()>.5){ch="x"+ch.toString(16)}out+="&#"+ch+";"}return out};function Renderer(options){this.options=options||{}}Renderer.prototype.code=function(code,lang,escaped){if(this.options.highlight){var out=this.options.highlight(code,lang);if(out!=null&&out!==code){escaped=true;code=out}}if(!lang){return"<pre><code>"+(escaped?code:escape(code,true))+"\n</code></pre>"}return'<pre><code class="'+this.options.langPrefix+escape(lang,true)+'">'+(escaped?code:escape(code,true))+"\n</code></pre>\n"};Renderer.prototype.blockquote=function(quote){return"<blockquote>\n"+quote+"</blockquote>\n"};Renderer.prototype.html=function(html){return html};Renderer.prototype.heading=function(text,level,raw){return"<h"+level+' id="'+this.options.headerPrefix+raw.toLowerCase().replace(/[^\w]+/g,"-")+'">'+text+"</h"+level+">\n"};Renderer.prototype.hr=function(){return this.options.xhtml?"<hr/>\n":"<hr>\n"};Renderer.prototype.list=function(body,ordered){var type=ordered?"ol":"ul";return"<"+type+">\n"+body+"</"+type+">\n"};Renderer.prototype.listitem=function(text){return"<li>"+text+"</li>\n"};Renderer.prototype.paragraph=function(text){return"<p>"+text+"</p>\n"};Renderer.prototype.table=function(header,body){return"<table>\n"+"<thead>\n"+header+"</thead>\n"+"<tbody>\n"+body+"</tbody>\n"+"</table>\n"};Renderer.prototype.tablerow=function(content){return"<tr>\n"+content+"</tr>\n"};Renderer.prototype.tablecell=function(content,flags){var type=flags.header?"th":"td";var tag=flags.align?"<"+type+' style="text-align:'+flags.align+'">':"<"+type+">";return tag+content+"</"+type+">\n"};Renderer.prototype.strong=function(text){return"<strong>"+text+"</strong>"};Renderer.prototype.em=function(text){return"<em>"+text+"</em>"};Renderer.prototype.codespan=function(text){return"<code>"+text+"</code>"};Renderer.prototype.br=function(){return this.options.xhtml?"<br/>":"<br>"};Renderer.prototype.del=function(text){return"<del>"+text+"</del>"};Renderer.prototype.link=function(href,title,text){if(this.options.sanitize){try{var prot=decodeURIComponent(unescape(href)).replace(/[^\w:]/g,"").toLowerCase()}catch(e){return""}if(prot.indexOf("javascript:")===0){return""}}var out='<a href="'+href+'"';if(title){out+=' title="'+title+'"'}out+=">"+text+"</a>";return out};Renderer.prototype.image=function(href,title,text){var out='<img src="'+href+'" alt="'+text+'"';if(title){out+=' title="'+title+'"'}out+=this.options.xhtml?"/>":">";return out};function Parser(options){this.tokens=[];this.token=null;this.options=options||marked.defaults;this.options.renderer=this.options.renderer||new Renderer;this.renderer=this.options.renderer;this.renderer.options=this.options}Parser.parse=function(src,options,renderer){var parser=new Parser(options,renderer);return parser.parse(src)};Parser.prototype.parse=function(src){this.inline=new InlineLexer(src.links,this.options,this.renderer);this.tokens=src.reverse();var out="";while(this.next()){out+=this.tok()}return out};Parser.prototype.next=function(){return this.token=this.tokens.pop()};Parser.prototype.peek=function(){return this.tokens[this.tokens.length-1]||0};Parser.prototype.parseText=function(){var body=this.token.text;while(this.peek().type==="text"){body+="\n"+this.next().text}return this.inline.output(body)};Parser.prototype.tok=function(){switch(this.token.type){case"space":{return""}case"hr":{return this.renderer.hr()}case"heading":{return this.renderer.heading(this.inline.output(this.token.text),this.token.depth,this.token.text)}case"code":{return this.renderer.code(this.token.text,this.token.lang,this.token.escaped)}case"table":{var header="",body="",i,row,cell,flags,j;cell="";for(i=0;i<this.token.header.length;i++){flags={header:true,align:this.token.align[i]};cell+=this.renderer.tablecell(this.inline.output(this.token.header[i]),{header:true,align:this.token.align[i]})}header+=this.renderer.tablerow(cell);for(i=0;i<this.token.cells.length;i++){row=this.token.cells[i];cell="";for(j=0;j<row.length;j++){cell+=this.renderer.tablecell(this.inline.output(row[j]),{header:false,align:this.token.align[j]})}body+=this.renderer.tablerow(cell)}return this.renderer.table(header,body)}case"blockquote_start":{var body="";while(this.next().type!=="blockquote_end"){body+=this.tok()}return this.renderer.blockquote(body)}case"list_start":{var body="",ordered=this.token.ordered;while(this.next().type!=="list_end"){body+=this.tok()}return this.renderer.list(body,ordered)}case"list_item_start":{var body="";while(this.next().type!=="list_item_end"){body+=this.token.type==="text"?this.parseText():this.tok()}return this.renderer.listitem(body)}case"loose_item_start":{var body="";while(this.next().type!=="list_item_end"){body+=this.tok()}return this.renderer.listitem(body)}case"html":{var html=!this.token.pre&&!this.options.pedantic?this.inline.output(this.token.text):this.token.text;return this.renderer.html(html)}case"paragraph":{return this.renderer.paragraph(this.inline.output(this.token.text))}case"text":{return this.renderer.paragraph(this.parseText())}}};function escape(html,encode){return html.replace(!encode?/&(?!#?\w+;)/g:/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function unescape(html){return html.replace(/&([#\w]+);/g,function(_,n){n=n.toLowerCase();if(n==="colon")return":";if(n.charAt(0)==="#"){return n.charAt(1)==="x"?String.fromCharCode(parseInt(n.substring(2),16)):String.fromCharCode(+n.substring(1))}return""})}function replace(regex,opt){regex=regex.source;opt=opt||"";return function self(name,val){if(!name)return new RegExp(regex,opt);val=val.source||val;val=val.replace(/(^|[^\[])\^/g,"$1");regex=regex.replace(name,val);return self}}function noop(){}noop.exec=noop;function merge(obj){var i=1,target,key;for(;i<arguments.length;i++){target=arguments[i];for(key in target){if(Object.prototype.hasOwnProperty.call(target,key)){obj[key]=target[key]}}}return obj}function marked(src,opt,callback){if(callback||typeof opt==="function"){if(!callback){callback=opt;opt=null}opt=merge({},marked.defaults,opt||{});var highlight=opt.highlight,tokens,pending,i=0;try{tokens=Lexer.lex(src,opt)}catch(e){return callback(e)}pending=tokens.length;var done=function(err){if(err){opt.highlight=highlight;return callback(err)}var out;try{out=Parser.parse(tokens,opt)}catch(e){err=e}opt.highlight=highlight;return err?callback(err):callback(null,out)};if(!highlight||highlight.length<3){return done()}delete opt.highlight;if(!pending)return done();for(;i<tokens.length;i++){(function(token){if(token.type!=="code"){return--pending||done()}return highlight(token.text,token.lang,function(err,code){if(err)return done(err);if(code==null||code===token.text){return--pending||done()}token.text=code;token.escaped=true;--pending||done()})})(tokens[i])}return}try{if(opt)opt=merge({},marked.defaults,opt);return Parser.parse(Lexer.lex(src,opt),opt)}catch(e){e.message+="\nPlease report this to https://github.com/chjj/marked.";if((opt||marked.defaults).silent){return"<p>An error occured:</p><pre>"+escape(e.message+"",true)+"</pre>"}throw e}}marked.options=marked.setOptions=function(opt){merge(marked.defaults,opt);return marked};marked.defaults={gfm:true,tables:true,breaks:false,pedantic:false,sanitize:false,smartLists:false,silent:false,highlight:null,langPrefix:"lang-",smartypants:false,headerPrefix:"",renderer:new Renderer,xhtml:false};marked.Parser=Parser;marked.parser=Parser.parse;marked.Renderer=Renderer;marked.Lexer=Lexer;marked.lexer=Lexer.lex;marked.InlineLexer=InlineLexer;marked.inlineLexer=InlineLexer.output;marked.parse=marked;if(typeof module!=="undefined"&&typeof exports==="object"){module.exports=marked}else if(typeof define==="function"&&define.amd){define(function(){return marked})}else{this.marked=marked}}).call(function(){return this||(typeof window!=="undefined"?window:global)}());
+	(function(){var block={newline:/^\n+/,code:/^( {4}[^\n]+\n*)+/,fences:noop,hr:/^( *[-*_]){3,} *(?:\n+|$)/,heading:/^ *(#{1,6}) *([^\n]+?) *#* *(?:\n+|$)/,nptable:noop,lheading:/^([^\n]+)\n *(=|-){2,} *(?:\n+|$)/,blockquote:/^( *>[^\n]+(\n(?!def)[^\n]+)*\n*)+/,list:/^( *)(bull) [\s\S]+?(?:hr|def|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,html:/^ *(?:comment *(?:\n|\s*$)|closed *(?:\n{2,}|\s*$)|closing *(?:\n{2,}|\s*$))/,def:/^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +["(]([^\n]+)[")])? *(?:\n+|$)/,table:noop,paragraph:/^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|tag|def))+)\n*/,text:/^[^\n]+/};block.bullet=/(?:[*+-]|\d+\.)/;block.item=/^( *)(bull) [^\n]*(?:\n(?!\1bull )[^\n]*)*/;block.item=replace(block.item,"gm")(/bull/g,block.bullet)();block.list=replace(block.list)(/bull/g,block.bullet)("hr","\\n+(?=\\1?(?:[-*_] *){3,}(?:\\n+|$))")("def","\\n+(?="+block.def.source+")")();block.blockquote=replace(block.blockquote)("def",block.def)();block._tag="(?!(?:"+"a|em|strong|small|s|cite|q|dfn|abbr|data|time|code"+"|var|samp|kbd|sub|sup|i|b|u|mark|ruby|rt|rp|bdi|bdo"+"|span|br|wbr|ins|del|img)\\b)\\w+(?!:/|[^\\w\\s@]*@)\\b";block.html=replace(block.html)("comment",/<!--[\s\S]*?-->/)("closed",/<(tag)[\s\S]+?<\/\1>/)("closing",/<tag(?:"[^"]*"|'[^']*'|[^'">])*?>/)(/tag/g,block._tag)();block.paragraph=replace(block.paragraph)("hr",block.hr)("heading",block.heading)("lheading",block.lheading)("blockquote",block.blockquote)("tag","<"+block._tag)("def",block.def)();block.normal=merge({},block);block.gfm=merge({},block.normal,{fences:/^ *(`{3,}|~{3,})[ \.]*(\S+)? *\n([\s\S]*?)\s*\1 *(?:\n+|$)/,paragraph:/^/,heading:/^ *(#{1,6}) +([^\n]+?) *#* *(?:\n+|$)/});block.gfm.paragraph=replace(block.paragraph)("(?!","(?!"+block.gfm.fences.source.replace("\\1","\\2")+"|"+block.list.source.replace("\\1","\\3")+"|")();block.tables=merge({},block.gfm,{nptable:/^ *(\S.*\|.*)\n *([-:]+ *\|[-| :]*)\n((?:.*\|.*(?:\n|$))*)\n*/,table:/^ *\|(.+)\n *\|( *[-:]+[-| :]*)\n((?: *\|.*(?:\n|$))*)\n*/});function Lexer(options){this.tokens=[];this.tokens.links={};this.options=options||marked.defaults;this.rules=block.normal;if(this.options.gfm){if(this.options.tables){this.rules=block.tables}else{this.rules=block.gfm}}}Lexer.rules=block;Lexer.lex=function(src,options){var lexer=new Lexer(options);return lexer.lex(src)};Lexer.prototype.lex=function(src){src=src.replace(/\r\n|\r/g,"\n").replace(/\t/g,"    ").replace(/\u00a0/g," ").replace(/\u2424/g,"\n");return this.token(src,true)};Lexer.prototype.token=function(src,top,bq){var src=src.replace(/^ +$/gm,""),next,loose,cap,bull,b,item,space,i,l;while(src){if(cap=this.rules.newline.exec(src)){src=src.substring(cap[0].length);if(cap[0].length>1){this.tokens.push({type:"space"})}}if(cap=this.rules.code.exec(src)){src=src.substring(cap[0].length);cap=cap[0].replace(/^ {4}/gm,"");this.tokens.push({type:"code",text:!this.options.pedantic?cap.replace(/\n+$/,""):cap});continue}if(cap=this.rules.fences.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"code",lang:cap[2],text:cap[3]||""});continue}if(cap=this.rules.heading.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"heading",depth:cap[1].length,text:cap[2]});continue}if(top&&(cap=this.rules.nptable.exec(src))){src=src.substring(cap[0].length);item={type:"table",header:cap[1].replace(/^ *| *\| *$/g,"").split(/ *\| */),align:cap[2].replace(/^ *|\| *$/g,"").split(/ *\| */),cells:cap[3].replace(/\n$/,"").split("\n")};for(i=0;i<item.align.length;i++){if(/^ *-+: *$/.test(item.align[i])){item.align[i]="right"}else if(/^ *:-+: *$/.test(item.align[i])){item.align[i]="center"}else if(/^ *:-+ *$/.test(item.align[i])){item.align[i]="left"}else{item.align[i]=null}}for(i=0;i<item.cells.length;i++){item.cells[i]=item.cells[i].split(/ *\| */)}this.tokens.push(item);continue}if(cap=this.rules.lheading.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"heading",depth:cap[2]==="="?1:2,text:cap[1]});continue}if(cap=this.rules.hr.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"hr"});continue}if(cap=this.rules.blockquote.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"blockquote_start"});cap=cap[0].replace(/^ *> ?/gm,"");this.token(cap,top,true);this.tokens.push({type:"blockquote_end"});continue}if(cap=this.rules.list.exec(src)){src=src.substring(cap[0].length);bull=cap[2];this.tokens.push({type:"list_start",ordered:bull.length>1});cap=cap[0].match(this.rules.item);next=false;l=cap.length;i=0;for(;i<l;i++){item=cap[i];space=item.length;item=item.replace(/^ *([*+-]|\d+\.) +/,"");if(~item.indexOf("\n ")){space-=item.length;item=!this.options.pedantic?item.replace(new RegExp("^ {1,"+space+"}","gm"),""):item.replace(/^ {1,4}/gm,"")}if(this.options.smartLists&&i!==l-1){b=block.bullet.exec(cap[i+1])[0];if(bull!==b&&!(bull.length>1&&b.length>1)){src=cap.slice(i+1).join("\n")+src;i=l-1}}loose=next||/\n\n(?!\s*$)/.test(item);if(i!==l-1){next=item.charAt(item.length-1)==="\n";if(!loose)loose=next}this.tokens.push({type:loose?"loose_item_start":"list_item_start"});this.token(item,false,bq);this.tokens.push({type:"list_item_end"})}this.tokens.push({type:"list_end"});continue}if(cap=this.rules.html.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:this.options.sanitize?"paragraph":"html",pre:!this.options.sanitizer&&(cap[1]==="pre"||cap[1]==="script"||cap[1]==="style"),text:cap[0]});continue}if(!bq&&top&&(cap=this.rules.def.exec(src))){src=src.substring(cap[0].length);this.tokens.links[cap[1].toLowerCase()]={href:cap[2],title:cap[3]};continue}if(top&&(cap=this.rules.table.exec(src))){src=src.substring(cap[0].length);item={type:"table",header:cap[1].replace(/^ *| *\| *$/g,"").split(/ *\| */),align:cap[2].replace(/^ *|\| *$/g,"").split(/ *\| */),cells:cap[3].replace(/(?: *\| *)?\n$/,"").split("\n")};for(i=0;i<item.align.length;i++){if(/^ *-+: *$/.test(item.align[i])){item.align[i]="right"}else if(/^ *:-+: *$/.test(item.align[i])){item.align[i]="center"}else if(/^ *:-+ *$/.test(item.align[i])){item.align[i]="left"}else{item.align[i]=null}}for(i=0;i<item.cells.length;i++){item.cells[i]=item.cells[i].replace(/^ *\| *| *\| *$/g,"").split(/ *\| */)}this.tokens.push(item);continue}if(top&&(cap=this.rules.paragraph.exec(src))){src=src.substring(cap[0].length);this.tokens.push({type:"paragraph",text:cap[1].charAt(cap[1].length-1)==="\n"?cap[1].slice(0,-1):cap[1]});continue}if(cap=this.rules.text.exec(src)){src=src.substring(cap[0].length);this.tokens.push({type:"text",text:cap[0]});continue}if(src){throw new Error("Infinite loop on byte: "+src.charCodeAt(0))}}return this.tokens};var inline={escape:/^\\([\\`*{}\[\]()#+\-.!_>])/,autolink:/^<([^ >]+(@|:\/)[^ >]+)>/,url:noop,tag:/^<!--[\s\S]*?-->|^<\/?\w+(?:"[^"]*"|'[^']*'|[^'">])*?>/,link:/^!?\[(inside)\]\(href\)/,reflink:/^!?\[(inside)\]\s*\[([^\]]*)\]/,nolink:/^!?\[((?:\[[^\]]*\]|[^\[\]])*)\]/,strong:/^__([\s\S]+?)__(?!_)|^\*\*([\s\S]+?)\*\*(?!\*)/,em:/^\b_((?:[^_]|__)+?)_\b|^\*((?:\*\*|[\s\S])+?)\*(?!\*)/,code:/^(`+)\s*([\s\S]*?[^`])\s*\1(?!`)/,br:/^ {2,}\n(?!\s*$)/,del:noop,text:/^[\s\S]+?(?=[\\<!\[_*`]| {2,}\n|$)/};inline._inside=/(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*/;inline._href=/\s*<?([\s\S]*?)>?(?:\s+['"]([\s\S]*?)['"])?\s*/;inline.link=replace(inline.link)("inside",inline._inside)("href",inline._href)();inline.reflink=replace(inline.reflink)("inside",inline._inside)();inline.normal=merge({},inline);inline.pedantic=merge({},inline.normal,{strong:/^__(?=\S)([\s\S]*?\S)__(?!_)|^\*\*(?=\S)([\s\S]*?\S)\*\*(?!\*)/,em:/^_(?=\S)([\s\S]*?\S)_(?!_)|^\*(?=\S)([\s\S]*?\S)\*(?!\*)/});inline.gfm=merge({},inline.normal,{escape:replace(inline.escape)("])","~|])")(),url:/^(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/,del:/^~~(?=\S)([\s\S]*?\S)~~/,text:replace(inline.text)("]|","~]|")("|","|https?://|")()});inline.breaks=merge({},inline.gfm,{br:replace(inline.br)("{2,}","*")(),text:replace(inline.gfm.text)("{2,}","*")()});function InlineLexer(links,options){this.options=options||marked.defaults;this.links=links;this.rules=inline.normal;this.renderer=this.options.renderer||new Renderer;this.renderer.options=this.options;if(!this.links){throw new Error("Tokens array requires a `links` property.")}if(this.options.gfm){if(this.options.breaks){this.rules=inline.breaks}else{this.rules=inline.gfm}}else if(this.options.pedantic){this.rules=inline.pedantic}}InlineLexer.rules=inline;InlineLexer.output=function(src,links,options){var inline=new InlineLexer(links,options);return inline.output(src)};InlineLexer.prototype.output=function(src){var out="",link,text,href,cap;while(src){if(cap=this.rules.escape.exec(src)){src=src.substring(cap[0].length);out+=cap[1];continue}if(cap=this.rules.autolink.exec(src)){src=src.substring(cap[0].length);if(cap[2]==="@"){text=cap[1].charAt(6)===":"?this.mangle(cap[1].substring(7)):this.mangle(cap[1]);href=this.mangle("mailto:")+text}else{text=escape(cap[1]);href=text}out+=this.renderer.link(href,null,text);continue}if(!this.inLink&&(cap=this.rules.url.exec(src))){src=src.substring(cap[0].length);text=escape(cap[1]);href=text;out+=this.renderer.link(href,null,text);continue}if(cap=this.rules.tag.exec(src)){if(!this.inLink&&/^<a /i.test(cap[0])){this.inLink=true}else if(this.inLink&&/^<\/a>/i.test(cap[0])){this.inLink=false}src=src.substring(cap[0].length);out+=this.options.sanitize?this.options.sanitizer?this.options.sanitizer(cap[0]):escape(cap[0]):cap[0];continue}if(cap=this.rules.link.exec(src)){src=src.substring(cap[0].length);this.inLink=true;out+=this.outputLink(cap,{href:cap[2],title:cap[3]});this.inLink=false;continue}if((cap=this.rules.reflink.exec(src))||(cap=this.rules.nolink.exec(src))){src=src.substring(cap[0].length);link=(cap[2]||cap[1]).replace(/\s+/g," ");link=this.links[link.toLowerCase()];if(!link||!link.href){out+=cap[0].charAt(0);src=cap[0].substring(1)+src;continue}this.inLink=true;out+=this.outputLink(cap,link);this.inLink=false;continue}if(cap=this.rules.strong.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.strong(this.output(cap[2]||cap[1]));continue}if(cap=this.rules.em.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.em(this.output(cap[2]||cap[1]));continue}if(cap=this.rules.code.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.codespan(escape(cap[2],true));continue}if(cap=this.rules.br.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.br();continue}if(cap=this.rules.del.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.del(this.output(cap[1]));continue}if(cap=this.rules.text.exec(src)){src=src.substring(cap[0].length);out+=this.renderer.text(escape(this.smartypants(cap[0])));continue}if(src){throw new Error("Infinite loop on byte: "+src.charCodeAt(0))}}return out};InlineLexer.prototype.outputLink=function(cap,link){var href=escape(link.href),title=link.title?escape(link.title):null;return cap[0].charAt(0)!=="!"?this.renderer.link(href,title,this.output(cap[1])):this.renderer.image(href,title,escape(cap[1]))};InlineLexer.prototype.smartypants=function(text){if(!this.options.smartypants)return text;return text.replace(/---/g,"—").replace(/--/g,"–").replace(/(^|[-\u2014\/(\[{"\s])'/g,"$1‘").replace(/'/g,"’").replace(/(^|[-\u2014\/(\[{\u2018\s])"/g,"$1“").replace(/"/g,"”").replace(/\.{3}/g,"…")};InlineLexer.prototype.mangle=function(text){if(!this.options.mangle)return text;var out="",l=text.length,i=0,ch;for(;i<l;i++){ch=text.charCodeAt(i);if(Math.random()>.5){ch="x"+ch.toString(16)}out+="&#"+ch+";"}return out};function Renderer(options){this.options=options||{}}Renderer.prototype.code=function(code,lang,escaped){if(this.options.highlight){var out=this.options.highlight(code,lang);if(out!=null&&out!==code){escaped=true;code=out}}if(!lang){return"<pre><code>"+(escaped?code:escape(code,true))+"\n</code></pre>"}return'<pre><code class="'+this.options.langPrefix+escape(lang,true)+'">'+(escaped?code:escape(code,true))+"\n</code></pre>\n"};Renderer.prototype.blockquote=function(quote){return"<blockquote>\n"+quote+"</blockquote>\n"};Renderer.prototype.html=function(html){return html};Renderer.prototype.heading=function(text,level,raw){return"<h"+level+' id="'+this.options.headerPrefix+raw.toLowerCase().replace(/[^\w]+/g,"-")+'">'+text+"</h"+level+">\n"};Renderer.prototype.hr=function(){return this.options.xhtml?"<hr/>\n":"<hr>\n"};Renderer.prototype.list=function(body,ordered){var type=ordered?"ol":"ul";return"<"+type+">\n"+body+"</"+type+">\n"};Renderer.prototype.listitem=function(text){return"<li>"+text+"</li>\n"};Renderer.prototype.paragraph=function(text){return"<p>"+text+"</p>\n"};Renderer.prototype.table=function(header,body){return"<table>\n"+"<thead>\n"+header+"</thead>\n"+"<tbody>\n"+body+"</tbody>\n"+"</table>\n"};Renderer.prototype.tablerow=function(content){return"<tr>\n"+content+"</tr>\n"};Renderer.prototype.tablecell=function(content,flags){var type=flags.header?"th":"td";var tag=flags.align?"<"+type+' style="text-align:'+flags.align+'">':"<"+type+">";return tag+content+"</"+type+">\n"};Renderer.prototype.strong=function(text){return"<strong>"+text+"</strong>"};Renderer.prototype.em=function(text){return"<em>"+text+"</em>"};Renderer.prototype.codespan=function(text){return"<code>"+text+"</code>"};Renderer.prototype.br=function(){return this.options.xhtml?"<br/>":"<br>"};Renderer.prototype.del=function(text){return"<del>"+text+"</del>"};Renderer.prototype.link=function(href,title,text){if(this.options.sanitize){try{var prot=decodeURIComponent(unescape(href)).replace(/[^\w:]/g,"").toLowerCase()}catch(e){return""}if(prot.indexOf("javascript:")===0||prot.indexOf("vbscript:")===0||prot.indexOf("data:")===0){return""}}var out='<a href="'+href+'"';if(title){out+=' title="'+title+'"'}out+=">"+text+"</a>";return out};Renderer.prototype.image=function(href,title,text){var out='<img src="'+href+'" alt="'+text+'"';if(title){out+=' title="'+title+'"'}out+=this.options.xhtml?"/>":">";return out};Renderer.prototype.text=function(text){return text};function Parser(options){this.tokens=[];this.token=null;this.options=options||marked.defaults;this.options.renderer=this.options.renderer||new Renderer;this.renderer=this.options.renderer;this.renderer.options=this.options}Parser.parse=function(src,options,renderer){var parser=new Parser(options,renderer);return parser.parse(src)};Parser.prototype.parse=function(src){this.inline=new InlineLexer(src.links,this.options,this.renderer);this.tokens=src.reverse();var out="";while(this.next()){out+=this.tok()}return out};Parser.prototype.next=function(){return this.token=this.tokens.pop()};Parser.prototype.peek=function(){return this.tokens[this.tokens.length-1]||0};Parser.prototype.parseText=function(){var body=this.token.text;while(this.peek().type==="text"){body+="\n"+this.next().text}return this.inline.output(body)};Parser.prototype.tok=function(){switch(this.token.type){case"space":{return""}case"hr":{return this.renderer.hr()}case"heading":{return this.renderer.heading(this.inline.output(this.token.text),this.token.depth,this.token.text)}case"code":{return this.renderer.code(this.token.text,this.token.lang,this.token.escaped)}case"table":{var header="",body="",i,row,cell,flags,j;cell="";for(i=0;i<this.token.header.length;i++){flags={header:true,align:this.token.align[i]};cell+=this.renderer.tablecell(this.inline.output(this.token.header[i]),{header:true,align:this.token.align[i]})}header+=this.renderer.tablerow(cell);for(i=0;i<this.token.cells.length;i++){row=this.token.cells[i];cell="";for(j=0;j<row.length;j++){cell+=this.renderer.tablecell(this.inline.output(row[j]),{header:false,align:this.token.align[j]})}body+=this.renderer.tablerow(cell)}return this.renderer.table(header,body)}case"blockquote_start":{var body="";while(this.next().type!=="blockquote_end"){body+=this.tok()}return this.renderer.blockquote(body)}case"list_start":{var body="",ordered=this.token.ordered;while(this.next().type!=="list_end"){body+=this.tok()}return this.renderer.list(body,ordered)}case"list_item_start":{var body="";while(this.next().type!=="list_item_end"){body+=this.token.type==="text"?this.parseText():this.tok()}return this.renderer.listitem(body)}case"loose_item_start":{var body="";while(this.next().type!=="list_item_end"){body+=this.tok()}return this.renderer.listitem(body)}case"html":{var html=!this.token.pre&&!this.options.pedantic?this.inline.output(this.token.text):this.token.text;return this.renderer.html(html)}case"paragraph":{return this.renderer.paragraph(this.inline.output(this.token.text))}case"text":{return this.renderer.paragraph(this.parseText())}}};function escape(html,encode){return html.replace(!encode?/&(?!#?\w+;)/g:/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function unescape(html){return html.replace(/&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/g,function(_,n){n=n.toLowerCase();if(n==="colon")return":";if(n.charAt(0)==="#"){return n.charAt(1)==="x"?String.fromCharCode(parseInt(n.substring(2),16)):String.fromCharCode(+n.substring(1))}return""})}function replace(regex,opt){regex=regex.source;opt=opt||"";return function self(name,val){if(!name)return new RegExp(regex,opt);val=val.source||val;val=val.replace(/(^|[^\[])\^/g,"$1");regex=regex.replace(name,val);return self}}function noop(){}noop.exec=noop;function merge(obj){var i=1,target,key;for(;i<arguments.length;i++){target=arguments[i];for(key in target){if(Object.prototype.hasOwnProperty.call(target,key)){obj[key]=target[key]}}}return obj}function marked(src,opt,callback){if(callback||typeof opt==="function"){if(!callback){callback=opt;opt=null}opt=merge({},marked.defaults,opt||{});var highlight=opt.highlight,tokens,pending,i=0;try{tokens=Lexer.lex(src,opt)}catch(e){return callback(e)}pending=tokens.length;var done=function(err){if(err){opt.highlight=highlight;return callback(err)}var out;try{out=Parser.parse(tokens,opt)}catch(e){err=e}opt.highlight=highlight;return err?callback(err):callback(null,out)};if(!highlight||highlight.length<3){return done()}delete opt.highlight;if(!pending)return done();for(;i<tokens.length;i++){(function(token){if(token.type!=="code"){return--pending||done()}return highlight(token.text,token.lang,function(err,code){if(err)return done(err);if(code==null||code===token.text){return--pending||done()}token.text=code;token.escaped=true;--pending||done()})})(tokens[i])}return}try{if(opt)opt=merge({},marked.defaults,opt);return Parser.parse(Lexer.lex(src,opt),opt)}catch(e){e.message+="\nPlease report this to https://github.com/chjj/marked.";if((opt||marked.defaults).silent){return"<p>An error occured:</p><pre>"+escape(e.message+"",true)+"</pre>"}throw e}}marked.options=marked.setOptions=function(opt){merge(marked.defaults,opt);return marked};marked.defaults={gfm:true,tables:true,breaks:false,pedantic:false,sanitize:false,sanitizer:null,mangle:true,smartLists:false,silent:false,highlight:null,langPrefix:"lang-",smartypants:false,headerPrefix:"",renderer:new Renderer,xhtml:false};marked.Parser=Parser;marked.parser=Parser.parse;marked.Renderer=Renderer;marked.Lexer=Lexer;marked.lexer=Lexer.lex;marked.InlineLexer=InlineLexer;marked.inlineLexer=InlineLexer.output;marked.parse=marked;if(typeof module!=="undefined"&&typeof exports==="object"){module.exports=marked}else if(typeof define==="function"&&define.amd){define(function(){return marked})}else{this.marked=marked}}).call(function(){return this||(typeof window!=="undefined"?window:global)}());
 
 	return module.exports;
 }();
@@ -9800,528 +9901,7 @@ var _evancz$url_parser$UrlParser$intParam = function (name) {
 	return A2(_evancz$url_parser$UrlParser$customParam, name, _evancz$url_parser$UrlParser$intParamHelp);
 };
 
-var _user$project$CommonViews$siteFooter = A2(
-	_elm_lang$html$Html$footer,
-	{ctor: '[]'},
-	{
-		ctor: '::',
-		_0: A2(
-			_elm_lang$html$Html$div,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$id('siteFooter'),
-				_1: {ctor: '[]'}
-			},
-			{
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$hr,
-					{ctor: '[]'},
-					{ctor: '[]'}),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$p,
-						{ctor: '[]'},
-						{
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$a,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$class('twitter-follow-button'),
-									_1: {
-										ctor: '::',
-										_0: _elm_lang$html$Html_Attributes$style(
-											{
-												ctor: '::',
-												_0: {ctor: '_Tuple2', _0: 'padding-top', _1: '10px'},
-												_1: {ctor: '[]'}
-											}),
-										_1: {
-											ctor: '::',
-											_0: _elm_lang$html$Html_Attributes$href('https://twitter.com/ChrisWellsWood'),
-											_1: {
-												ctor: '::',
-												_0: A2(_elm_lang$html$Html_Attributes$attribute, 'data-show-count', 'false'),
-												_1: {ctor: '[]'}
-											}
-										}
-									}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('Follow @ChrisWellsWood'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html$text('© Chris Wells Wood, 2016-2017.'),
-						_1: {ctor: '[]'}
-					}
-				}
-			}),
-		_1: {ctor: '[]'}
-	});
-var _user$project$CommonViews$navBar = A2(
-	_elm_lang$html$Html$div,
-	{ctor: '[]'},
-	{
-		ctor: '::',
-		_0: A2(
-			_elm_lang$html$Html$a,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$href('index.html'),
-				_1: {ctor: '[]'}
-			},
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text('Home'),
-				_1: {ctor: '[]'}
-			}),
-		_1: {
-			ctor: '::',
-			_0: _elm_lang$html$Html$text(' | '),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$a,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$href('#all-posts'),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text('All Posts'),
-						_1: {ctor: '[]'}
-					}),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$html$Html$text(' | '),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$a,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Attributes$href('#all-snippets'),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('All Snippets'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
-				}
-			}
-		}
-	});
-var _user$project$CommonViews$socialMedia = A2(
-	_elm_lang$html$Html$div,
-	{
-		ctor: '::',
-		_0: _elm_lang$html$Html_Attributes$id('socialMedia'),
-		_1: {ctor: '[]'}
-	},
-	{
-		ctor: '::',
-		_0: A2(
-			_elm_lang$html$Html$p,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$style(
-					{
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'font-size', _1: '12px'},
-						_1: {ctor: '[]'}
-					}),
-				_1: {ctor: '[]'}
-			},
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text('GitHub: '),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$a,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Attributes$href('https://github.com/ChrisWellsWood'),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('@ChrisWellsWood'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html$text(' | Twitter: '),
-						_1: {
-							ctor: '::',
-							_0: A2(
-								_elm_lang$html$Html$a,
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html_Attributes$href('https://twitter.com/ChrisWellsWood'),
-									_1: {ctor: '[]'}
-								},
-								{
-									ctor: '::',
-									_0: _elm_lang$html$Html$text('@ChrisWellsWood'),
-									_1: {ctor: '[]'}
-								}),
-							_1: {ctor: '[]'}
-						}
-					}
-				}
-			}),
-		_1: {ctor: '[]'}
-	});
-var _user$project$CommonViews$nameAndTagline = A2(
-	_elm_lang$html$Html$div,
-	{
-		ctor: '::',
-		_0: _elm_lang$html$Html_Attributes$id('nameAndTagline'),
-		_1: {ctor: '[]'}
-	},
-	{
-		ctor: '::',
-		_0: A2(
-			_elm_lang$html$Html$h1,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$id('siteName'),
-				_1: {
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '0'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'padding-bottom', _1: '0'},
-								_1: {ctor: '[]'}
-							}
-						}),
-					_1: {ctor: '[]'}
-				}
-			},
-			{
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$a,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Attributes$href(''),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text('Bits and Pieces and Odds and Ends'),
-						_1: {ctor: '[]'}
-					}),
-				_1: {ctor: '[]'}
-			}),
-		_1: {
-			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$h3,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$style(
-						{
-							ctor: '::',
-							_0: {ctor: '_Tuple2', _0: 'margin', _1: '0'},
-							_1: {
-								ctor: '::',
-								_0: {ctor: '_Tuple2', _0: 'padding', _1: '0'},
-								_1: {ctor: '[]'}
-							}
-						}),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text('Code, science and misc by Chris Wells Wood.'),
-					_1: {ctor: '[]'}
-				}),
-			_1: {ctor: '[]'}
-		}
-	});
-var _user$project$CommonViews$siteHeader = A2(
-	_elm_lang$html$Html$header,
-	{
-		ctor: '::',
-		_0: _elm_lang$html$Html_Attributes$id('siteHeader'),
-		_1: {ctor: '[]'}
-	},
-	{
-		ctor: '::',
-		_0: _user$project$CommonViews$nameAndTagline,
-		_1: {
-			ctor: '::',
-			_0: _user$project$CommonViews$socialMedia,
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$hr,
-					{ctor: '[]'},
-					{ctor: '[]'}),
-				_1: {
-					ctor: '::',
-					_0: _user$project$CommonViews$navBar,
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$hr,
-							{ctor: '[]'},
-							{ctor: '[]'}),
-						_1: {ctor: '[]'}
-					}
-				}
-			}
-		}
-	});
-
-var _user$project$Types$ContentMetaData = F8(
-	function (a, b, c, d, e, f, g, h) {
-		return {name: a, title: b, date: c, description: d, category: e, subcategory: f, url: g, content: h};
-	});
-
-var _user$project$EmptyRustStructs$rawContent = '\r\nIn C/C++, you can initialise a struct without giving values for any of the fields:\r\n\r\n```C\r\nstruct Point {\r\n  float x;\r\n  float y;\r\n  float z;\r\n};\r\n\r\nint main() {\r\n  Point my_point = {};\r\n}\r\n```\r\n\r\nStructs in RUST can\'t do this by default, you\'ll just get an error:\r\n\r\n```Rust\r\n#[derive(Debug)]\r\nstruct Point {\r\n    x: i32,\r\n    y: i32,\r\n    z: i32,\r\n}\r\n\r\nfn main() {\r\n    let p1 = Point{};\r\n}\r\n```\r\n\r\n```\r\nerror[E0063]: missing fields `x`, `y`, `z` in initializer of `Point`\r\n --> src\\main.rs:2:15\r\n  |\r\n2 |     let p1 = Point{};\r\n  |              ^^^^^ missing `x`, `y`, `z`\r\n```\r\n\r\nThe proper way to do this for a struct in Rust is to implement the `Default` trait and then you can generate default values easily:\r\n\r\n```Rust\r\n#[derive(Debug)]\r\nstruct Point {\r\n    x: i32,\r\n    y: i32,\r\n    z: i32,\r\n}\r\n\r\nimpl Default for Point {\r\n    fn default () -> Point {\r\n        Point{x: 0, y: 0, z:0}\r\n    }\r\n}\r\nfn main() {\r\n  let p1 = Point::default(); \r\n  let p2 = Point{ x: 34, ..Default::default() }; // Partial definition of fields\r\n}\r\n```\r\n\r\nYou can even do this automatically using the `derive` attribute.\r\n\r\n```Rust\r\n#[derive(Debug, Default)] // Derive is cool, I have no idea how it works!\r\nstruct Point {\r\n    x: i32,\r\n    y: i32,\r\n    z: i32,\r\n}\r\n\r\nfn main() {\r\n  let p1 = Point::default();\r\n  let p2 = Point{ x: 34, ..Default::default() };\r\n}\r\n```\r\n\r\nIt\'s like magic! \r\n\r\nInitialising empty structs is especially useful when working with an API, where you might give a function a pointer to a struct and the fields are populated for you. If you\'re working with a RUST API that follows this pattern, we can just use our `Default` trait implementation to do this, right? Well, that depends on the API. If you\'re using using the `winapi` crate, this doesn\'t work as `Default` has not been implemented for any of the structs that I\'ve used:\r\n\r\n```Rust\r\nextern crate winapi;\r\n\r\nuse winapi::windef::RECT;\r\n\r\nfn main() {\r\n    let rect = RECT{ ..Default::default() };\r\n    println!(\"{:?}\", rect);\r\n}\r\n```\r\n\r\n```\r\nerror[E0277]: the trait bound `winapi::RECT: std::default::Default`\r\nis not satisfied\r\n --> src\\main.rs:6:24\r\n  |\r\n6 |     let rect = RECT{ ..Default::default() };\r\n  |                        ^^^^^^^^^^^^^^^^ trait `winapi::RECT: std::default::Default` not satisfied\r\n```\r\n\r\nUnfortunately, you\'re not allowed to implement a trait that you did not define, for a type that you also did not define. So if you\'re using a struct from an external crate, you can\'t implement `Default` for it:\r\n\r\n```Rust\r\nextern crate winapi;\r\n\r\nuse winapi::windef::RECT;\r\n\r\nimpl Default for RECT {\r\n    fn default () -> RECT {\r\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\r\n    }\r\n}\r\n\r\nfn main() {\r\n    let rect = RECT::default();\r\n    println!(\"{:?}\", rect);\r\n}\r\n```\r\n\r\n```\r\nerror[E0117]: only traits defined in the current crate can be implemented for arbitrary types\r\n --> src\\main.rs:5:1\r\n  |\r\n5 | impl Default for RECT {\r\n  | ^ impl doesn\'t use types inside crate\r\n```\r\n\r\nThat\'s annoying... So what do you do? There\'s a couple of things you could do. Firstly, you could wrap the struct as a new type (so you\'re defining it in your own crate):\r\n\r\n```Rust\r\nextern crate winapi;\r\n\r\nuse winapi::windef::RECT;\r\n\r\n#[derive(Debug)]\r\nstruct WrappedRECT{rect: RECT}\r\n\r\nimpl Default for WrappedRECT {\r\n    fn default () -> WrappedRECT {\r\n        WrappedRECT{rect: RECT{left: 0, top: 0, right: 0, bottom: 0}}\r\n    }\r\n}\r\n\r\nfn main() {\r\n    let rect = WrappedRECT::default();\r\n    println!(\"{:?}\", rect);\r\n}\r\n```\r\n\r\nBut this is a bit clunky, so I prefer just creating a new `trait`, and implementing it for the external struct:\r\n\r\n```Rust\r\nextern crate winapi;\r\n\r\nuse winapi::windef::RECT;\r\n\r\ntrait Empty<T> {\r\n    fn empty() -> T;\r\n}\r\n\r\nimpl Empty<RECT> for RECT {\r\n    fn empty() -> RECT {\r\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\r\n    }\r\n}\r\n\r\nfn main() {\r\n    let rect = RECT::empty();\r\n    println!(\"{:?}\", rect);\r\n}\r\n```\r\n\r\nIt seems a little more transparent, and there\'s no clash with the name of the method. If you want to be a good citizen, the best way to deal with this is probably to just go and modify the crate you\'re using, adding `derive(Debug)` attributes to everything!\r\n\r\nThanks to joshtriplett and yohanesu75 for some extra info.\r\n';
-var _user$project$EmptyRustStructs$content = A2(
-	_evancz$elm_markdown$Markdown$toHtml,
-	{ctor: '[]'},
-	_user$project$EmptyRustStructs$rawContent);
-var _user$project$EmptyRustStructs$name = 'empty-rust-structs';
-var _user$project$EmptyRustStructs$metaData = {
-	name: _user$project$EmptyRustStructs$name,
-	title: 'Initialising Empty Structs in Rust',
-	date: {
-		ctor: '::',
-		_0: 2016,
-		_1: {
-			ctor: '::',
-			_0: 12,
-			_1: {
-				ctor: '::',
-				_0: 11,
-				_1: {ctor: '[]'}
-			}
-		}
-	},
-	description: 'A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!',
-	category: 'Code',
-	subcategory: 'Rust',
-	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$EmptyRustStructs$name),
-	content: _elm_lang$core$Maybe$Just(_user$project$EmptyRustStructs$content)
-};
-
-var _user$project$ElmAndNewLanguages$rawContent = '\r\nSo like most people that have been coding for a while, I\'ve got more and more interested in exploring new programming languages. It\'s kind of like visiting a foreign country, it\'s fun to experience other ways of life. Sometimes though you\'re disappointed when it\'s too similar to home other times it\'s a bit overwhelming if it\'s too different.\r\n\r\nWhat you really want is something in the middle, so maybe you walk through a supermarket when you\'re abroad and you marvel at the unusual selection of canned goods, and then right in the corner you notice a can of baked beans. It always makes me smile, and then you think \"What if they taste different!?\", and you end up having beans for lunch, which is nice but you end up thinking that you should have been a bit more adventurous. Anyway, you can see what I\'m getting at, it\'s nice to try something new, but sometimes a bit of familiarity doesn\'t go amiss.\r\n\r\nI learned to code in Python, and while a lot of programming paradigms are captured by the language, it is mainly an imperative language, that is where you make statements to change the state of a program. For example maybe you want to count all the odd numbers in a list, you could do it in a hundred ways but here\'s one that is classically imperative:\r\n\r\n```Python\r\nmy_numbers = [0, 1, 2, 3, 4, 5]\r\nodd_number_count = 0\r\nfor number in my_numbers:\r\n  if number % 2:\r\n    odd_number_count += 1\r\nprint(odd_number_count)\r\n```\r\n\r\nOne day I was reading about how to be a good programmer, and people kept mentioning that you should learn more than one language and you should try to make it pretty different from a language you know. One argument for that is that it show you other ways to program, and Haskell is often used as an example of this. So I started to learn a bit of Haskell, using http://learnyouahaskell.com/, and my mind started to melt! I wasn\'t aware that there was any other way to program apart from using imperative style code.\r\n\r\nBy this point, I had been exposed to many functional programming paradigms in Python, such as the idea of functions as first-class citizens, map, filter, list comprehensions… but it never occurred to me that programming languages existed that used these traits as the basis for the language and built upon them.\r\n\r\nI learned a fair bit of Haskell, but in the I stopped learning it in the end because it was utterly mind-bending trying to think of an algorithm to solve a particular problem. Also, because it was so unfamiliar I couldn\'t think of anything that I could actually use Haskell for! To make this clear, this was because of my lack of understanding, nothing to do with Haskell itself. It wasn\'t an utter loss though, functional programming stuck with me, and I definitely started using it more in Python after learning a bit of Haskell.\r\n\r\nTime passes and I\'m messing around with JavaScript, in particular languages that compile to JavaScript (which is a super interesting topic I\'ll hopefully discuss in more detail in another article) like TypeScript, and I came across Elm, and it properly intrigued me. Elm is a purely functional programming language that compiles down to HTML, CSS and JavaScript and can be used to make front ends for websites and web applications. It feels a lot like Haskell in syntax.\r\n\r\nThe nice thing about Elm is that it has a really clear application, in an area I\'m interested in at the moment, which makes it easier to learn for me as I have a goal to work towards. I\'ve started learning a bit of Elm just using the main documentation, and it\'s already starting to cement a lot of the more nebulous aspects of functional programming (things like Currying). I suppose this is to be expected, but what I\'ve been surprised about is that I feel like it\'s teaching me to be a better web developer too, which is really neat!\r\n\r\nElm is probably not going to replace things like React and Angular any time soon, if ever, and it\'s still in flux as a language so it probably not ready for \"production\" code, but for a hobbyist wanting to learn about good web development and FP it seems ideal. I feel like Elm is the programming language equivalent of baked beans in a foreign super-market, it feels new and different, but has familiar aspects (the web development parts!).\r\n\r\nI\'m going to write about Elm and the little web application that I\'m developing using it in upcoming posts. Let me know what you think of Elm, Haskell and FP on Twitter. Have you used Elm? What did you think? Has anyone learned to code using FP and then moved across to an imperative language?\r\n';
-var _user$project$ElmAndNewLanguages$content = A2(
-	_evancz$elm_markdown$Markdown$toHtml,
-	{ctor: '[]'},
-	_user$project$ElmAndNewLanguages$rawContent);
-var _user$project$ElmAndNewLanguages$name = 'elm-and-learning-new-languages';
-var _user$project$ElmAndNewLanguages$metaData = {
-	name: _user$project$ElmAndNewLanguages$name,
-	title: 'Elm and Learning New Programming Languages',
-	date: {
-		ctor: '::',
-		_0: 2016,
-		_1: {
-			ctor: '::',
-			_0: 8,
-			_1: {
-				ctor: '::',
-				_0: 25,
-				_1: {ctor: '[]'}
-			}
-		}
-	},
-	description: 'A bit of pontification on learning programming languages and paradigms.',
-	category: 'Code',
-	subcategory: 'Elm',
-	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$ElmAndNewLanguages$name),
-	content: _elm_lang$core$Maybe$Just(_user$project$ElmAndNewLanguages$content)
-};
-
-var _user$project$OOBrainAndTypes$rawContent = '\r\nI\'m not embarrassed to admit that it took me a fair amount of time to get my head around object-oriented programming. For a long time I just couldn\'t figure out why it was a useful thing. That\'s probably got something to do with my background as a research scientist, and the type of problems I originally tackled during the first few weeks and months after I started learning to code.\r\n\r\nAfter a while of staring at examples and messing about with classes in Python, it eventually clicked for me. A funny thing happened in between finally grasping the idea of objects and now… my brain has become object oriented.\r\n\r\nThere is a concept known as the law of the instrument, which was most famously expressed by Abraham Maslow as follows:\r\n\r\n> I suppose it is tempting, if the only tool you have is a hammer, to treat everything as if it were a nail.\"\r\n\r\nI now see most problems when I\'m programming in terms of objects - \"Oh I\'ll take that data and store it in this object, and it can interact with this, this and this though these methods, and it\'ll have these properties and some nice class methods and I\'ll chuck in this static method too\". Now I don\'t think that this is inherently a bad thing, sure it can be taken to absurd extremes†, but most of the time I think what I come up with is a decent solution that can be easily followed, modified, tested etc.\r\n\r\nWhat happens if you\'re using a language that doesn\'t contain objects? I\'m not taking about something like Rust where there\'s not objects, but there sort of are really, you can glue together structs and functions using the impl keyword and traits. Okay I\'m probably over simplifying that, my Rust* isn\'t great but that\'s the way it seemed to me. In Elm there are no objects, but there are types…\r\n\r\nElm has strong, static typing. This means that all data in Elm has a type, and that type is used to dictate what you can do with that data. The compiler will tell you if you\'ve used an Int in a function that expects a String. The compiler can tell from your source code, exactly how data flows through your program, and can tell how everything should connect together. If you pass the wrong type of data to a function, the compiler will tell you long before you run your code as it knows  what the type of the function is (more on this later) and the type of your data. This avoids many of the unexpected behaviours that arise when you\'re using languages that aren\'t statically typed, and particularly when you\'re working with a language like JavaScript or Python where you have duck typing.\r\n\r\nWhat does static typing have to do with objects? Well in Elm you can define your own types, and these types represent complex data in the same way that objects can in OOP. Types in Elm can be defined using some simple tools: type annotations and type aliases.\r\n\r\nIf we use the Elm repl, we can see the types of values easily:\r\n\r\n```Elm\r\n> \"This is a string\"\r\n\"This is a string\" : String\r\n\r\n> 2.71828\r\n2.71828 : Float\r\n\r\n> 123\r\n123 : number\r\n\r\n> [1, 2, 3, 4, 5]\r\n[1,2,3,4,5] : List number\r\n\r\n> [True, False, True]\r\n[True,False,True] : List Bool\r\n\r\n> []\r\n[] : List a\r\n\r\n> floor\r\n<function:floor> : Float -> Int\r\n\r\n> addX s = s ++ \"X\"\r\n<function> : String -> String\r\n\r\n> \\n -> n * 2\r\n<function> : number -> number\r\n\r\n> (\\n -> n * 2) 4\r\n8 : number\r\n\r\n> \\x y -> x ^ (y - 1)\r\n<function> : number -> number -> number\r\n```\r\n\r\nWhen you type an expression in the repl, the type of the evaluated expression is displayed immediately after (in the format \"data : type\". Most of this seems obvious, you have strings and their types are strings, or a number of type number or slightly more complicated you have lists which are of the types List \"something\", like List String or List Bool. You can even have lists of a generic type (see the empty list on line 16). There\'s something odd though…\r\n\r\nLet\'s look at the type of a function, for example floor on line 19, it has a type of Float -&gt; Int. This means that the type of the function is defined by the type of its input argument and the type that it returns. The type signature looks a lot like you define an anonymous function in Elm, using the syntax on line 25, and that\'s not a coincidence. I won\'t go into why this is here, but it\'s a pretty fundamental part of the language that I\'ll discuss in a later post.\r\n\r\nAs you can see in the example, Elm can infer the types of data a function will receive, but you can explicitly state them using type annotations using the same syntax as the type signature:\r\n\r\n```Elm\r\ndoubleIt : number -> number\r\ndoubleIt n = n * 2\r\n\r\nimport String\r\n\r\nstringify : number -> String\r\nstringify n = toString n\r\n\r\naddX : String -> String\r\naddX s = s ++ \"X\"\r\n\r\naddX : String -> Int\r\naddX s = s ++ \"X\"\r\n-- This raises a error on compilation\r\n\r\npowerMinusOne : number -> number -> number\r\npowerMinusOne x y = x ^ (y - 1)\r\n\r\ngetFileExtension : { name : String, path : String } -> String\r\ngetFileExtension rec = String.right 4 rec.name\r\n\r\n-- With no type annotation on get file the type sig is:\r\n-- <function> : { a | name : String } -> String\r\n```\r\n\r\nAs you can see in line 12, you can\'t lie to the compiler, I checks the types even if you\'ve annotated them. So that\'s all fine, but what if you want to pass more complex data to a function using records? Well you need to annotate the type of the record, and specify the types of all its component data. You can see this on lines 19 and 20. The record that\'s being passed into the function is relatively simple, what if you have lots of data in the record? Well no worries, let\'s just not annotate the type, and the compiler can infer the type. If you do that in the Elm repl you get the type signature on line 23. This shows that the function will take any generic type with that contains a \".name\" field. This sucks! Everything should be more explicit, that\'d make it easier to read. In the words of Raymond Hettinger \"There must be a better way!\", and of course there is. We can use type aliases to make this more readable, concise and maintainable. \r\n\r\n```Elm\r\nimport String\r\nimport Html\r\nimport List\r\n\r\ntype alias Person = { name : String\r\n  , access : List String }\r\n\r\ntype alias Location = String\r\n\r\nee1 = { name = \"Ian Beal\"\r\n  , access = [\"Caff\", \"Laundrette\"] }\r\n\r\nee2 = { name = \"Pat Butcher\"\r\n  , access = [\"Queen Vic\", \"The Market\"] }\r\n\r\nrequestAccess : Person -> Location -> Bool\r\nrequestAccess person location = if List.member location person.access\r\n  then True\r\n  else False\r\n\r\nrequestAccess ee1 \"Caff\"\r\n-- Returns True\r\n\r\nrequestAccess ee1 \"Queen Vic\"\r\n-- Returns False\r\n\r\nrequestAccess ee2 \"Queen Vic\"\r\n-- Returns True\r\n\r\nrequestAccess { name = \"Ian Beal\", access = [\"Caff\", \"Laundrette\"] } \"Caff\"\r\n-- Returns True\r\n\r\nrequestAccess { access = [\"Caff\", \"Laundrette\"] } \"Caff\"\r\n-- Raises error on compilation\r\n```\r\n\r\nYou can see the type aliases on line 5/6 and line 8. 5/6 shows a type alias of a Record with a name and an access field and 8 is an alias of a String. We then add a type annotation to the requestAccess function. This function takes a \"Person\" and a \"Location\" type, then returns a bool if they\'re allowed access. You can annotate any type, but you must remember that it doesn\'t do anything special, it merely is a form of shorthand for the annotations.\r\n\r\nType aliases are much lighter weight than objects in most languages, but I think that maybe they\'re a bit more transparent too. Pretty neat!\r\n\r\nUpdate: There are also type unions, which as the name suggests groups types together, but I\'ll go into more depth about those in another post.\r\n\r\nNote: Most of the examples here are based on the Elm docs regarding types, check them out [here](https://guide.elm-lang.org/types/).\r\n\r\n\r\n† - I love this article by Steve Yegge where he describes a terrifying world where there are only objects http://steve-yegge.blogspot.co.uk/2006/03/execution-in-kingdom-of-nouns.html\r\n\r\n\\* - Rust is cool, I like it for the same main reason I like Elm; it has a clear domain except it\'s systems programming not web development. I might write some posts on it at some point.\r\n';
-var _user$project$OOBrainAndTypes$content = A2(
-	_evancz$elm_markdown$Markdown$toHtml,
-	{ctor: '[]'},
-	_user$project$OOBrainAndTypes$rawContent);
-var _user$project$OOBrainAndTypes$name = 'object-oriented-brain-and-types';
-var _user$project$OOBrainAndTypes$metaData = {
-	name: _user$project$OOBrainAndTypes$name,
-	title: 'Object-Oriented Brain and Types',
-	date: {
-		ctor: '::',
-		_0: 2016,
-		_1: {
-			ctor: '::',
-			_0: 8,
-			_1: {
-				ctor: '::',
-				_0: 29,
-				_1: {ctor: '[]'}
-			}
-		}
-	},
-	description: 'An intro to types and type aliases in Elm.',
-	category: 'Code',
-	subcategory: 'Elm',
-	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$OOBrainAndTypes$name),
-	content: _elm_lang$core$Maybe$Just(_user$project$OOBrainAndTypes$content)
-};
-
-var _user$project$ElmStaticSiteP1$rawContent = '\r\n*Check out the source code for the site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io).*\r\n\r\nFirst of all, happy new year! I hope everyone had a great holiday. I\'ve got a bit of time off of work, and as I\'m now back from visiting family, I\'ve been getting stuck into some little projects. The first thing I wanted to do was update this website. I was very pleased how quickly I managed to get the site up and running using just Markdown and GitHub pages, but obviously there are limitations around building a website this way. So I decided I\'d rebuild it in [Elm](http://elm-lang.org/), which is a neat functional programming language designed to make webapps.\r\n\r\nThe main purpose of this website is to host my blog, as well as sharing things that I\'ve made and other interesting stuff I\'ve found. Usually Elm is used to make one page webapps, where content is dynamically added to the page, so it wasn\'t particularly obvious to me how I should implement a site that mainly uses static content with the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:\r\n\r\n1. **How you would provide a link to a particular article when there\'s only a single HTML page?**\r\n2. After dynamically changing the website, how do you deal with running external Javascript libraries in response to these changes?\r\n\r\nThis post deals with the first topic.\r\n\r\n### Links on a single page Elm application\r\n\r\nMy initial solution to this was to just have Elm files that each compiled independently to create a bunch of HTML pages. I used a bat file to automate the building process, but it felt clunky. Then I came across the `navigation` module in the Elm core library. So I rewrote the site to use this, but quickly found out I also needed to use the `url-parser` module.\r\n\r\nTo start, you need to use a special `Program` type, stored in the `Navigation` module:\r\n\r\n```Elm\r\nmain : Program Never Model Msg\r\nmain =\r\n    Navigation.program UrlChange\r\n        { init = init\r\n        , view = view\r\n        , update = update\r\n        , subscriptions = (\\_ -> Sub.none)\r\n        }\r\n```\r\n\r\nThis is very similar to `Html.program`, the only real difference is that you need to supply a `Msg` that will be fed to the update function everytime the URL changes. The `init` function is important too, but I\'ll come back to that later.\r\n\r\nNext, the current active page is recorded in the model using a union type:\r\n\r\n```Elm\r\ntype alias Model =\r\n    { page: Page\r\n    }\r\n\r\ntype Page\r\n    = Home\r\n    | AllPosts\r\n    | Post String\r\n```\r\n\r\nThis means that we can currently have 3 \"types\" of pages. `Home` and `AllPosts` are pretty self explanatory, correspond to a unique page. The `Post` page type corresponds to blog post pages, of which there are many, and so information on the specific post is also required.\r\n\r\nYou can handle the unique pages using just the navigation module, by pattern matching a hash in a url, as outlined in [this article](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) by Pablo Fernández. However, you need more information for the post pages, so you can get the correct post. This can be extracted from the URL using the [`url-parser` module](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/).\r\n\r\nTo parse a URL, you need a `Msg` to handle the change in URL, which takes a `Navigation.Location` as an input:\r\n\r\n```Elm\r\ntype Msg\r\n    = UrlChange Navigation.Location\r\n```\r\n\r\nThe `Navigation.Location` record has the following type annotation:\r\n\r\n```Elm\r\ntype alias Location =\r\n    { href : String\r\n    , host : String\r\n    , hostname : String\r\n    , protocol : String\r\n    , origin : String\r\n    , port_ : String\r\n    , pathname : String\r\n    , search : String\r\n    , hash : String\r\n    , username : String\r\n    , password : String }\r\n```\r\n\r\nI\'m using location hashes for the links to different content, so we can ignore the rest of the record. Our update function handles the `UrlChange Msg`, parsing the URL and saving the correct page type in the model.\r\n\r\n```Elm\r\nimport UrlParser exposing ((</>))\r\n\r\nupdate : Msg -> Model -> ( Model, Cmd Msg )\r\nupdate msg model =\r\n    case msg of\r\n        UrlChange location ->\r\n            { model | page = getPage location } ! [ Cmd.none ]\r\n\r\ngetPage : Navigation.Location -> Page\r\ngetPage location =\r\n    Maybe.withDefault AllPosts (UrlParser.parseHash route location)\r\n\r\nroute : UrlParser.Parser (Page -> a) a\r\nroute =\r\n    UrlParser.oneOf\r\n        [ UrlParser.map Home UrlParser.top\r\n        , UrlParser.map Post (UrlParser.s \"blog\" </> UrlParser.string)\r\n        ]\r\n```\r\n\r\nThe update function is pretty straight forward, it process a `UrlChange Msg` and then parses the location to get the page type, which is stored in the model. The `getPage` function uses `UrlParser.parseHash` to process the location, generating a `Maybe Page`.\r\n\r\n`parseHash` takes a `UrlParser.Parser` type, in this case `route`. Route looks a bit weird, mainly due to `UrlParser.oneOf`, but essentially it just take a bunch of parsers and merges them together to make a super parser that when used will try each of the parsers it contains.\r\n\r\nThe actual parsers themselves are the `(UrlParser.s \"blog\" </> UrlParser.string)` and `UrlParser.top` bits. The `Parser` takes URLs and converts them to data. `UrlParser.top` is pretty simple, it doesn\'t consume any segments from the path, and so will successfully parse if the URL if it has no additional segments. The `s` parser will parse a segment of the URL if it *exactly* matches a provided string, so `UrlParser.s \"blog\"` will parse `/blog/` but nothing else. `UrlParser.string` will successfully parse any segment that is a string. Finally, `UrlParser.</>` combines the parsers together, to make a parser that has to exactly match `blog` and then contain another segment that is a string. There are other parser types too, check out the [docs](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/UrlParser) for more details.\r\n\r\nThe parser can then be applied to the location using either `parsePath` or `parseHash`, and will return `Just` *data* or `Nothing`. `UrlParser.map` is used to transform the data contained in the URL into a `Msg`. So, using this parser:\r\n\r\n```Elm\r\n-- /                      ==> Just Home\r\n-- /blog/my-gid-blog-post ==> Just (Post \"my-gid-blog-post\")\r\n-- /blog                  ==> Nothing\r\n```\r\n\r\n`UrlParser` is very powerful, and it isn\'t as complex to use as it is to explain. The best way to get a feel for how `UrlParser` works is to actually use it.\r\n\r\nFinally, the post type in the `model` can be used to alter content in the view when it\'s rendered:\r\n\r\n```Elm\r\nview : Model -> Html Msg\r\nview model = div [ id \"mainSiteDiv\", mainSiteDivStyle ]\r\n    [ CommonViews.siteHeader\r\n    , content model\r\n    , CommonViews.siteFooter\r\n    ]\r\n\r\ncontent : Model -> Html Msg\r\ncontent model = div [ id \"contentSection\" ]\r\n    [ getContent model\r\n    ]\r\n\r\ngetContent : Model -> Html Msg\r\ngetContent model =\r\n    case model.page of\r\n      Home -> home\r\n      AllPosts -> postList\r\n      Post title -> getBlogPost title\r\n```\r\n\r\nThere\'s one more bit of plumbing we need to do if this is to work properly. Previously I mentioned that the `init` was important. When I originally implemented the `init`, it looks like this:\r\n\r\n```Elm\r\ninit : Navigation.Location -> (Model, Cmd Msg)\r\ninit _ = ( Model Home, Cmd.none )\r\n```\r\n\r\nAs its `Navigation.program` it takes a `Navigation.Location` as an input, but I threw it away because I didn\'t know what to do with it. The model is simply initialised with the `Home` page. This works, if you went to the URL of my website it goes to the homepage. However, if you use with a hash location, like this https://chriswellswood.github.io/#blog/elm-static-site-p1, it would still go to the homepage. It\'s pretty obvious why this is happening, no `UrlChange` message is getting passed to the `update` function.\r\n\r\nTo fix this, I changed the `init` function to look like this:\r\n\r\n```Elm\r\ninit : Navigation.Location -> (Model, Cmd Msg)\r\ninit location =\r\n    ( Model Home\r\n    , Task.perform identity (Task.succeed (UrlChange location))\r\n    )\r\n```\r\n\r\nThis time, the model is the same, but the location is not thrown away. We need to send a command to pass `UrlChange` to the `update` function. To do this we wrap a `Msg` in a task that will always succeed and will return the `UrlChange`, and then identity is used to provide `UrlChange` to be passed to update after the task has been performed. The end result is that as soon as the website starts, the URL will be parsed and the correct content will be loaded.\r\n\r\nThat\'s it for this post, but in the next post I\'ll discuss using ports and tasks to interact with Javascript, allowing us to format code in the posts and interact with Google Analytics.\r\n\r\n### References\r\n\r\n1. [SPA simple with Elm Navigation](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) Pablo Fernández\r\n1. UrlParser [documentation](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/) and [example](https://github.com/evancz/url-parser/blob/2.0.1/examples/Example.elm) by Evan Czaplicki.\r\n';
-var _user$project$ElmStaticSiteP1$content = A2(
-	_evancz$elm_markdown$Markdown$toHtml,
-	{ctor: '[]'},
-	_user$project$ElmStaticSiteP1$rawContent);
-var _user$project$ElmStaticSiteP1$name = 'elm-static-site-p1';
-var _user$project$ElmStaticSiteP1$metaData = {
-	name: _user$project$ElmStaticSiteP1$name,
-	title: 'Tools for Handling Static Pages in Elm - Part 1. Dealing with Links',
-	date: {
-		ctor: '::',
-		_0: 2017,
-		_1: {
-			ctor: '::',
-			_0: 1,
-			_1: {
-				ctor: '::',
-				_0: 7,
-				_1: {ctor: '[]'}
-			}
-		}
-	},
-	description: 'How to handle links to static content in a dynamic one page Elm app, using the Navigation and UrlParser modules.',
-	category: 'Code',
-	subcategory: 'Elm',
-	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$ElmStaticSiteP1$name),
-	content: _elm_lang$core$Maybe$Just(_user$project$ElmStaticSiteP1$content)
-};
-
-var _user$project$ElmStaticSiteP2$rawContent = '\nIn a [previous article](#blog/elm-static-site-p1), I discussed making a single-page web app in Elm that mainly uses static content, based on my experience making this site. The next thing I wanted to do to the site was add Google Analytics. I wanted to track page views, partly because I\'m nosey, but mainly as I thought this might allow me to refine my content a bit. It\'s free to set up an account, and works by adding a little bit of JavaScript to your pages. To hook this up to our Elm app, we need to use ports.\n\nElm can communicate with JavaScript by sending data through constructs called ports. This means that the JavaScript is isolated from the Elm application, and so you still get all of the normal guarantees you\'d expect with Elm. I like this mode of interopt, as it means that you\'re protected in a lovely bubble of predictable Elm, from all that chaotic JavaScript.\n\nBefore we start, if you\'re planning to do this, make sure you are compiling your Elm app to JavaScript and embedding it in HTML, rather than compiling straight to HTML. This is pretty easy to do and is covered in the [Elm guide](https://guide.elm-lang.org/interop/javascript.html).\n\n### Setting up the Port\n\nGoogle give you a bit of JavaScript to paste into your page that looks like this:\n\n```Javascript\n  (function(i,s,o,g,r,a,m){i[\'GoogleAnalyticsObject\']=r;i[r]=i[r]||function(){\n  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n  })(window,document,\'script\',\'https://www.google-analytics.com/analytics.js\',\'ga\');\n\n  ga(\'create\', \'UA-XXXXXXXX-X\', \'auto\');\n  ga(\'send\', \'pageview\'); // we don\'t want this!\n```\n\nBut this will only send a page view on load. As we are using fragment identifiers, i.e. \"www.boblaw.com/**#lawblog**\", to select our pages, we need to explicitly set the page like this:\n\n```Javascript\nga(\'set\', \'page\', \'www.boblaw.com/#lawblog\');\nga(\'send\', \'pageview\');\n```\n\nWe need to run this code when we change a page, and we\'ll need to pass a String containing the relevant url.\n\nTo make a JavaScript port, you need to define it in your Elm app using the port keyword, both when exposing your module and to explicitly create the port:\n\n```Elm\nport module Index exposing (..)\n\n...\n\nport analytics : String -> Cmd msg\n```\n\nPorts use regular Elm commands and subscriptions. If we\'re only sending data out, it\'s a command, and if we\'re getting data back, it\'s a subscription. We aren\'t needing any data back, so we have the simpler case here.\n\nTo trigger this command when we change the location on the site, we need to change our update function, which I described in a [previous article](#blog/elm-static-site-p1). It looked like this:\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! [ Cmd.none ]\n```\n\nPreviously we had no commands, but now we want to send data through our port:\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! [ analytics location.href ]\n```\n\nWe take the full URL from the `Navigation.Location` record, which includes the current hash location. That\'s all that\'s required on the Elm side, now we need to connect it up to the JavaScript.\n\n### Setting up the HTML file\n\nBefore, our HTML file looked roughly like this:\n\n```Html\n<!DOCTYPE HTML>\n<html>\n\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Bits and Pieces and Odds and Ends</title>\n  <script type=\"text/javascript\" src=\"index.js\"></script>\n\n  <link rel=\"stylesheet\" href=\"css/style.css\">\n</head>\n\n<body>\n</body>\n\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n</script>\n\n</html>\n```\n\nOur Elm app compiles down to a file called `index.js`, which is embedded into the page. We need to add the Google Analytics code so we can start tracking page views:\n\n```Html\n<head>\n  ...\n  <script>\n    (function(i,s,o,g,r,a,m){i[\'GoogleAnalyticsObject\']=r;i[r]=i[r]||function(){\n    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n    })(window,document,\'script\',\'https://www.google-analytics.com/analytics.js\',\'ga\');\n\n    ga(\'create\', \'UA-XXXXXXXX-X\', \'auto\');\n  </script>\n</head>\n...\n```\n\n`UA-XXXXXXXX-X` is the tracking ID that you get when you set up your Google Analytics account, so it varies from person to person. Here we create the session, but we don\'t trigger any page views yet.\n\nNow we need to add the JavaScript that will run when we trigger our Elm port command:\n\n```Html\n...\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n\n    app.ports.analytics.subscribe(\n      function (pageUrl) {\n        ga(\'set\', \'page\', pageUrl);\n        ga(\'send\', \'pageview\');\n      }\n    );\n</script>\n\n</html>\n```\n\nLet\'s break that down a bit. `app.ports.analytics` refers to the port that we created in our app. We subscribe to the event, which is triggered by the `analytics` command, providing a  function that will be run when the event is triggered. This function takes a string, `pageUrl`, which we pass into this function through the port in our Elm app. This is used to set the currently active page through the Google Analytics API, then we send off the page view to be recorded. Pretty easy!\n\n### Explicitly Highlighting Code with `highlight.js`\n\nThis works with any external JavaScript API, for example, all the highlighting for the code in this article is performed using [`highlight.js`](https://highlightjs.org/), and the highlighting function is triggered in a similar way. Let\'s look at how that\'s connected up.\n\nFirst we make our port:\n\n```Elm\nport highlightMarkdown : () -> Cmd msg\n```\n\nThen we trigger the command in our update:\n\n```Elm\ntype Msg\n    = UrlChange Navigation.Location\n    | Highlight ()\n\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } !\n                [ Task.perform Highlight (Process.sleep (100 * Time.millisecond))\n                , analytics location.href ]\n\n        Highlight _ ->\n            ( model, highlightMarkdown () )\n```\n\nWe\'ve added a couple of things here because we need to add a delay before we trigger the highlight command, allowing the DOM to be rendered first. We have a new `Highlight Msg` to handle this, which is triggered after a sleep process is performed. `Process.sleep` doesn\'t return anything, so the `Highlight Msg` takes an empty tuple as an argument. All the `Highlight Msg` does is trigger the `highlightMarkdown` port command, which doesn\'t require any input variables, and so it also takes an empty tuple.\n\nOn the HTML side we need a few things:\n\n```Html\n<!DOCTYPE HTML>\n<html>\n\n<head>\n  ...\n  <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js\"></script>\n\n  <!-- Markdown Highlighting -->\n  <link rel=\"stylesheet\" href=\"css/github.css\">\n  <script src=\"js/highlight.pack.js\"></script>\n  ...\n</head>\n\n<body>\n</body>\n\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n\n    app.ports.highlightMarkdown.subscribe(\n      function () {\n        highlightCodeBlocks();\n      }\n    );\n\n    function highlightCodeBlocks() {\n      $(\'pre code\').each(function(i, block) {\n        hljs.highlightBlock(block);\n      });\n    };\n\n    app.ports.analytics.subscribe(\n      function (pageUrl) {\n        ga(\'set\', \'page\', pageUrl);\n        ga(\'send\', \'pageview\');\n      }\n    );\n\n</script>\n\n</html>\n```\n\nAgain we trigger a function by subscribing to the `app.ports.highlightMarkdown` port. I then use jQuery to grab the relevant divs and highlight them using `highlight.js`. Using this method, we can dynamically add content to the page and then highlight the code.\n\nThat\'s it for this post, take a look at the source code for this site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io), and feel free to ask questions on Twitter if you have any.\n';
-var _user$project$ElmStaticSiteP2$content = A2(
-	_evancz$elm_markdown$Markdown$toHtml,
-	{ctor: '[]'},
-	_user$project$ElmStaticSiteP2$rawContent);
-var _user$project$ElmStaticSiteP2$name = 'elm-static-site-p2';
-var _user$project$ElmStaticSiteP2$metaData = {
-	name: _user$project$ElmStaticSiteP2$name,
-	title: 'Tools for Handling Static Pages in Elm - Part 2. Ports, Google Analytics and Highlight.js',
-	date: {
-		ctor: '::',
-		_0: 2017,
-		_1: {
-			ctor: '::',
-			_0: 1,
-			_1: {
-				ctor: '::',
-				_0: 28,
-				_1: {ctor: '[]'}
-			}
-		}
-	},
-	description: 'How to communicate with external JavaScript libraries using ports.',
-	category: 'Code',
-	subcategory: 'Elm',
-	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$ElmStaticSiteP2$name),
-	content: _elm_lang$core$Maybe$Just(_user$project$ElmStaticSiteP2$content)
-};
-
-var _user$project$CounterReusableView$rawContent = '\n*Check out the source code [here](https://github.com/ChrisWellsWood/elm-counters)*\n\nThere seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be achieved. It centred around creating a reusable counter *component* that managed its own updates, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.\n\nWorking with reusable components was quite awkward, and involved multiple update functions and relaying `msgs` to the correct place. Personally, I found it difficult to get my head around and I much prefer that the module simply contains functions to create views.\n\nIn this post, I\'m going to reimplement the old counter example using a the reusable view pattern.\n\n### The Counter App\n\nWe\'ll start with a little Counter app that\'s entirely self contained:\n\n```Elm\nimport Html exposing (..)\nimport Html.Attributes exposing (style)\nimport Html.Events exposing (onClick)\n\n\nmain = Html.program\n  { init = init\n  , view = view\n  , update = update\n  , subscriptions = (\\_ -> Sub.none)\n  }\n\ninit : ( Model, Cmd Msg )\ninit = ( 0, Cmd.none )\n\n-- MODEL\n\ntype alias Model = Int\n\n\n-- UPDATE\n\n\ntype Msg = Increment | Decrement | Clear\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate action model =\n  case action of\n    Increment ->\n      ( model + 1, Cmd.none )\n\n    Decrement ->\n      ( model - 1, Cmd.none )\n\n    Clear ->\n      ( 0, Cmd.none )\n\n\n-- VIEW\n\nview : Model -> Html Msg\nview model =\n  div []\n    [ button [ onClick Decrement ] [ text \"-\" ]\n    , div [ countStyle ] [ text (toString model) ]\n    , button [ onClick Increment ] [ text \"+\" ]\n    , button [ onClick Clear ] [ text \"Clear\" ]\n    ]\n\ncountStyle : Attribute msg\ncountStyle =\n  style\n    [ (\"font-size\", \"20px\")\n    , (\"font-family\", \"monospace\")\n    , (\"display\", \"inline-block\")\n    , (\"width\", \"50px\")\n    , (\"text-align\", \"center\")\n    ]\n```\n\nHere\'s what it looks like:\n\n<iframe src=\"https://chriswellswood.github.io/elm-counters/counter.html\"></iframe>\n\nIt\'s pretty straight forward, your model is simply an `Int` and the messages that update handles are `Increment`, `Decrement` and `Clear`. The model is used to create a view which displays the current count, as well as buttons for sending messages to the update function.\n\nI think this is a pretty realistic starting point, as when I make an app in Elm, I make the core functional bit first and then expanded that into the full application.\n\n### Counter List\n\nLet\'s start making our counter list app. What we\'re aiming for is an app where we can dynamically add and remove counters. We need to change the structure of the counter module to accommodate this.\n\n#### Reusable Counter View\n\nTo start with, we can get rid of most of the mechanical stuff that Elm needs: the main function `Html.program`, `init` and `update`. We\'ll rename the model to `CounterModel`, just to be explicit and avoid confusion.\n\nOur update function has been replaced by a helper method that deals with modifying the counters:\n\n```Elm\ntype CounterModifier = Increment | Decrement | Clear\n\nmodifyCounter : CounterModifier -> CounterModel -> CounterModel\nmodifyCounter counterModifier counterModel =\n  case counterModifier of\n    Increment -> counterModel + 1\n    Decrement -> counterModel - 1\n    Clear -> 0\n```\n\nIt looks quite like an update function, but doesn\'t pass messages or commands. Our different counter operations have been defined using a union type. `modifyCounter` takes a `CounterModel` and a modifier command and returns a new model.\n\nNext up we have the view for our counter:\n\n```Elm\nviewCounter : Config msg -> CounterModel -> Html msg\nviewCounter (Config { modifyMsg, removeMsg }) counterModel =\n  div []\n    [ button [ onClick (modifyMsg Decrement) ] [ text \"-\" ]\n    , div [ countStyle ] [ text (toString counterModel) ]\n    , button [ onClick (modifyMsg Increment) ] [ text \"+\" ]\n    , button [ onClick (modifyMsg Clear) ] [ text \"Clear\" ]\n    , button [ onClick (removeMsg) ] [ text \"Remove\" ]\n    ]\n```\n\nThis looks quite familiar, but it\'s slightly more complicated than before. Firstly, we\'ve added an extra button to remove the counter, but that\'s pretty straight forward. Now that the counter is not handling it\'s own update, it needs to give the `onClick` event a `Msg` from the module that\'s calling it, which will be our `CounterList` app. We\'re passing in the messages from the module that\'s using the counter in a `Config` type, let\'s take a look at that:\n\n```Elm\ntype Config msg =\n  Config\n    { modifyMsg : (CounterModifier -> msg)\n    , removeMsg : msg\n    }\n\nconfig\n  : { modifyMsg : (CounterModifier -> msg)\n    , removeMsg : msg\n    }\n  -> Config msg\nconfig { modifyMsg, removeMsg } =\n  Config\n    { modifyMsg = modifyMsg\n    , removeMsg = removeMsg\n    }\n```\n\nThis looks a bit weird, but it makes sense if we break it down. First, we define a sort of \"generic\" type, it takes a type and returns a new type that uses the input type. In this case we pass in a `msg`, which will be our `Msg` union type from our CounterList app. The function annotations are suited to the type of message: the `modifyMsg` will be used to pass a `CounterModifier` to the `modifyCounter` function in our main app. We then define a config function which takes our messages and returns a `Config` type.\n\nThat\'s all the changes to the counter itself, now we can make something with it!\n\n#### Counter List\n\nThe app itself is pretty basic, we use the standard `Html.program`. The model looks like this:\n\n```Elm\nimport ReusableCounter exposing (..)\n\ntype alias Model =\n  { counterDict : CounterDict\n  , currentCounterID : CounterID\n  }\n\ntype alias CounterDict = Dict.Dict CounterID CounterModel\n\ntype alias CounterID = Int\n```\n\nIt contains `counterDict`, a dictionary with a `CounterID` as the key and a `CounterModel` as the value, and `currentCounterID` where the last used `CounterID` is stored.\n\nOur update is pretty simple too:\n\n```Elm\ntype Msg\n  = AddCounter\n  | ModifyCounter CounterID CounterModifier\n  | RemoveCounter CounterID\n```\n\nWe handle 3 messages, 2 of which - `ModifyCounter` and `RemoveCounter` - are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations? The messages are modified to contain a CounterID before being passed to the counter module, so the CounterID isn\'t in the `Config` annotation.\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate action model =\n  case action of\n    AddCounter ->\n      let\n        nextID = model.currentCounterID + 1\n        newModel =\n          { counterDict = Dict.insert nextID 0 model.counterDict\n          , currentCounterID = nextID\n          }\n      in\n        ( newModel, Cmd.none )\n\n    ModifyCounter counterID modifier ->\n      let\n        clickedCounter = Dict.get counterID model.counterDict\n      in\n        case clickedCounter of\n          Just counter ->\n            ( { model | counterDict =\n              Dict.insert counterID (modifyCounter modifier counter) model.counterDict }\n            , Cmd.none )\n          Nothing ->\n            ( model, Cmd.none )\n\n    RemoveCounter counterID ->\n        ( { model | counterDict = Dict.remove counterID model.counterDict }, Cmd.none )\n```\n\n`AddCounter` just adds a new `CounterModel` to our dictionary, using the next ID that\'s free as the key.\n\nOur `ModifyCounter` message takes a modifier type, from the `ReusableCounter` module, and a `CounterID`. The `CounterID` is used to get the relevant counter and is passed to the `modifyCounter` function from the `ReusableCounter` module. After this, the `counterDict` field is updated in the model.\n\n`RemoveCounter` receives a `CounterID` that needs to be removed, and uses `Dict.remove` to create a new Dict without that counter.\n\nLastly, we have our main view:\n\n```Elm\nview : Model -> Html Msg\nview model =\n  div []\n    [ div [] [ button [ onClick AddCounter ] [ text \"Add Counter\" ] ]\n    , div [] (List.map makeView (Dict.toList model.counterDict))\n    ]\n\nmakeView : (CounterID, CounterModel) -> Html Msg\nmakeView (refID, counterModel) =\n  let\n    counterConfig =\n      config\n        { modifyMsg = ModifyCounter refID\n        , removeMsg = RemoveCounter refID\n        }\n  in\n    viewCounter counterConfig counterModel\n```\n\nIt has a button to add counters and uses the `viewCounter` function from `ReusableCounter` module to generate the views for each of the counters. This function needs to be passed a `Config`, which we make using the `config` function from `ReusableCounter`, giving it our `ModifyCounter` and `RemoveCounter` messages, modified with the relevant `CounterID`s.\n\nDone and dusted! Using this basic approach, you can make modular, composable units, while all your update logic remains in one place. You don\'t need to bother passing `Msg`s around, you just have views and functions to help create views.\n\nHere\'s the final `CounterList` application:\n\n<iframe src=\"https://chriswellswood.github.io/elm-counters/counter-list.html\"></iframe>\n\nFeel free to ask questions or share your thoughts on this over on Twitter ([@ChrisWellsWood](https://twitter.com/ChrisWellsWood))!\n\n*Many thanks to [/u/wintvelt](https://www.reddit.com/user/wintvelt) for some great suggestions on improvements to the code.*\n';
-var _user$project$CounterReusableView$content = A2(
-	_evancz$elm_markdown$Markdown$toHtml,
-	{ctor: '[]'},
-	_user$project$CounterReusableView$rawContent);
-var _user$project$CounterReusableView$name = 'creating-simple-reusable-view-modules';
-var _user$project$CounterReusableView$metaData = {
-	name: _user$project$CounterReusableView$name,
-	title: 'Creating a Simple Reusable View Module in Elm',
-	date: {
-		ctor: '::',
-		_0: 2017,
-		_1: {
-			ctor: '::',
-			_0: 1,
-			_1: {
-				ctor: '::',
-				_0: 17,
-				_1: {ctor: '[]'}
-			}
-		}
-	},
-	description: 'An updated version of an old example of how to scale your Elm app using modules, this time using reusable views rather than components.',
-	category: 'Code',
-	subcategory: 'Elm',
-	url: A2(_elm_lang$core$Basics_ops['++'], '#blog/', _user$project$CounterReusableView$name),
-	content: _elm_lang$core$Maybe$Just(_user$project$CounterReusableView$content)
-};
-
-var _user$project$Snippets$allSnippets = {
-	ctor: '::',
-	_0: {
-		name: 'markdown-cheatsheet',
-		title: 'Markdown Cheatsheet',
-		date: {
-			ctor: '::',
-			_0: 2016,
-			_1: {
-				ctor: '::',
-				_0: 12,
-				_1: {
-					ctor: '::',
-					_0: 11,
-					_1: {ctor: '[]'}
-				}
-			}
-		},
-		description: 'A great cheatsheet for markdown written by @adam-p. I always forget how to make tables...',
-		category: 'Code',
-		subcategory: 'Markdown',
-		url: 'https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet',
-		content: _elm_lang$core$Maybe$Nothing
-	},
-	_1: {
-		ctor: '::',
-		_0: {
-			name: 'python-packages',
-			title: 'Packaging a Python Project and Distributing on PyPi',
-			date: {
-				ctor: '::',
-				_0: 2017,
-				_1: {
-					ctor: '::',
-					_0: 8,
-					_1: {
-						ctor: '::',
-						_0: 17,
-						_1: {ctor: '[]'}
-					}
-				}
-			},
-			description: 'Workflow for making and distributing a Python package.',
-			category: 'Code',
-			subcategory: 'Python',
-			url: 'https://gist.github.com/ChrisWellsWood/165e3144f4a8199482ab50a8146c8069',
-			content: _elm_lang$core$Maybe$Nothing
-		},
-		_1: {ctor: '[]'}
-	}
-};
-
-var _user$project$Content$dateToString = function (dateTuple) {
+var _user$project$Skeleton$dateToString = function (dateTuple) {
 	return A3(
 		_elm_lang$core$List$foldr,
 		F2(
@@ -10335,7 +9915,33 @@ var _user$project$Content$dateToString = function (dateTuple) {
 			_elm_lang$core$List$reverse(
 				A2(_elm_lang$core$List$map, _elm_lang$core$Basics$toString, dateTuple))));
 };
-var _user$project$Content$cardInfo = function (metaData) {
+var _user$project$Skeleton$contentUrl = F4(
+	function (group, category, subcategory, name) {
+		return A2(
+			_elm_lang$core$String$join,
+			'/',
+			A2(
+				_elm_lang$core$List$map,
+				_elm_lang$core$String$toLower,
+				{
+					ctor: '::',
+					_0: group,
+					_1: {
+						ctor: '::',
+						_0: category,
+						_1: {
+							ctor: '::',
+							_0: subcategory,
+							_1: {
+								ctor: '::',
+								_0: name,
+								_1: {ctor: '[]'}
+							}
+						}
+					}
+				}));
+	});
+var _user$project$Skeleton$contentInfo = function (metaData) {
 	return A2(
 		_elm_lang$html$Html$p,
 		{
@@ -10371,7 +9977,7 @@ var _user$project$Content$cardInfo = function (metaData) {
 				_0: _elm_lang$html$Html$text(
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						_user$project$Content$dateToString(metaData.date),
+						_user$project$Skeleton$dateToString(metaData.date),
 						' | ')),
 				_1: {
 					ctor: '::',
@@ -10396,7 +10002,7 @@ var _user$project$Content$cardInfo = function (metaData) {
 			}
 		});
 };
-var _user$project$Content$blogPostHeader = function (metaData) {
+var _user$project$Skeleton$blogPostHeader = function (metaData) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -10429,36 +10035,31 @@ var _user$project$Content$blogPostHeader = function (metaData) {
 				}),
 			_1: {
 				ctor: '::',
-				_0: _user$project$Content$cardInfo(metaData),
+				_0: _user$project$Skeleton$contentInfo(metaData),
 				_1: {ctor: '[]'}
 			}
 		});
 };
-var _user$project$Content$blogPostView = function (metaData) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$class('blogPostView'),
-			_1: {ctor: '[]'}
-		},
-		{
-			ctor: '::',
-			_0: _user$project$Content$blogPostHeader(metaData),
-			_1: {
+var _user$project$Skeleton$blogPostView = F2(
+	function (metaData, content) {
+		return A2(
+			_elm_lang$html$Html$div,
+			{
 				ctor: '::',
-				_0: A2(
-					_elm_lang$core$Maybe$withDefault,
-					A2(
-						_elm_lang$html$Html$div,
-						{ctor: '[]'},
-						{ctor: '[]'}),
-					metaData.content),
+				_0: _elm_lang$html$Html_Attributes$class('blogPostView'),
 				_1: {ctor: '[]'}
-			}
-		});
-};
-var _user$project$Content$contentCard = function (metaData) {
+			},
+			{
+				ctor: '::',
+				_0: _user$project$Skeleton$blogPostHeader(metaData),
+				_1: {
+					ctor: '::',
+					_0: content,
+					_1: {ctor: '[]'}
+				}
+			});
+	});
+var _user$project$Skeleton$contentCard = function (metaData) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -10531,7 +10132,7 @@ var _user$project$Content$contentCard = function (metaData) {
 				}),
 			_1: {
 				ctor: '::',
-				_0: _user$project$Content$cardInfo(metaData),
+				_0: _user$project$Skeleton$contentInfo(metaData),
 				_1: {
 					ctor: '::',
 					_0: A2(
@@ -10547,75 +10148,608 @@ var _user$project$Content$contentCard = function (metaData) {
 			}
 		});
 };
-var _user$project$Content$allSnippetsView = A2(
+var _user$project$Skeleton$siteFooter = A2(
+	_elm_lang$html$Html$footer,
+	{ctor: '[]'},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$id('siteFooter'),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$hr,
+					{ctor: '[]'},
+					{ctor: '[]'}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$p,
+						{ctor: '[]'},
+						{
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$a,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$class('twitter-follow-button'),
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$style(
+											{
+												ctor: '::',
+												_0: {ctor: '_Tuple2', _0: 'padding-top', _1: '10px'},
+												_1: {ctor: '[]'}
+											}),
+										_1: {
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$href('https://twitter.com/ChrisWellsWood'),
+											_1: {
+												ctor: '::',
+												_0: A2(_elm_lang$html$Html_Attributes$attribute, 'data-show-count', 'false'),
+												_1: {ctor: '[]'}
+											}
+										}
+									}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('Follow @ChrisWellsWood'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('© Chris Wells Wood, 2016-2017.'),
+						_1: {ctor: '[]'}
+					}
+				}
+			}),
+		_1: {ctor: '[]'}
+	});
+var _user$project$Skeleton$navBar = A2(
+	_elm_lang$html$Html$div,
+	{ctor: '[]'},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$a,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$href('/'),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('Home'),
+				_1: {ctor: '[]'}
+			}),
+		_1: {
+			ctor: '::',
+			_0: _elm_lang$html$Html$text(' | '),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$a,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$href('/#all-posts'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('All Posts'),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(' | '),
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$a,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Attributes$href('/#all-snippets'),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('All Snippets'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		}
+	});
+var _user$project$Skeleton$socialMedia = A2(
 	_elm_lang$html$Html$div,
 	{
 		ctor: '::',
-		_0: _elm_lang$html$Html_Attributes$id('allSnippetsView'),
+		_0: _elm_lang$html$Html_Attributes$id('socialMedia'),
 		_1: {ctor: '[]'}
 	},
 	{
 		ctor: '::',
 		_0: A2(
-			_elm_lang$html$Html$h2,
-			{ctor: '[]'},
+			_elm_lang$html$Html$p,
 			{
 				ctor: '::',
-				_0: _elm_lang$html$Html$text('All Snippets'),
+				_0: _elm_lang$html$Html_Attributes$style(
+					{
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'font-size', _1: '12px'},
+						_1: {ctor: '[]'}
+					}),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('GitHub: '),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$a,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$href('https://github.com/ChrisWellsWood'),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('@ChrisWellsWood'),
+							_1: {ctor: '[]'}
+						}),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html$text(' | Twitter: '),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$a,
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html_Attributes$href('https://twitter.com/ChrisWellsWood'),
+									_1: {ctor: '[]'}
+								},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text('@ChrisWellsWood'),
+									_1: {ctor: '[]'}
+								}),
+							_1: {ctor: '[]'}
+						}
+					}
+				}
+			}),
+		_1: {ctor: '[]'}
+	});
+var _user$project$Skeleton$nameAndTagline = A2(
+	_elm_lang$html$Html$div,
+	{
+		ctor: '::',
+		_0: _elm_lang$html$Html_Attributes$id('nameAndTagline'),
+		_1: {ctor: '[]'}
+	},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$h1,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$id('siteName'),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'margin-bottom', _1: '0'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'padding-bottom', _1: '0'},
+								_1: {ctor: '[]'}
+							}
+						}),
+					_1: {ctor: '[]'}
+				}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$a,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$href(''),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html$text('Bits and Pieces and Odds and Ends'),
+						_1: {ctor: '[]'}
+					}),
 				_1: {ctor: '[]'}
 			}),
 		_1: {
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$div,
-				{ctor: '[]'},
-				A2(_elm_lang$core$List$map, _user$project$Content$contentCard, _user$project$Snippets$allSnippets)),
+				_elm_lang$html$Html$h3,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$style(
+						{
+							ctor: '::',
+							_0: {ctor: '_Tuple2', _0: 'margin', _1: '0'},
+							_1: {
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: 'padding', _1: '0'},
+								_1: {ctor: '[]'}
+							}
+						}),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Code, science and misc by Chris Wells Wood.'),
+					_1: {ctor: '[]'}
+				}),
 			_1: {ctor: '[]'}
 		}
 	});
-var _user$project$Content$recentContentCards = F2(
-	function (posts, numToShow) {
-		return A2(
-			_elm_lang$html$Html$div,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$id('recentContentCards'),
-				_1: {ctor: '[]'}
-			},
-			A2(
-				_elm_lang$core$List$take,
-				numToShow,
-				A2(_elm_lang$core$List$map, _user$project$Content$contentCard, posts)));
-	});
-var _user$project$Content$recentSnippets = function (numToShow) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{ctor: '[]'},
-		{
+var _user$project$Skeleton$siteHeader = A2(
+	_elm_lang$html$Html$header,
+	{
+		ctor: '::',
+		_0: _elm_lang$html$Html_Attributes$id('siteHeader'),
+		_1: {ctor: '[]'}
+	},
+	{
+		ctor: '::',
+		_0: _user$project$Skeleton$nameAndTagline,
+		_1: {
 			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$h2,
-				{ctor: '[]'},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text('Recent Snippets'),
-					_1: {ctor: '[]'}
-				}),
+			_0: _user$project$Skeleton$socialMedia,
 			_1: {
 				ctor: '::',
 				_0: A2(
-					_user$project$Content$recentContentCards,
-					_elm_lang$core$List$reverse(
-						A2(
-							_elm_lang$core$List$sortBy,
-							function (_) {
-								return _.date;
-							},
-							_user$project$Snippets$allSnippets)),
-					numToShow),
+					_elm_lang$html$Html$hr,
+					{ctor: '[]'},
+					{ctor: '[]'}),
+				_1: {
+					ctor: '::',
+					_0: _user$project$Skeleton$navBar,
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$hr,
+							{ctor: '[]'},
+							{ctor: '[]'}),
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		}
+	});
+var _user$project$Skeleton$mainSiteDivStyle = _elm_lang$html$Html_Attributes$style(
+	{
+		ctor: '::',
+		_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
+		_1: {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
+			_1: {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'max-width', _1: '980px'},
+				_1: {
+					ctor: '::',
+					_0: {ctor: '_Tuple2', _0: 'padding-right', _1: '2.5%'},
+					_1: {
+						ctor: '::',
+						_0: {ctor: '_Tuple2', _0: 'padding-left', _1: '2.5%'},
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		}
+	});
+var _user$project$Skeleton$skeleton = function (content) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html_Attributes$id('mainSiteDiv'),
+			_1: {
+				ctor: '::',
+				_0: _user$project$Skeleton$mainSiteDivStyle,
 				_1: {ctor: '[]'}
 			}
+		},
+		{
+			ctor: '::',
+			_0: _user$project$Skeleton$siteHeader,
+			_1: {
+				ctor: '::',
+				_0: content,
+				_1: {
+					ctor: '::',
+					_0: _user$project$Skeleton$siteFooter,
+					_1: {ctor: '[]'}
+				}
+			}
 		});
+};
+var _user$project$Skeleton$ContentMetaData = F8(
+	function (a, b, c, d, e, f, g, h) {
+		return {name: a, title: b, date: c, description: d, group: e, category: f, subcategory: g, url: h};
+	});
+
+var _user$project$EmptyRustStructs$rawContent = '\r\nIn C/C++, you can initialise a struct without giving values for any of the fields:\r\n\r\n```C\r\nstruct Point {\r\n  float x;\r\n  float y;\r\n  float z;\r\n};\r\n\r\nint main() {\r\n  Point my_point = {};\r\n}\r\n```\r\n\r\nStructs in RUST can\'t do this by default, you\'ll just get an error:\r\n\r\n```Rust\r\n#[derive(Debug)]\r\nstruct Point {\r\n    x: i32,\r\n    y: i32,\r\n    z: i32,\r\n}\r\n\r\nfn main() {\r\n    let p1 = Point{};\r\n}\r\n```\r\n\r\n```\r\nerror[E0063]: missing fields `x`, `y`, `z` in initializer of `Point`\r\n --> src\\main.rs:2:15\r\n  |\r\n2 |     let p1 = Point{};\r\n  |              ^^^^^ missing `x`, `y`, `z`\r\n```\r\n\r\nThe proper way to do this for a struct in Rust is to implement the `Default` trait and then you can generate default values easily:\r\n\r\n```Rust\r\n#[derive(Debug)]\r\nstruct Point {\r\n    x: i32,\r\n    y: i32,\r\n    z: i32,\r\n}\r\n\r\nimpl Default for Point {\r\n    fn default () -> Point {\r\n        Point{x: 0, y: 0, z:0}\r\n    }\r\n}\r\nfn main() {\r\n  let p1 = Point::default(); \r\n  let p2 = Point{ x: 34, ..Default::default() }; // Partial definition of fields\r\n}\r\n```\r\n\r\nYou can even do this automatically using the `derive` attribute.\r\n\r\n```Rust\r\n#[derive(Debug, Default)] // Derive is cool, I have no idea how it works!\r\nstruct Point {\r\n    x: i32,\r\n    y: i32,\r\n    z: i32,\r\n}\r\n\r\nfn main() {\r\n  let p1 = Point::default();\r\n  let p2 = Point{ x: 34, ..Default::default() };\r\n}\r\n```\r\n\r\nIt\'s like magic! \r\n\r\nInitialising empty structs is especially useful when working with an API, where you might give a function a pointer to a struct and the fields are populated for you. If you\'re working with a RUST API that follows this pattern, we can just use our `Default` trait implementation to do this, right? Well, that depends on the API. If you\'re using using the `winapi` crate, this doesn\'t work as `Default` has not been implemented for any of the structs that I\'ve used:\r\n\r\n```Rust\r\nextern crate winapi;\r\n\r\nuse winapi::windef::RECT;\r\n\r\nfn main() {\r\n    let rect = RECT{ ..Default::default() };\r\n    println!(\"{:?}\", rect);\r\n}\r\n```\r\n\r\n```\r\nerror[E0277]: the trait bound `winapi::RECT: std::default::Default`\r\nis not satisfied\r\n --> src\\main.rs:6:24\r\n  |\r\n6 |     let rect = RECT{ ..Default::default() };\r\n  |                        ^^^^^^^^^^^^^^^^ trait `winapi::RECT: std::default::Default` not satisfied\r\n```\r\n\r\nUnfortunately, you\'re not allowed to implement a trait that you did not define, for a type that you also did not define. So if you\'re using a struct from an external crate, you can\'t implement `Default` for it:\r\n\r\n```Rust\r\nextern crate winapi;\r\n\r\nuse winapi::windef::RECT;\r\n\r\nimpl Default for RECT {\r\n    fn default () -> RECT {\r\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\r\n    }\r\n}\r\n\r\nfn main() {\r\n    let rect = RECT::default();\r\n    println!(\"{:?}\", rect);\r\n}\r\n```\r\n\r\n```\r\nerror[E0117]: only traits defined in the current crate can be implemented for arbitrary types\r\n --> src\\main.rs:5:1\r\n  |\r\n5 | impl Default for RECT {\r\n  | ^ impl doesn\'t use types inside crate\r\n```\r\n\r\nThat\'s annoying... So what do you do? There\'s a couple of things you could do. Firstly, you could wrap the struct as a new type (so you\'re defining it in your own crate):\r\n\r\n```Rust\r\nextern crate winapi;\r\n\r\nuse winapi::windef::RECT;\r\n\r\n#[derive(Debug)]\r\nstruct WrappedRECT{rect: RECT}\r\n\r\nimpl Default for WrappedRECT {\r\n    fn default () -> WrappedRECT {\r\n        WrappedRECT{rect: RECT{left: 0, top: 0, right: 0, bottom: 0}}\r\n    }\r\n}\r\n\r\nfn main() {\r\n    let rect = WrappedRECT::default();\r\n    println!(\"{:?}\", rect);\r\n}\r\n```\r\n\r\nBut this is a bit clunky, so I prefer just creating a new `trait`, and implementing it for the external struct:\r\n\r\n```Rust\r\nextern crate winapi;\r\n\r\nuse winapi::windef::RECT;\r\n\r\ntrait Empty<T> {\r\n    fn empty() -> T;\r\n}\r\n\r\nimpl Empty<RECT> for RECT {\r\n    fn empty() -> RECT {\r\n        RECT{left: 0, top: 0, right: 0, bottom: 0}\r\n    }\r\n}\r\n\r\nfn main() {\r\n    let rect = RECT::empty();\r\n    println!(\"{:?}\", rect);\r\n}\r\n```\r\n\r\nIt seems a little more transparent, and there\'s no clash with the name of the method. If you want to be a good citizen, the best way to deal with this is probably to just go and modify the crate you\'re using, adding `derive(Debug)` attributes to everything!\r\n\r\nThanks to joshtriplett and yohanesu75 for some extra info.\r\n';
+var _user$project$EmptyRustStructs$content = A2(
+	_evancz$elm_markdown$Markdown$toHtml,
+	{ctor: '[]'},
+	_user$project$EmptyRustStructs$rawContent);
+var _user$project$EmptyRustStructs$subcategory = 'Elm';
+var _user$project$EmptyRustStructs$category = 'Code';
+var _user$project$EmptyRustStructs$group = 'Blog';
+var _user$project$EmptyRustStructs$name = 'empty-rust-structs';
+var _user$project$EmptyRustStructs$metaData = {
+	name: _user$project$EmptyRustStructs$name,
+	title: 'Initialising Empty Structs in Rust',
+	date: {
+		ctor: '::',
+		_0: 2016,
+		_1: {
+			ctor: '::',
+			_0: 12,
+			_1: {
+				ctor: '::',
+				_0: 11,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
+	description: 'A little article about methods for initialising empty/default structs in Rust, which can be more complicated than you might think!',
+	group: _user$project$EmptyRustStructs$group,
+	category: _user$project$EmptyRustStructs$category,
+	subcategory: _user$project$EmptyRustStructs$subcategory,
+	url: A4(_user$project$Skeleton$contentUrl, _user$project$EmptyRustStructs$group, _user$project$EmptyRustStructs$category, _user$project$EmptyRustStructs$subcategory, _user$project$EmptyRustStructs$name)
+};
+var _user$project$EmptyRustStructs$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(
+	_user$project$Skeleton$skeleton(
+		A2(_user$project$Skeleton$blogPostView, _user$project$EmptyRustStructs$metaData, _user$project$EmptyRustStructs$content)));
+
+var _user$project$ElmAndNewLanguages$rawContent = '\r\nSo like most people that have been coding for a while, I\'ve got more and more interested in exploring new programming languages. It\'s kind of like visiting a foreign country, it\'s fun to experience other ways of life. Sometimes though you\'re disappointed when it\'s too similar to home other times it\'s a bit overwhelming if it\'s too different.\r\n\r\nWhat you really want is something in the middle, so maybe you walk through a supermarket when you\'re abroad and you marvel at the unusual selection of canned goods, and then right in the corner you notice a can of baked beans. It always makes me smile, and then you think \"What if they taste different!?\", and you end up having beans for lunch, which is nice but you end up thinking that you should have been a bit more adventurous. Anyway, you can see what I\'m getting at, it\'s nice to try something new, but sometimes a bit of familiarity doesn\'t go amiss.\r\n\r\nI learned to code in Python, and while a lot of programming paradigms are captured by the language, it is mainly an imperative language, that is where you make statements to change the state of a program. For example maybe you want to count all the odd numbers in a list, you could do it in a hundred ways but here\'s one that is classically imperative:\r\n\r\n```Python\r\nmy_numbers = [0, 1, 2, 3, 4, 5]\r\nodd_number_count = 0\r\nfor number in my_numbers:\r\n  if number % 2:\r\n    odd_number_count += 1\r\nprint(odd_number_count)\r\n```\r\n\r\nOne day I was reading about how to be a good programmer, and people kept mentioning that you should learn more than one language and you should try to make it pretty different from a language you know. One argument for that is that it show you other ways to program, and Haskell is often used as an example of this. So I started to learn a bit of Haskell, using http://learnyouahaskell.com/, and my mind started to melt! I wasn\'t aware that there was any other way to program apart from using imperative style code.\r\n\r\nBy this point, I had been exposed to many functional programming paradigms in Python, such as the idea of functions as first-class citizens, map, filter, list comprehensions… but it never occurred to me that programming languages existed that used these traits as the basis for the language and built upon them.\r\n\r\nI learned a fair bit of Haskell, but in the I stopped learning it in the end because it was utterly mind-bending trying to think of an algorithm to solve a particular problem. Also, because it was so unfamiliar I couldn\'t think of anything that I could actually use Haskell for! To make this clear, this was because of my lack of understanding, nothing to do with Haskell itself. It wasn\'t an utter loss though, functional programming stuck with me, and I definitely started using it more in Python after learning a bit of Haskell.\r\n\r\nTime passes and I\'m messing around with JavaScript, in particular languages that compile to JavaScript (which is a super interesting topic I\'ll hopefully discuss in more detail in another article) like TypeScript, and I came across Elm, and it properly intrigued me. Elm is a purely functional programming language that compiles down to HTML, CSS and JavaScript and can be used to make front ends for websites and web applications. It feels a lot like Haskell in syntax.\r\n\r\nThe nice thing about Elm is that it has a really clear application, in an area I\'m interested in at the moment, which makes it easier to learn for me as I have a goal to work towards. I\'ve started learning a bit of Elm just using the main documentation, and it\'s already starting to cement a lot of the more nebulous aspects of functional programming (things like Currying). I suppose this is to be expected, but what I\'ve been surprised about is that I feel like it\'s teaching me to be a better web developer too, which is really neat!\r\n\r\nElm is probably not going to replace things like React and Angular any time soon, if ever, and it\'s still in flux as a language so it probably not ready for \"production\" code, but for a hobbyist wanting to learn about good web development and FP it seems ideal. I feel like Elm is the programming language equivalent of baked beans in a foreign super-market, it feels new and different, but has familiar aspects (the web development parts!).\r\n\r\nI\'m going to write about Elm and the little web application that I\'m developing using it in upcoming posts. Let me know what you think of Elm, Haskell and FP on Twitter. Have you used Elm? What did you think? Has anyone learned to code using FP and then moved across to an imperative language?\r\n';
+var _user$project$ElmAndNewLanguages$content = A2(
+	_evancz$elm_markdown$Markdown$toHtml,
+	{ctor: '[]'},
+	_user$project$ElmAndNewLanguages$rawContent);
+var _user$project$ElmAndNewLanguages$subcategory = 'Elm';
+var _user$project$ElmAndNewLanguages$category = 'Code';
+var _user$project$ElmAndNewLanguages$group = 'Blog';
+var _user$project$ElmAndNewLanguages$name = 'elm-and-learning-new-languages';
+var _user$project$ElmAndNewLanguages$metaData = {
+	name: _user$project$ElmAndNewLanguages$name,
+	title: 'Elm and Learning New Programming Languages',
+	date: {
+		ctor: '::',
+		_0: 2016,
+		_1: {
+			ctor: '::',
+			_0: 8,
+			_1: {
+				ctor: '::',
+				_0: 25,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
+	description: 'A bit of pontification on learning programming languages and paradigms.',
+	group: _user$project$ElmAndNewLanguages$group,
+	category: _user$project$ElmAndNewLanguages$category,
+	subcategory: _user$project$ElmAndNewLanguages$subcategory,
+	url: A4(_user$project$Skeleton$contentUrl, _user$project$ElmAndNewLanguages$group, _user$project$ElmAndNewLanguages$category, _user$project$ElmAndNewLanguages$subcategory, _user$project$ElmAndNewLanguages$name)
+};
+var _user$project$ElmAndNewLanguages$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(
+	_user$project$Skeleton$skeleton(
+		A2(_user$project$Skeleton$blogPostView, _user$project$ElmAndNewLanguages$metaData, _user$project$ElmAndNewLanguages$content)));
+
+var _user$project$OOBrainAndTypes$rawContent = '\r\nI\'m not embarrassed to admit that it took me a fair amount of time to get my head around object-oriented programming. For a long time I just couldn\'t figure out why it was a useful thing. That\'s probably got something to do with my background as a research scientist, and the type of problems I originally tackled during the first few weeks and months after I started learning to code.\r\n\r\nAfter a while of staring at examples and messing about with classes in Python, it eventually clicked for me. A funny thing happened in between finally grasping the idea of objects and now… my brain has become object oriented.\r\n\r\nThere is a concept known as the law of the instrument, which was most famously expressed by Abraham Maslow as follows:\r\n\r\n> I suppose it is tempting, if the only tool you have is a hammer, to treat everything as if it were a nail.\"\r\n\r\nI now see most problems when I\'m programming in terms of objects - \"Oh I\'ll take that data and store it in this object, and it can interact with this, this and this though these methods, and it\'ll have these properties and some nice class methods and I\'ll chuck in this static method too\". Now I don\'t think that this is inherently a bad thing, sure it can be taken to absurd extremes†, but most of the time I think what I come up with is a decent solution that can be easily followed, modified, tested etc.\r\n\r\nWhat happens if you\'re using a language that doesn\'t contain objects? I\'m not taking about something like Rust where there\'s not objects, but there sort of are really, you can glue together structs and functions using the impl keyword and traits. Okay I\'m probably over simplifying that, my Rust* isn\'t great but that\'s the way it seemed to me. In Elm there are no objects, but there are types…\r\n\r\nElm has strong, static typing. This means that all data in Elm has a type, and that type is used to dictate what you can do with that data. The compiler will tell you if you\'ve used an Int in a function that expects a String. The compiler can tell from your source code, exactly how data flows through your program, and can tell how everything should connect together. If you pass the wrong type of data to a function, the compiler will tell you long before you run your code as it knows  what the type of the function is (more on this later) and the type of your data. This avoids many of the unexpected behaviours that arise when you\'re using languages that aren\'t statically typed, and particularly when you\'re working with a language like JavaScript or Python where you have duck typing.\r\n\r\nWhat does static typing have to do with objects? Well in Elm you can define your own types, and these types represent complex data in the same way that objects can in OOP. Types in Elm can be defined using some simple tools: type annotations and type aliases.\r\n\r\nIf we use the Elm repl, we can see the types of values easily:\r\n\r\n```Elm\r\n> \"This is a string\"\r\n\"This is a string\" : String\r\n\r\n> 2.71828\r\n2.71828 : Float\r\n\r\n> 123\r\n123 : number\r\n\r\n> [1, 2, 3, 4, 5]\r\n[1,2,3,4,5] : List number\r\n\r\n> [True, False, True]\r\n[True,False,True] : List Bool\r\n\r\n> []\r\n[] : List a\r\n\r\n> floor\r\n<function:floor> : Float -> Int\r\n\r\n> addX s = s ++ \"X\"\r\n<function> : String -> String\r\n\r\n> \\n -> n * 2\r\n<function> : number -> number\r\n\r\n> (\\n -> n * 2) 4\r\n8 : number\r\n\r\n> \\x y -> x ^ (y - 1)\r\n<function> : number -> number -> number\r\n```\r\n\r\nWhen you type an expression in the repl, the type of the evaluated expression is displayed immediately after (in the format \"data : type\". Most of this seems obvious, you have strings and their types are strings, or a number of type number or slightly more complicated you have lists which are of the types List \"something\", like List String or List Bool. You can even have lists of a generic type (see the empty list on line 16). There\'s something odd though…\r\n\r\nLet\'s look at the type of a function, for example floor on line 19, it has a type of Float -&gt; Int. This means that the type of the function is defined by the type of its input argument and the type that it returns. The type signature looks a lot like you define an anonymous function in Elm, using the syntax on line 25, and that\'s not a coincidence. I won\'t go into why this is here, but it\'s a pretty fundamental part of the language that I\'ll discuss in a later post.\r\n\r\nAs you can see in the example, Elm can infer the types of data a function will receive, but you can explicitly state them using type annotations using the same syntax as the type signature:\r\n\r\n```Elm\r\ndoubleIt : number -> number\r\ndoubleIt n = n * 2\r\n\r\nimport String\r\n\r\nstringify : number -> String\r\nstringify n = toString n\r\n\r\naddX : String -> String\r\naddX s = s ++ \"X\"\r\n\r\naddX : String -> Int\r\naddX s = s ++ \"X\"\r\n-- This raises a error on compilation\r\n\r\npowerMinusOne : number -> number -> number\r\npowerMinusOne x y = x ^ (y - 1)\r\n\r\ngetFileExtension : { name : String, path : String } -> String\r\ngetFileExtension rec = String.right 4 rec.name\r\n\r\n-- With no type annotation on get file the type sig is:\r\n-- <function> : { a | name : String } -> String\r\n```\r\n\r\nAs you can see in line 12, you can\'t lie to the compiler, I checks the types even if you\'ve annotated them. So that\'s all fine, but what if you want to pass more complex data to a function using records? Well you need to annotate the type of the record, and specify the types of all its component data. You can see this on lines 19 and 20. The record that\'s being passed into the function is relatively simple, what if you have lots of data in the record? Well no worries, let\'s just not annotate the type, and the compiler can infer the type. If you do that in the Elm repl you get the type signature on line 23. This shows that the function will take any generic type with that contains a \".name\" field. This sucks! Everything should be more explicit, that\'d make it easier to read. In the words of Raymond Hettinger \"There must be a better way!\", and of course there is. We can use type aliases to make this more readable, concise and maintainable. \r\n\r\n```Elm\r\nimport String\r\nimport Html\r\nimport List\r\n\r\ntype alias Person = { name : String\r\n  , access : List String }\r\n\r\ntype alias Location = String\r\n\r\nee1 = { name = \"Ian Beal\"\r\n  , access = [\"Caff\", \"Laundrette\"] }\r\n\r\nee2 = { name = \"Pat Butcher\"\r\n  , access = [\"Queen Vic\", \"The Market\"] }\r\n\r\nrequestAccess : Person -> Location -> Bool\r\nrequestAccess person location = if List.member location person.access\r\n  then True\r\n  else False\r\n\r\nrequestAccess ee1 \"Caff\"\r\n-- Returns True\r\n\r\nrequestAccess ee1 \"Queen Vic\"\r\n-- Returns False\r\n\r\nrequestAccess ee2 \"Queen Vic\"\r\n-- Returns True\r\n\r\nrequestAccess { name = \"Ian Beal\", access = [\"Caff\", \"Laundrette\"] } \"Caff\"\r\n-- Returns True\r\n\r\nrequestAccess { access = [\"Caff\", \"Laundrette\"] } \"Caff\"\r\n-- Raises error on compilation\r\n```\r\n\r\nYou can see the type aliases on line 5/6 and line 8. 5/6 shows a type alias of a Record with a name and an access field and 8 is an alias of a String. We then add a type annotation to the requestAccess function. This function takes a \"Person\" and a \"Location\" type, then returns a bool if they\'re allowed access. You can annotate any type, but you must remember that it doesn\'t do anything special, it merely is a form of shorthand for the annotations.\r\n\r\nType aliases are much lighter weight than objects in most languages, but I think that maybe they\'re a bit more transparent too. Pretty neat!\r\n\r\nUpdate: There are also type unions, which as the name suggests groups types together, but I\'ll go into more depth about those in another post.\r\n\r\nNote: Most of the examples here are based on the Elm docs regarding types, check them out [here](https://guide.elm-lang.org/types/).\r\n\r\n\r\n† - I love this article by Steve Yegge where he describes a terrifying world where there are only objects http://steve-yegge.blogspot.co.uk/2006/03/execution-in-kingdom-of-nouns.html\r\n\r\n\\* - Rust is cool, I like it for the same main reason I like Elm; it has a clear domain except it\'s systems programming not web development. I might write some posts on it at some point.\r\n';
+var _user$project$OOBrainAndTypes$content = A2(
+	_evancz$elm_markdown$Markdown$toHtml,
+	{ctor: '[]'},
+	_user$project$OOBrainAndTypes$rawContent);
+var _user$project$OOBrainAndTypes$subcategory = 'Elm';
+var _user$project$OOBrainAndTypes$category = 'Code';
+var _user$project$OOBrainAndTypes$group = 'Blog';
+var _user$project$OOBrainAndTypes$name = 'object-oriented-brain-and-types';
+var _user$project$OOBrainAndTypes$metaData = {
+	name: _user$project$OOBrainAndTypes$name,
+	title: 'Object-Oriented Brain and Types',
+	date: {
+		ctor: '::',
+		_0: 2016,
+		_1: {
+			ctor: '::',
+			_0: 8,
+			_1: {
+				ctor: '::',
+				_0: 29,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
+	description: 'An intro to types and type aliases in Elm.',
+	group: _user$project$OOBrainAndTypes$group,
+	category: _user$project$OOBrainAndTypes$category,
+	subcategory: _user$project$OOBrainAndTypes$subcategory,
+	url: A4(_user$project$Skeleton$contentUrl, _user$project$OOBrainAndTypes$group, _user$project$OOBrainAndTypes$category, _user$project$OOBrainAndTypes$subcategory, _user$project$OOBrainAndTypes$name)
+};
+var _user$project$OOBrainAndTypes$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(
+	_user$project$Skeleton$skeleton(
+		A2(_user$project$Skeleton$blogPostView, _user$project$OOBrainAndTypes$metaData, _user$project$OOBrainAndTypes$content)));
+
+var _user$project$ElmStaticSiteP1$rawContent = '\r\n*Check out the source code for the site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io).*\r\n\r\nFirst of all, happy new year! I hope everyone had a great holiday. I\'ve got a bit of time off of work, and as I\'m now back from visiting family, I\'ve been getting stuck into some little projects. The first thing I wanted to do was update this website. I was very pleased how quickly I managed to get the site up and running using just Markdown and GitHub pages, but obviously there are limitations around building a website this way. So I decided I\'d rebuild it in [Elm](http://elm-lang.org/), which is a neat functional programming language designed to make webapps.\r\n\r\nThe main purpose of this website is to host my blog, as well as sharing things that I\'ve made and other interesting stuff I\'ve found. Usually Elm is used to make one page webapps, where content is dynamically added to the page, so it wasn\'t particularly obvious to me how I should implement a site that mainly uses static content with the [Elm Architecture](https://guide.elm-lang.org/architecture/). There were two main difficulties I came across while making the site:\r\n\r\n1. **How you would provide a link to a particular article when there\'s only a single HTML page?**\r\n2. After dynamically changing the website, how do you deal with running external Javascript libraries in response to these changes?\r\n\r\nThis post deals with the first topic.\r\n\r\n### Links on a single page Elm application\r\n\r\nMy initial solution to this was to just have Elm files that each compiled independently to create a bunch of HTML pages. I used a bat file to automate the building process, but it felt clunky. Then I came across the `navigation` module in the Elm core library. So I rewrote the site to use this, but quickly found out I also needed to use the `url-parser` module.\r\n\r\nTo start, you need to use a special `Program` type, stored in the `Navigation` module:\r\n\r\n```Elm\r\nmain : Program Never Model Msg\r\nmain =\r\n    Navigation.program UrlChange\r\n        { init = init\r\n        , view = view\r\n        , update = update\r\n        , subscriptions = (\\_ -> Sub.none)\r\n        }\r\n```\r\n\r\nThis is very similar to `Html.program`, the only real difference is that you need to supply a `Msg` that will be fed to the update function everytime the URL changes. The `init` function is important too, but I\'ll come back to that later.\r\n\r\nNext, the current active page is recorded in the model using a union type:\r\n\r\n```Elm\r\ntype alias Model =\r\n    { page: Page\r\n    }\r\n\r\ntype Page\r\n    = Home\r\n    | AllPosts\r\n    | Post String\r\n```\r\n\r\nThis means that we can currently have 3 \"types\" of pages. `Home` and `AllPosts` are pretty self explanatory, correspond to a unique page. The `Post` page type corresponds to blog post pages, of which there are many, and so information on the specific post is also required.\r\n\r\nYou can handle the unique pages using just the navigation module, by pattern matching a hash in a url, as outlined in [this article](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) by Pablo Fernández. However, you need more information for the post pages, so you can get the correct post. This can be extracted from the URL using the [`url-parser` module](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/).\r\n\r\nTo parse a URL, you need a `Msg` to handle the change in URL, which takes a `Navigation.Location` as an input:\r\n\r\n```Elm\r\ntype Msg\r\n    = UrlChange Navigation.Location\r\n```\r\n\r\nThe `Navigation.Location` record has the following type annotation:\r\n\r\n```Elm\r\ntype alias Location =\r\n    { href : String\r\n    , host : String\r\n    , hostname : String\r\n    , protocol : String\r\n    , origin : String\r\n    , port_ : String\r\n    , pathname : String\r\n    , search : String\r\n    , hash : String\r\n    , username : String\r\n    , password : String }\r\n```\r\n\r\nI\'m using location hashes for the links to different content, so we can ignore the rest of the record. Our update function handles the `UrlChange Msg`, parsing the URL and saving the correct page type in the model.\r\n\r\n```Elm\r\nimport UrlParser exposing ((</>))\r\n\r\nupdate : Msg -> Model -> ( Model, Cmd Msg )\r\nupdate msg model =\r\n    case msg of\r\n        UrlChange location ->\r\n            { model | page = getPage location } ! [ Cmd.none ]\r\n\r\ngetPage : Navigation.Location -> Page\r\ngetPage location =\r\n    Maybe.withDefault AllPosts (UrlParser.parseHash route location)\r\n\r\nroute : UrlParser.Parser (Page -> a) a\r\nroute =\r\n    UrlParser.oneOf\r\n        [ UrlParser.map Home UrlParser.top\r\n        , UrlParser.map Post (UrlParser.s \"blog\" </> UrlParser.string)\r\n        ]\r\n```\r\n\r\nThe update function is pretty straight forward, it process a `UrlChange Msg` and then parses the location to get the page type, which is stored in the model. The `getPage` function uses `UrlParser.parseHash` to process the location, generating a `Maybe Page`.\r\n\r\n`parseHash` takes a `UrlParser.Parser` type, in this case `route`. Route looks a bit weird, mainly due to `UrlParser.oneOf`, but essentially it just take a bunch of parsers and merges them together to make a super parser that when used will try each of the parsers it contains.\r\n\r\nThe actual parsers themselves are the `(UrlParser.s \"blog\" </> UrlParser.string)` and `UrlParser.top` bits. The `Parser` takes URLs and converts them to data. `UrlParser.top` is pretty simple, it doesn\'t consume any segments from the path, and so will successfully parse if the URL if it has no additional segments. The `s` parser will parse a segment of the URL if it *exactly* matches a provided string, so `UrlParser.s \"blog\"` will parse `/blog/` but nothing else. `UrlParser.string` will successfully parse any segment that is a string. Finally, `UrlParser.</>` combines the parsers together, to make a parser that has to exactly match `blog` and then contain another segment that is a string. There are other parser types too, check out the [docs](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/UrlParser) for more details.\r\n\r\nThe parser can then be applied to the location using either `parsePath` or `parseHash`, and will return `Just` *data* or `Nothing`. `UrlParser.map` is used to transform the data contained in the URL into a `Msg`. So, using this parser:\r\n\r\n```Elm\r\n-- /                      ==> Just Home\r\n-- /blog/my-gid-blog-post ==> Just (Post \"my-gid-blog-post\")\r\n-- /blog                  ==> Nothing\r\n```\r\n\r\n`UrlParser` is very powerful, and it isn\'t as complex to use as it is to explain. The best way to get a feel for how `UrlParser` works is to actually use it.\r\n\r\nFinally, the post type in the `model` can be used to alter content in the view when it\'s rendered:\r\n\r\n```Elm\r\nview : Model -> Html Msg\r\nview model = div [ id \"mainSiteDiv\", mainSiteDivStyle ]\r\n    [ CommonViews.siteHeader\r\n    , content model\r\n    , CommonViews.siteFooter\r\n    ]\r\n\r\ncontent : Model -> Html Msg\r\ncontent model = div [ id \"contentSection\" ]\r\n    [ getContent model\r\n    ]\r\n\r\ngetContent : Model -> Html Msg\r\ngetContent model =\r\n    case model.page of\r\n      Home -> home\r\n      AllPosts -> postList\r\n      Post title -> getBlogPost title\r\n```\r\n\r\nThere\'s one more bit of plumbing we need to do if this is to work properly. Previously I mentioned that the `init` was important. When I originally implemented the `init`, it looks like this:\r\n\r\n```Elm\r\ninit : Navigation.Location -> (Model, Cmd Msg)\r\ninit _ = ( Model Home, Cmd.none )\r\n```\r\n\r\nAs its `Navigation.program` it takes a `Navigation.Location` as an input, but I threw it away because I didn\'t know what to do with it. The model is simply initialised with the `Home` page. This works, if you went to the URL of my website it goes to the homepage. However, if you use with a hash location, like this https://chriswellswood.github.io/#blog/elm-static-site-p1, it would still go to the homepage. It\'s pretty obvious why this is happening, no `UrlChange` message is getting passed to the `update` function.\r\n\r\nTo fix this, I changed the `init` function to look like this:\r\n\r\n```Elm\r\ninit : Navigation.Location -> (Model, Cmd Msg)\r\ninit location =\r\n    ( Model Home\r\n    , Task.perform identity (Task.succeed (UrlChange location))\r\n    )\r\n```\r\n\r\nThis time, the model is the same, but the location is not thrown away. We need to send a command to pass `UrlChange` to the `update` function. To do this we wrap a `Msg` in a task that will always succeed and will return the `UrlChange`, and then identity is used to provide `UrlChange` to be passed to update after the task has been performed. The end result is that as soon as the website starts, the URL will be parsed and the correct content will be loaded.\r\n\r\nThat\'s it for this post, but in the next post I\'ll discuss using ports and tasks to interact with Javascript, allowing us to format code in the posts and interact with Google Analytics.\r\n\r\n### References\r\n\r\n1. [SPA simple with Elm Navigation](https://medium.com/@nithstong/spa-simple-with-elm-navigation-630bdfdbef94#.om47asuv1) Pablo Fernández\r\n1. UrlParser [documentation](http://package.elm-lang.org/packages/evancz/url-parser/2.0.1/) and [example](https://github.com/evancz/url-parser/blob/2.0.1/examples/Example.elm) by Evan Czaplicki.\r\n';
+var _user$project$ElmStaticSiteP1$content = A2(
+	_evancz$elm_markdown$Markdown$toHtml,
+	{ctor: '[]'},
+	_user$project$ElmStaticSiteP1$rawContent);
+var _user$project$ElmStaticSiteP1$subcategory = 'Elm';
+var _user$project$ElmStaticSiteP1$category = 'Code';
+var _user$project$ElmStaticSiteP1$group = 'Blog';
+var _user$project$ElmStaticSiteP1$name = 'elm-static-site-p1';
+var _user$project$ElmStaticSiteP1$metaData = {
+	name: _user$project$ElmStaticSiteP1$name,
+	title: 'Tools for Handling Static Pages in Elm - Part 1. Dealing with Links',
+	date: {
+		ctor: '::',
+		_0: 2017,
+		_1: {
+			ctor: '::',
+			_0: 1,
+			_1: {
+				ctor: '::',
+				_0: 7,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
+	description: 'How to handle links to static content in a dynamic one page Elm app, using the Navigation and UrlParser modules.',
+	group: _user$project$ElmStaticSiteP1$group,
+	category: _user$project$ElmStaticSiteP1$category,
+	subcategory: _user$project$ElmStaticSiteP1$subcategory,
+	url: A4(_user$project$Skeleton$contentUrl, _user$project$ElmStaticSiteP1$group, _user$project$ElmStaticSiteP1$category, _user$project$ElmStaticSiteP1$subcategory, _user$project$ElmStaticSiteP1$name)
+};
+var _user$project$ElmStaticSiteP1$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(
+	_user$project$Skeleton$skeleton(
+		A2(_user$project$Skeleton$blogPostView, _user$project$ElmStaticSiteP1$metaData, _user$project$ElmStaticSiteP1$content)));
+
+var _user$project$ElmStaticSiteP2$rawContent = '\nIn a [previous article](#blog/elm-static-site-p1), I discussed making a single-page web app in Elm that mainly uses static content, based on my experience making this site. The next thing I wanted to do to the site was add Google Analytics. I wanted to track page views, partly because I\'m nosey, but mainly as I thought this might allow me to refine my content a bit. It\'s free to set up an account, and works by adding a little bit of JavaScript to your pages. To hook this up to our Elm app, we need to use ports.\n\nElm can communicate with JavaScript by sending data through constructs called ports. This means that the JavaScript is isolated from the Elm application, and so you still get all of the normal guarantees you\'d expect with Elm. I like this mode of interopt, as it means that you\'re protected in a lovely bubble of predictable Elm, from all that chaotic JavaScript.\n\nBefore we start, if you\'re planning to do this, make sure you are compiling your Elm app to JavaScript and embedding it in HTML, rather than compiling straight to HTML. This is pretty easy to do and is covered in the [Elm guide](https://guide.elm-lang.org/interop/javascript.html).\n\n### Setting up the Port\n\nGoogle give you a bit of JavaScript to paste into your page that looks like this:\n\n```Javascript\n  (function(i,s,o,g,r,a,m){i[\'GoogleAnalyticsObject\']=r;i[r]=i[r]||function(){\n  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n  })(window,document,\'script\',\'https://www.google-analytics.com/analytics.js\',\'ga\');\n\n  ga(\'create\', \'UA-XXXXXXXX-X\', \'auto\');\n  ga(\'send\', \'pageview\'); // we don\'t want this!\n```\n\nBut this will only send a page view on load. As we are using fragment identifiers, i.e. \"www.boblaw.com/**#lawblog**\", to select our pages, we need to explicitly set the page like this:\n\n```Javascript\nga(\'set\', \'page\', \'www.boblaw.com/#lawblog\');\nga(\'send\', \'pageview\');\n```\n\nWe need to run this code when we change a page, and we\'ll need to pass a String containing the relevant url.\n\nTo make a JavaScript port, you need to define it in your Elm app using the port keyword, both when exposing your module and to explicitly create the port:\n\n```Elm\nport module Index exposing (..)\n\n...\n\nport analytics : String -> Cmd msg\n```\n\nPorts use regular Elm commands and subscriptions. If we\'re only sending data out, it\'s a command, and if we\'re getting data back, it\'s a subscription. We aren\'t needing any data back, so we have the simpler case here.\n\nTo trigger this command when we change the location on the site, we need to change our update function, which I described in a [previous article](#blog/elm-static-site-p1). It looked like this:\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! [ Cmd.none ]\n```\n\nPreviously we had no commands, but now we want to send data through our port:\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } ! [ analytics location.href ]\n```\n\nWe take the full URL from the `Navigation.Location` record, which includes the current hash location. That\'s all that\'s required on the Elm side, now we need to connect it up to the JavaScript.\n\n### Setting up the HTML file\n\nBefore, our HTML file looked roughly like this:\n\n```Html\n<!DOCTYPE HTML>\n<html>\n\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Bits and Pieces and Odds and Ends</title>\n  <script type=\"text/javascript\" src=\"index.js\"></script>\n\n  <link rel=\"stylesheet\" href=\"css/style.css\">\n</head>\n\n<body>\n</body>\n\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n</script>\n\n</html>\n```\n\nOur Elm app compiles down to a file called `index.js`, which is embedded into the page. We need to add the Google Analytics code so we can start tracking page views:\n\n```Html\n<head>\n  ...\n  <script>\n    (function(i,s,o,g,r,a,m){i[\'GoogleAnalyticsObject\']=r;i[r]=i[r]||function(){\n    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n    })(window,document,\'script\',\'https://www.google-analytics.com/analytics.js\',\'ga\');\n\n    ga(\'create\', \'UA-XXXXXXXX-X\', \'auto\');\n  </script>\n</head>\n...\n```\n\n`UA-XXXXXXXX-X` is the tracking ID that you get when you set up your Google Analytics account, so it varies from person to person. Here we create the session, but we don\'t trigger any page views yet.\n\nNow we need to add the JavaScript that will run when we trigger our Elm port command:\n\n```Html\n...\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n\n    app.ports.analytics.subscribe(\n      function (pageUrl) {\n        ga(\'set\', \'page\', pageUrl);\n        ga(\'send\', \'pageview\');\n      }\n    );\n</script>\n\n</html>\n```\n\nLet\'s break that down a bit. `app.ports.analytics` refers to the port that we created in our app. We subscribe to the event, which is triggered by the `analytics` command, providing a  function that will be run when the event is triggered. This function takes a string, `pageUrl`, which we pass into this function through the port in our Elm app. This is used to set the currently active page through the Google Analytics API, then we send off the page view to be recorded. Pretty easy!\n\n### Explicitly Highlighting Code with `highlight.js`\n\nThis works with any external JavaScript API, for example, all the highlighting for the code in this article is performed using [`highlight.js`](https://highlightjs.org/), and the highlighting function is triggered in a similar way. Let\'s look at how that\'s connected up.\n\nFirst we make our port:\n\n```Elm\nport highlightMarkdown : () -> Cmd msg\n```\n\nThen we trigger the command in our update:\n\n```Elm\ntype Msg\n    = UrlChange Navigation.Location\n    | Highlight ()\n\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate msg model =\n    case msg of\n        UrlChange location ->\n            { model | page = getPage location } !\n                [ Task.perform Highlight (Process.sleep (100 * Time.millisecond))\n                , analytics location.href ]\n\n        Highlight _ ->\n            ( model, highlightMarkdown () )\n```\n\nWe\'ve added a couple of things here because we need to add a delay before we trigger the highlight command, allowing the DOM to be rendered first. We have a new `Highlight Msg` to handle this, which is triggered after a sleep process is performed. `Process.sleep` doesn\'t return anything, so the `Highlight Msg` takes an empty tuple as an argument. All the `Highlight Msg` does is trigger the `highlightMarkdown` port command, which doesn\'t require any input variables, and so it also takes an empty tuple.\n\nOn the HTML side we need a few things:\n\n```Html\n<!DOCTYPE HTML>\n<html>\n\n<head>\n  ...\n  <script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js\"></script>\n\n  <!-- Markdown Highlighting -->\n  <link rel=\"stylesheet\" href=\"css/github.css\">\n  <script src=\"js/highlight.pack.js\"></script>\n  ...\n</head>\n\n<body>\n</body>\n\n<div id=\"main\"></div>\n<script type=\"text/javascript\">\n    var node = document.getElementById(\'main\');\n    var app = Elm.Index.embed(node);\n\n    app.ports.highlightMarkdown.subscribe(\n      function () {\n        highlightCodeBlocks();\n      }\n    );\n\n    function highlightCodeBlocks() {\n      $(\'pre code\').each(function(i, block) {\n        hljs.highlightBlock(block);\n      });\n    };\n\n    app.ports.analytics.subscribe(\n      function (pageUrl) {\n        ga(\'set\', \'page\', pageUrl);\n        ga(\'send\', \'pageview\');\n      }\n    );\n\n</script>\n\n</html>\n```\n\nAgain we trigger a function by subscribing to the `app.ports.highlightMarkdown` port. I then use jQuery to grab the relevant divs and highlight them using `highlight.js`. Using this method, we can dynamically add content to the page and then highlight the code.\n\nThat\'s it for this post, take a look at the source code for this site [here](https://github.com/ChrisWellsWood/chriswellswood.github.io), and feel free to ask questions on Twitter if you have any.\n';
+var _user$project$ElmStaticSiteP2$content = A2(
+	_evancz$elm_markdown$Markdown$toHtml,
+	{ctor: '[]'},
+	_user$project$ElmStaticSiteP2$rawContent);
+var _user$project$ElmStaticSiteP2$subcategory = 'Elm';
+var _user$project$ElmStaticSiteP2$category = 'Code';
+var _user$project$ElmStaticSiteP2$group = 'Blog';
+var _user$project$ElmStaticSiteP2$name = 'elm-static-site-p2';
+var _user$project$ElmStaticSiteP2$metaData = {
+	name: _user$project$ElmStaticSiteP2$name,
+	title: 'Tools for Handling Static Pages in Elm - Part 2. Ports, Google Analytics and Highlight.js',
+	date: {
+		ctor: '::',
+		_0: 2017,
+		_1: {
+			ctor: '::',
+			_0: 1,
+			_1: {
+				ctor: '::',
+				_0: 28,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
+	description: 'How to communicate with external JavaScript libraries using ports.',
+	group: _user$project$ElmStaticSiteP2$group,
+	category: _user$project$ElmStaticSiteP2$category,
+	subcategory: _user$project$ElmStaticSiteP2$subcategory,
+	url: A4(_user$project$Skeleton$contentUrl, _user$project$ElmStaticSiteP2$group, _user$project$ElmStaticSiteP2$category, _user$project$ElmStaticSiteP2$subcategory, _user$project$ElmStaticSiteP2$name)
+};
+var _user$project$ElmStaticSiteP2$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(
+	_user$project$Skeleton$skeleton(
+		A2(_user$project$Skeleton$blogPostView, _user$project$ElmStaticSiteP2$metaData, _user$project$ElmStaticSiteP2$content)));
+
+var _user$project$CounterReusableView$rawContent = '\n*Check out the source code [here](https://github.com/ChrisWellsWood/elm-counters)*\n\nThere seems to be a lot of confusion about how to scale an Elm app, and in particular, how to break out functionality into generic, reusable elements. I first started using Elm at v0.16, and at that point there was a tutorial on how this should be achieved. It centred around creating a reusable counter *component* that managed its own updates, and then you used this to create list of Counters. However, leading up to v0.17 there was a shift away from reusable components towards reusable views.\n\nWorking with reusable components was quite awkward, and involved multiple update functions and relaying `msgs` to the correct place. Personally, I found it difficult to get my head around and I much prefer that the module simply contains functions to create views.\n\nIn this post, I\'m going to reimplement the old counter example using a the reusable view pattern.\n\n### The Counter App\n\nWe\'ll start with a little Counter app that\'s entirely self contained:\n\n```Elm\nimport Html exposing (..)\nimport Html.Attributes exposing (style)\nimport Html.Events exposing (onClick)\n\n\nmain = Html.program\n  { init = init\n  , view = view\n  , update = update\n  , subscriptions = (\\_ -> Sub.none)\n  }\n\ninit : ( Model, Cmd Msg )\ninit = ( 0, Cmd.none )\n\n-- MODEL\n\ntype alias Model = Int\n\n\n-- UPDATE\n\n\ntype Msg = Increment | Decrement | Clear\n\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate action model =\n  case action of\n    Increment ->\n      ( model + 1, Cmd.none )\n\n    Decrement ->\n      ( model - 1, Cmd.none )\n\n    Clear ->\n      ( 0, Cmd.none )\n\n\n-- VIEW\n\nview : Model -> Html Msg\nview model =\n  div []\n    [ button [ onClick Decrement ] [ text \"-\" ]\n    , div [ countStyle ] [ text (toString model) ]\n    , button [ onClick Increment ] [ text \"+\" ]\n    , button [ onClick Clear ] [ text \"Clear\" ]\n    ]\n\ncountStyle : Attribute msg\ncountStyle =\n  style\n    [ (\"font-size\", \"20px\")\n    , (\"font-family\", \"monospace\")\n    , (\"display\", \"inline-block\")\n    , (\"width\", \"50px\")\n    , (\"text-align\", \"center\")\n    ]\n```\n\nHere\'s what it looks like:\n\n<iframe src=\"https://chriswellswood.github.io/elm-counters/counter.html\"></iframe>\n\nIt\'s pretty straight forward, your model is simply an `Int` and the messages that update handles are `Increment`, `Decrement` and `Clear`. The model is used to create a view which displays the current count, as well as buttons for sending messages to the update function.\n\nI think this is a pretty realistic starting point, as when I make an app in Elm, I make the core functional bit first and then expanded that into the full application.\n\n### Counter List\n\nLet\'s start making our counter list app. What we\'re aiming for is an app where we can dynamically add and remove counters. We need to change the structure of the counter module to accommodate this.\n\n#### Reusable Counter View\n\nTo start with, we can get rid of most of the mechanical stuff that Elm needs: the main function `Html.program`, `init` and `update`. We\'ll rename the model to `CounterModel`, just to be explicit and avoid confusion.\n\nOur update function has been replaced by a helper method that deals with modifying the counters:\n\n```Elm\ntype CounterModifier = Increment | Decrement | Clear\n\nmodifyCounter : CounterModifier -> CounterModel -> CounterModel\nmodifyCounter counterModifier counterModel =\n  case counterModifier of\n    Increment -> counterModel + 1\n    Decrement -> counterModel - 1\n    Clear -> 0\n```\n\nIt looks quite like an update function, but doesn\'t pass messages or commands. Our different counter operations have been defined using a union type. `modifyCounter` takes a `CounterModel` and a modifier command and returns a new model.\n\nNext up we have the view for our counter:\n\n```Elm\nviewCounter : Config msg -> CounterModel -> Html msg\nviewCounter (Config { modifyMsg, removeMsg }) counterModel =\n  div []\n    [ button [ onClick (modifyMsg Decrement) ] [ text \"-\" ]\n    , div [ countStyle ] [ text (toString counterModel) ]\n    , button [ onClick (modifyMsg Increment) ] [ text \"+\" ]\n    , button [ onClick (modifyMsg Clear) ] [ text \"Clear\" ]\n    , button [ onClick (removeMsg) ] [ text \"Remove\" ]\n    ]\n```\n\nThis looks quite familiar, but it\'s slightly more complicated than before. Firstly, we\'ve added an extra button to remove the counter, but that\'s pretty straight forward. Now that the counter is not handling it\'s own update, it needs to give the `onClick` event a `Msg` from the module that\'s calling it, which will be our `CounterList` app. We\'re passing in the messages from the module that\'s using the counter in a `Config` type, let\'s take a look at that:\n\n```Elm\ntype Config msg =\n  Config\n    { modifyMsg : (CounterModifier -> msg)\n    , removeMsg : msg\n    }\n\nconfig\n  : { modifyMsg : (CounterModifier -> msg)\n    , removeMsg : msg\n    }\n  -> Config msg\nconfig { modifyMsg, removeMsg } =\n  Config\n    { modifyMsg = modifyMsg\n    , removeMsg = removeMsg\n    }\n```\n\nThis looks a bit weird, but it makes sense if we break it down. First, we define a sort of \"generic\" type, it takes a type and returns a new type that uses the input type. In this case we pass in a `msg`, which will be our `Msg` union type from our CounterList app. The function annotations are suited to the type of message: the `modifyMsg` will be used to pass a `CounterModifier` to the `modifyCounter` function in our main app. We then define a config function which takes our messages and returns a `Config` type.\n\nThat\'s all the changes to the counter itself, now we can make something with it!\n\n#### Counter List\n\nThe app itself is pretty basic, we use the standard `Html.program`. The model looks like this:\n\n```Elm\nimport ReusableCounter exposing (..)\n\ntype alias Model =\n  { counterDict : CounterDict\n  , currentCounterID : CounterID\n  }\n\ntype alias CounterDict = Dict.Dict CounterID CounterModel\n\ntype alias CounterID = Int\n```\n\nIt contains `counterDict`, a dictionary with a `CounterID` as the key and a `CounterModel` as the value, and `currentCounterID` where the last used `CounterID` is stored.\n\nOur update is pretty simple too:\n\n```Elm\ntype Msg\n  = AddCounter\n  | ModifyCounter CounterID CounterModifier\n  | RemoveCounter CounterID\n```\n\nWe handle 3 messages, 2 of which - `ModifyCounter` and `RemoveCounter` - are required by the `ReusableCounter` module. Remember the `Config` above expected messages that had those type annotations? The messages are modified to contain a CounterID before being passed to the counter module, so the CounterID isn\'t in the `Config` annotation.\n\n```Elm\nupdate : Msg -> Model -> ( Model, Cmd Msg )\nupdate action model =\n  case action of\n    AddCounter ->\n      let\n        nextID = model.currentCounterID + 1\n        newModel =\n          { counterDict = Dict.insert nextID 0 model.counterDict\n          , currentCounterID = nextID\n          }\n      in\n        ( newModel, Cmd.none )\n\n    ModifyCounter counterID modifier ->\n      let\n        clickedCounter = Dict.get counterID model.counterDict\n      in\n        case clickedCounter of\n          Just counter ->\n            ( { model | counterDict =\n              Dict.insert counterID (modifyCounter modifier counter) model.counterDict }\n            , Cmd.none )\n          Nothing ->\n            ( model, Cmd.none )\n\n    RemoveCounter counterID ->\n        ( { model | counterDict = Dict.remove counterID model.counterDict }, Cmd.none )\n```\n\n`AddCounter` just adds a new `CounterModel` to our dictionary, using the next ID that\'s free as the key.\n\nOur `ModifyCounter` message takes a modifier type, from the `ReusableCounter` module, and a `CounterID`. The `CounterID` is used to get the relevant counter and is passed to the `modifyCounter` function from the `ReusableCounter` module. After this, the `counterDict` field is updated in the model.\n\n`RemoveCounter` receives a `CounterID` that needs to be removed, and uses `Dict.remove` to create a new Dict without that counter.\n\nLastly, we have our main view:\n\n```Elm\nview : Model -> Html Msg\nview model =\n  div []\n    [ div [] [ button [ onClick AddCounter ] [ text \"Add Counter\" ] ]\n    , div [] (List.map makeView (Dict.toList model.counterDict))\n    ]\n\nmakeView : (CounterID, CounterModel) -> Html Msg\nmakeView (refID, counterModel) =\n  let\n    counterConfig =\n      config\n        { modifyMsg = ModifyCounter refID\n        , removeMsg = RemoveCounter refID\n        }\n  in\n    viewCounter counterConfig counterModel\n```\n\nIt has a button to add counters and uses the `viewCounter` function from `ReusableCounter` module to generate the views for each of the counters. This function needs to be passed a `Config`, which we make using the `config` function from `ReusableCounter`, giving it our `ModifyCounter` and `RemoveCounter` messages, modified with the relevant `CounterID`s.\n\nDone and dusted! Using this basic approach, you can make modular, composable units, while all your update logic remains in one place. You don\'t need to bother passing `Msg`s around, you just have views and functions to help create views.\n\nHere\'s the final `CounterList` application:\n\n<iframe src=\"https://chriswellswood.github.io/elm-counters/counter-list.html\"></iframe>\n\nFeel free to ask questions or share your thoughts on this over on Twitter ([@ChrisWellsWood](https://twitter.com/ChrisWellsWood))!\n\n*Many thanks to [/u/wintvelt](https://www.reddit.com/user/wintvelt) for some great suggestions on improvements to the code.*\n';
+var _user$project$CounterReusableView$content = A2(
+	_evancz$elm_markdown$Markdown$toHtml,
+	{ctor: '[]'},
+	_user$project$CounterReusableView$rawContent);
+var _user$project$CounterReusableView$subcategory = 'Elm';
+var _user$project$CounterReusableView$category = 'Code';
+var _user$project$CounterReusableView$group = 'Blog';
+var _user$project$CounterReusableView$name = 'creating-simple-reusable-view-modules';
+var _user$project$CounterReusableView$metaData = {
+	name: _user$project$CounterReusableView$name,
+	title: 'Creating a Simple Reusable View Module in Elm',
+	date: {
+		ctor: '::',
+		_0: 2017,
+		_1: {
+			ctor: '::',
+			_0: 1,
+			_1: {
+				ctor: '::',
+				_0: 17,
+				_1: {ctor: '[]'}
+			}
+		}
+	},
+	description: 'An updated version of an old example of how to scale your Elm app using modules, this time using reusable views rather than components.',
+	group: _user$project$CounterReusableView$group,
+	category: _user$project$CounterReusableView$category,
+	subcategory: _user$project$CounterReusableView$subcategory,
+	url: A4(_user$project$Skeleton$contentUrl, _user$project$CounterReusableView$group, _user$project$CounterReusableView$category, _user$project$CounterReusableView$subcategory, _user$project$CounterReusableView$name)
+};
+var _user$project$CounterReusableView$main = _elm_lang$virtual_dom$Native_VirtualDom.staticProgram(
+	_user$project$Skeleton$skeleton(
+		A2(_user$project$Skeleton$blogPostView, _user$project$CounterReusableView$metaData, _user$project$CounterReusableView$content)));
+
+var _user$project$Content$allSnippets = {
+	ctor: '::',
+	_0: {
+		name: 'markdown-cheatsheet',
+		title: 'Markdown Cheatsheet',
+		date: {
+			ctor: '::',
+			_0: 2016,
+			_1: {
+				ctor: '::',
+				_0: 12,
+				_1: {
+					ctor: '::',
+					_0: 11,
+					_1: {ctor: '[]'}
+				}
+			}
+		},
+		description: 'A great cheatsheet for markdown written by @adam-p. I always forget how to make tables...',
+		group: 'Snippet',
+		category: 'Code',
+		subcategory: 'Markdown',
+		url: 'https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet'
+	},
+	_1: {
+		ctor: '::',
+		_0: {
+			name: 'python-packages',
+			title: 'Packaging a Python Project and Distributing on PyPi',
+			date: {
+				ctor: '::',
+				_0: 2017,
+				_1: {
+					ctor: '::',
+					_0: 8,
+					_1: {
+						ctor: '::',
+						_0: 17,
+						_1: {ctor: '[]'}
+					}
+				}
+			},
+			description: 'Workflow for making and distributing a Python package.',
+			group: 'Snippet',
+			category: 'Code',
+			subcategory: 'Python',
+			url: 'https://gist.github.com/ChrisWellsWood/165e3144f4a8199482ab50a8146c8069'
+		},
+		_1: {ctor: '[]'}
+	}
 };
 var _user$project$Content$allPosts = {
 	ctor: '::',
@@ -10642,7 +10776,34 @@ var _user$project$Content$allPosts = {
 		}
 	}
 };
-var _user$project$Content$allPostsView = A2(
+
+var _user$project$Home$allSnippetsView = A2(
+	_elm_lang$html$Html$div,
+	{
+		ctor: '::',
+		_0: _elm_lang$html$Html_Attributes$id('allSnippetsView'),
+		_1: {ctor: '[]'}
+	},
+	{
+		ctor: '::',
+		_0: A2(
+			_elm_lang$html$Html$h2,
+			{ctor: '[]'},
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html$text('All Snippets'),
+				_1: {ctor: '[]'}
+			}),
+		_1: {
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$div,
+				{ctor: '[]'},
+				A2(_elm_lang$core$List$map, _user$project$Skeleton$contentCard, _user$project$Content$allSnippets)),
+			_1: {ctor: '[]'}
+		}
+	});
+var _user$project$Home$allPostsView = A2(
 	_elm_lang$html$Html$div,
 	{
 		ctor: '::',
@@ -10665,30 +10826,25 @@ var _user$project$Content$allPostsView = A2(
 				_elm_lang$html$Html$div,
 				{ctor: '[]'},
 				_elm_lang$core$List$reverse(
-					A2(_elm_lang$core$List$map, _user$project$Content$contentCard, _user$project$Content$allPosts))),
+					A2(_elm_lang$core$List$map, _user$project$Skeleton$contentCard, _user$project$Content$allPosts))),
 			_1: {ctor: '[]'}
 		}
 	});
-var _user$project$Content$getBlogMetaData = function (title) {
-	return _elm_lang$core$List$head(
-		A2(
-			_elm_lang$core$List$filter,
-			function (metaData) {
-				return _elm_lang$core$Native_Utils.eq(metaData.name, title);
+var _user$project$Home$recentContentCards = F2(
+	function (numToShow, posts) {
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$id('recentContentCards'),
+				_1: {ctor: '[]'}
 			},
-			_user$project$Content$allPosts));
-};
-var _user$project$Content$getBlogPost = function (title) {
-	var blogMetaData = _user$project$Content$getBlogMetaData(title);
-	var _p0 = blogMetaData;
-	if (_p0.ctor === 'Just') {
-		return _elm_lang$core$Maybe$Just(
-			_user$project$Content$blogPostView(_p0._0));
-	} else {
-		return _elm_lang$core$Maybe$Nothing;
-	}
-};
-var _user$project$Content$recentPosts = function (numToShow) {
+			A2(
+				_elm_lang$core$List$take,
+				numToShow,
+				A2(_elm_lang$core$List$map, _user$project$Skeleton$contentCard, posts)));
+	});
+var _user$project$Home$recentPosts = function (numToShow) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
@@ -10705,22 +10861,51 @@ var _user$project$Content$recentPosts = function (numToShow) {
 			_1: {
 				ctor: '::',
 				_0: A2(
-					_user$project$Content$recentContentCards,
+					_user$project$Home$recentContentCards,
+					numToShow,
 					_elm_lang$core$List$reverse(
 						A2(
 							_elm_lang$core$List$sortBy,
 							function (_) {
 								return _.date;
 							},
-							_user$project$Content$allPosts)),
-					numToShow),
+							_user$project$Content$allPosts))),
 				_1: {ctor: '[]'}
 			}
 		});
 };
-
-var _user$project$Index$aboutMeText = '\r\nI\'m a research scientist that spends a lot of time writing code and\r\noccasionally ventures into the lab. This is sort of a blog with various\r\narticles/posts as well as snippets from other sources.\r\n';
-var _user$project$Index$aboutMe = A2(
+var _user$project$Home$recentSnippets = function (numToShow) {
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: A2(
+				_elm_lang$html$Html$h2,
+				{ctor: '[]'},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Recent Snippets'),
+					_1: {ctor: '[]'}
+				}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_user$project$Home$recentContentCards,
+					numToShow,
+					_elm_lang$core$List$reverse(
+						A2(
+							_elm_lang$core$List$sortBy,
+							function (_) {
+								return _.date;
+							},
+							_user$project$Content$allSnippets))),
+				_1: {ctor: '[]'}
+			}
+		});
+};
+var _user$project$Home$aboutMeText = '\r\nI\'m a research scientist that spends a lot of time writing code and\r\noccasionally ventures into the lab. This is sort of a blog with various\r\narticles/posts as well as snippets from other sources.\r\n';
+var _user$project$Home$aboutMe = A2(
 	_elm_lang$html$Html$div,
 	{
 		ctor: '::',
@@ -10744,18 +10929,18 @@ var _user$project$Index$aboutMe = A2(
 				{ctor: '[]'},
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html$text(_user$project$Index$aboutMeText),
+					_0: _elm_lang$html$Html$text(_user$project$Home$aboutMeText),
 					_1: {ctor: '[]'}
 				}),
 			_1: {ctor: '[]'}
 		}
 	});
-var _user$project$Index$home = A2(
+var _user$project$Home$home = A2(
 	_elm_lang$html$Html$div,
 	{ctor: '[]'},
 	{
 		ctor: '::',
-		_0: _user$project$Index$aboutMe,
+		_0: _user$project$Home$aboutMe,
 		_1: {
 			ctor: '::',
 			_0: A2(
@@ -10764,7 +10949,7 @@ var _user$project$Index$home = A2(
 				{ctor: '[]'}),
 			_1: {
 				ctor: '::',
-				_0: _user$project$Content$recentPosts(5),
+				_0: _user$project$Home$recentPosts(10),
 				_1: {
 					ctor: '::',
 					_0: A2(
@@ -10773,30 +10958,25 @@ var _user$project$Index$home = A2(
 						{ctor: '[]'}),
 					_1: {
 						ctor: '::',
-						_0: _user$project$Content$recentSnippets(5),
+						_0: _user$project$Home$recentSnippets(5),
 						_1: {ctor: '[]'}
 					}
 				}
 			}
 		}
 	});
-var _user$project$Index$getContent = function (model) {
+var _user$project$Home$getContent = function (model) {
 	var _p0 = model.page;
 	switch (_p0.ctor) {
 		case 'Home':
-			return _user$project$Index$home;
+			return _user$project$Home$home;
 		case 'AllPosts':
-			return _user$project$Content$allPostsView;
-		case 'Post':
-			return A2(
-				_elm_lang$core$Maybe$withDefault,
-				_user$project$Index$home,
-				_user$project$Content$getBlogPost(_p0._0));
+			return _user$project$Home$allPostsView;
 		default:
-			return _user$project$Content$allSnippetsView;
+			return _user$project$Home$allSnippetsView;
 	}
 };
-var _user$project$Index$content = function (model) {
+var _user$project$Home$content = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{
@@ -10806,176 +10986,84 @@ var _user$project$Index$content = function (model) {
 		},
 		{
 			ctor: '::',
-			_0: _user$project$Index$getContent(model),
+			_0: _user$project$Home$getContent(model),
 			_1: {ctor: '[]'}
 		});
 };
-var _user$project$Index$mainSiteDivStyle = _elm_lang$html$Html_Attributes$style(
-	{
-		ctor: '::',
-		_0: {ctor: '_Tuple2', _0: 'margin-right', _1: 'auto'},
-		_1: {
-			ctor: '::',
-			_0: {ctor: '_Tuple2', _0: 'margin-left', _1: 'auto'},
-			_1: {
-				ctor: '::',
-				_0: {ctor: '_Tuple2', _0: 'max-width', _1: '980px'},
-				_1: {
-					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: 'padding-right', _1: '2.5%'},
-					_1: {
-						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: 'padding-left', _1: '2.5%'},
-						_1: {ctor: '[]'}
-					}
-				}
-			}
-		}
-	});
-var _user$project$Index$view = function (model) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$id('mainSiteDiv'),
-			_1: {
-				ctor: '::',
-				_0: _user$project$Index$mainSiteDivStyle,
-				_1: {ctor: '[]'}
-			}
-		},
-		{
-			ctor: '::',
-			_0: _user$project$CommonViews$siteHeader,
-			_1: {
-				ctor: '::',
-				_0: _user$project$Index$content(model),
-				_1: {
-					ctor: '::',
-					_0: _user$project$CommonViews$siteFooter,
-					_1: {ctor: '[]'}
-				}
-			}
-		});
+var _user$project$Home$view = function (model) {
+	return _user$project$Skeleton$skeleton(
+		_user$project$Home$content(model));
 };
-var _user$project$Index$highlightMarkdown = _elm_lang$core$Native_Platform.outgoingPort(
-	'highlightMarkdown',
-	function (v) {
-		return null;
-	});
-var _user$project$Index$analytics = _elm_lang$core$Native_Platform.outgoingPort(
-	'analytics',
-	function (v) {
-		return v;
-	});
-var _user$project$Index$Flags = function (a) {
+var _user$project$Home$Flags = function (a) {
 	return {mobile: a};
 };
-var _user$project$Index$Model = F2(
-	function (a, b) {
-		return {page: a, mobile: b};
-	});
-var _user$project$Index$AllSnippets = {ctor: 'AllSnippets'};
-var _user$project$Index$Post = function (a) {
-	return {ctor: 'Post', _0: a};
+var _user$project$Home$Model = function (a) {
+	return {page: a};
 };
-var _user$project$Index$AllPosts = {ctor: 'AllPosts'};
-var _user$project$Index$Home = {ctor: 'Home'};
-var _user$project$Index$route = _evancz$url_parser$UrlParser$oneOf(
+var _user$project$Home$AllSnippets = {ctor: 'AllSnippets'};
+var _user$project$Home$AllPosts = {ctor: 'AllPosts'};
+var _user$project$Home$Home = {ctor: 'Home'};
+var _user$project$Home$route = _evancz$url_parser$UrlParser$oneOf(
 	{
 		ctor: '::',
-		_0: A2(_evancz$url_parser$UrlParser$map, _user$project$Index$Home, _evancz$url_parser$UrlParser$top),
+		_0: A2(_evancz$url_parser$UrlParser$map, _user$project$Home$Home, _evancz$url_parser$UrlParser$top),
 		_1: {
 			ctor: '::',
 			_0: A2(
 				_evancz$url_parser$UrlParser$map,
-				_user$project$Index$AllPosts,
+				_user$project$Home$AllPosts,
 				_evancz$url_parser$UrlParser$s('all-posts')),
 			_1: {
 				ctor: '::',
 				_0: A2(
 					_evancz$url_parser$UrlParser$map,
-					_user$project$Index$Post,
-					A2(
-						_evancz$url_parser$UrlParser_ops['</>'],
-						_evancz$url_parser$UrlParser$s('blog'),
-						_evancz$url_parser$UrlParser$string)),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_evancz$url_parser$UrlParser$map,
-						_user$project$Index$AllSnippets,
-						_evancz$url_parser$UrlParser$s('all-snippets')),
-					_1: {ctor: '[]'}
-				}
+					_user$project$Home$AllSnippets,
+					_evancz$url_parser$UrlParser$s('all-snippets')),
+				_1: {ctor: '[]'}
 			}
 		}
 	});
-var _user$project$Index$getPage = function (location) {
+var _user$project$Home$getPage = function (location) {
 	return A2(
 		_elm_lang$core$Maybe$withDefault,
-		_user$project$Index$AllPosts,
-		A2(_evancz$url_parser$UrlParser$parseHash, _user$project$Index$route, location));
+		_user$project$Home$AllPosts,
+		A2(_evancz$url_parser$UrlParser$parseHash, _user$project$Home$route, location));
 };
-var _user$project$Index$Highlight = function (a) {
-	return {ctor: 'Highlight', _0: a};
-};
-var _user$project$Index$update = F2(
+var _user$project$Home$update = F2(
 	function (msg, model) {
 		var _p1 = msg;
-		if (_p1.ctor === 'UrlChange') {
-			var _p2 = _p1._0;
-			return A2(
-				_elm_lang$core$Platform_Cmd_ops['!'],
-				_elm_lang$core$Native_Utils.update(
-					model,
-					{
-						page: _user$project$Index$getPage(_p2)
-					}),
+		return A2(
+			_elm_lang$core$Platform_Cmd_ops['!'],
+			_elm_lang$core$Native_Utils.update(
+				model,
 				{
-					ctor: '::',
-					_0: A2(
-						_elm_lang$core$Task$perform,
-						_user$project$Index$Highlight,
-						_elm_lang$core$Process$sleep(100 * _elm_lang$core$Time$millisecond)),
-					_1: {
-						ctor: '::',
-						_0: _user$project$Index$analytics(_p2.href),
-						_1: {ctor: '[]'}
-					}
-				});
-		} else {
-			return {
-				ctor: '_Tuple2',
-				_0: model,
-				_1: _user$project$Index$highlightMarkdown(
-					{ctor: '_Tuple0'})
-			};
-		}
+					page: _user$project$Home$getPage(_p1._0)
+				}),
+			{ctor: '[]'});
 	});
-var _user$project$Index$UrlChange = function (a) {
+var _user$project$Home$UrlChange = function (a) {
 	return {ctor: 'UrlChange', _0: a};
 };
-var _user$project$Index$init = F2(
+var _user$project$Home$init = F2(
 	function (flags, location) {
 		return {
 			ctor: '_Tuple2',
-			_0: A2(_user$project$Index$Model, _user$project$Index$Home, flags.mobile),
+			_0: _user$project$Home$Model(_user$project$Home$Home),
 			_1: A2(
 				_elm_lang$core$Task$perform,
 				_elm_lang$core$Basics$identity,
 				_elm_lang$core$Task$succeed(
-					_user$project$Index$UrlChange(location)))
+					_user$project$Home$UrlChange(location)))
 		};
 	});
-var _user$project$Index$main = A2(
+var _user$project$Home$main = A2(
 	_elm_lang$navigation$Navigation$programWithFlags,
-	_user$project$Index$UrlChange,
+	_user$project$Home$UrlChange,
 	{
-		init: _user$project$Index$init,
-		view: _user$project$Index$view,
-		update: _user$project$Index$update,
-		subscriptions: function (_p3) {
+		init: _user$project$Home$init,
+		view: _user$project$Home$view,
+		update: _user$project$Home$update,
+		subscriptions: function (_p2) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
 	})(
@@ -10988,9 +11076,9 @@ var _user$project$Index$main = A2(
 		A2(_elm_lang$core$Json_Decode$field, 'mobile', _elm_lang$core$Json_Decode$bool)));
 
 var Elm = {};
-Elm['Index'] = Elm['Index'] || {};
-if (typeof _user$project$Index$main !== 'undefined') {
-    _user$project$Index$main(Elm['Index'], 'Index', undefined);
+Elm['Home'] = Elm['Home'] || {};
+if (typeof _user$project$Home$main !== 'undefined') {
+    _user$project$Home$main(Elm['Home'], 'Home', undefined);
 }
 
 if (typeof define === "function" && define['amd'])
