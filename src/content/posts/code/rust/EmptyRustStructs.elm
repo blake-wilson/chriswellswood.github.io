@@ -27,7 +27,7 @@ category =
 
 subcategory : String
 subcategory =
-    "Elm"
+    "Rust"
 
 
 metaData : ContentMetaData

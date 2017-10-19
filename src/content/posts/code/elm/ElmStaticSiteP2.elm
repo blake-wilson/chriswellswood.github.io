@@ -118,68 +118,14 @@ We take the full URL from the `Navigation.Location` record, which includes the c
 
 Before, our HTML file looked roughly like this:
 
-```Html
-<!DOCTYPE HTML>
-<html>
-
-<head>
-  <meta charset="UTF-8">
-  <title>Bits and Pieces and Odds and Ends</title>
-  <script type="text/javascript" src="index.js"></script>
-
-  <link rel="stylesheet" href="css/style.css">
-</head>
-
-<body>
-</body>
-
-<div id="main"></div>
-<script type="text/javascript">
-    var node = document.getElementById('main');
-    var app = Elm.Index.embed(node);
-</script>
-
-</html>
-```
 
 Our Elm app compiles down to a file called `index.js`, which is embedded into the page. We need to add the Google Analytics code so we can start tracking page views:
 
-```Html
-<head>
-  ...
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-    ga('create', 'UA-XXXXXXXX-X', 'auto');
-  </script>
-</head>
-...
-```
 
 `UA-XXXXXXXX-X` is the tracking ID that you get when you set up your Google Analytics account, so it varies from person to person. Here we create the session, but we don't trigger any page views yet.
 
 Now we need to add the JavaScript that will run when we trigger our Elm port command:
 
-```Html
-...
-<div id="main"></div>
-<script type="text/javascript">
-    var node = document.getElementById('main');
-    var app = Elm.Index.embed(node);
-
-    app.ports.analytics.subscribe(
-      function (pageUrl) {
-        ga('set', 'page', pageUrl);
-        ga('send', 'pageview');
-      }
-    );
-</script>
-
-</html>
-```
 
 Let's break that down a bit. `app.ports.analytics` refers to the port that we created in our app. We subscribe to the event, which is triggered by the `analytics` command, providing a  function that will be run when the event is triggered. This function takes a string, `pageUrl`, which we pass into this function through the port in our Elm app. This is used to set the currently active page through the Google Analytics API, then we send off the page view to be recorded. Pretty easy!
 
@@ -217,51 +163,6 @@ We've added a couple of things here because we need to add a delay before we tri
 
 On the HTML side we need a few things:
 
-```Html
-<!DOCTYPE HTML>
-<html>
-
-<head>
-  ...
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-
-  <!-- Markdown Highlighting -->
-  <link rel="stylesheet" href="css/github.css">
-  <script src="js/highlight.pack.js"></script>
-  ...
-</head>
-
-<body>
-</body>
-
-<div id="main"></div>
-<script type="text/javascript">
-    var node = document.getElementById('main');
-    var app = Elm.Index.embed(node);
-
-    app.ports.highlightMarkdown.subscribe(
-      function () {
-        highlightCodeBlocks();
-      }
-    );
-
-    function highlightCodeBlocks() {
-      $('pre code').each(function(i, block) {
-        hljs.highlightBlock(block);
-      });
-    };
-
-    app.ports.analytics.subscribe(
-      function (pageUrl) {
-        ga('set', 'page', pageUrl);
-        ga('send', 'pageview');
-      }
-    );
-
-</script>
-
-</html>
-```
 
 Again we trigger a function by subscribing to the `app.ports.highlightMarkdown` port. I then use jQuery to grab the relevant divs and highlight them using `highlight.js`. Using this method, we can dynamically add content to the page and then highlight the code.
 
