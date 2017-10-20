@@ -6,6 +6,12 @@ import OOBrainAndTypes
 import ElmStaticSiteP1
 import ElmStaticSiteP2
 import CounterReusableView
+import LetsElmEp1
+import LetsElmEp2
+import LetsElmEp3
+import LetsElmEp4
+import LetsElmEp5
+import LetsElmEp6
 import Skeleton exposing (ContentMetaData)
 
 
@@ -17,6 +23,12 @@ allPosts =
     , ElmStaticSiteP1.metaData
     , ElmStaticSiteP2.metaData
     , CounterReusableView.metaData
+    , LetsElmEp1.metaData
+    , LetsElmEp2.metaData
+    , LetsElmEp3.metaData
+    , LetsElmEp4.metaData
+    , LetsElmEp5.metaData
+    , LetsElmEp6.metaData
     ]
 
 

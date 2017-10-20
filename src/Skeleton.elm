@@ -142,7 +142,13 @@ contentInfo metaData =
         [ b [] [ text "Date Posted: " ]
         , text ((dateToString metaData.date) ++ " | ")
         , b [] [ text "Category: " ]
-        , text (metaData.category ++ "/" ++ metaData.subcategory)
+        , text
+            (metaData.group
+                ++ "/"
+                ++ metaData.category
+                ++ "/"
+                ++ metaData.subcategory
+            )
         ]
 
 
