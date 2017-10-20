@@ -52,4 +52,13 @@ allSnippets =
       , subcategory = "Python"
       , url = "https://gist.github.com/ChrisWellsWood/165e3144f4a8199482ab50a8146c8069"
       }
+    , { name = "random-git-commands"
+      , title = "A Random Selection of Useful Git Commands"
+      , date = [ 2017, 8, 24 ]
+      , description = "A bunch of useful Git commands and notes."
+      , group = "Snippet"
+      , category = "Code"
+      , subcategory = "Git"
+      , url = "https://gist.github.com/ChrisWellsWood/d68b3b4a603e603c052f2e8bf6413014"
+      }
     ]
